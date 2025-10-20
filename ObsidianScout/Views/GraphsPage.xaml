@@ -1,0 +1,380 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
+             xmlns:models="clr-namespace:ObsidianScout.Models"
+             xmlns:microcharts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
+             x:Class="ObsidianScout.Views.GraphsPage"
+             x:DataType="vm:GraphsViewModel"
+             Title="Team Analytics"
+             BackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Header -->
+            <Border Style="{StaticResource ElevatedGlassCard}" BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Team Analytics &amp; Graphs"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                    <Label Text="Compare team performance metrics and visualize data (Powered by LiveChartsCore - Free!)"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Status Message -->
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   TextColor="{StaticResource Tertiary}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}"
+                   HorizontalTextAlignment="Center" />
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                              IsVisible="{Binding IsLoading}"
+                              Color="{StaticResource Primary}"
+                              HeightRequest="40" />
+
+            <!-- Event Selection -->
+            <Border Style="{StaticResource CardBorderStyle}" BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Select Event"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                    
+                    <Picker Title="Choose an event"
+                            ItemsSource="{Binding Events}"
+                            SelectedItem="{Binding SelectedEvent}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+                        <Picker.ItemDisplayBinding>
+                            <Binding Path="Name" />
+                        </Picker.ItemDisplayBinding>
+                    </Picker>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Metric Selection -->
+            <Border Style="{StaticResource CardBorderStyle}" BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Select Metric"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                    
+                    <Picker Title="Choose a metric"
+                            ItemsSource="{Binding AvailableMetrics}"
+                            SelectedItem="{Binding SelectedMetric}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+                        <Picker.ItemDisplayBinding>
+                            <Binding Path="Name" />
+                        </Picker.ItemDisplayBinding>
+                    </Picker>
+                    
+                    <Label Text="{Binding SelectedMetric.Description}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                           IsVisible="{Binding SelectedMetric, Converter={StaticResource IsNotNullConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Team Selection -->
+            <Border Style="{StaticResource CardBorderStyle}" BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}">
+                <VerticalStackLayout Spacing="15">
+                    <Grid ColumnDefinitions="*,Auto,10,Auto">
+                        <Label Grid.Column="0"
+                               Text="Select Teams to Compare"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        
+                        <Button Grid.Column="1"
+                                Text="Select All"
+                                Command="{Binding SelectAllTeamsCommand}"
+                                Style="{StaticResource OutlineGlassButton}"
+                                FontSize="12"
+                                Padding="10,5"
+                                IsVisible="{Binding AvailableTeams.Count, Converter={StaticResource IsNotZeroConverter}}" />
+                        
+                        <Button Grid.Column="3"
+                                Text="Clear All"
+                                Command="{Binding ClearSelectedTeamsCommand}"
+                                Style="{StaticResource OutlineGlassButton}"
+                                FontSize="12"
+                                Padding="10,5" />
+                    </Grid>
+
+                    <!-- Selected Teams -->
+                    <CollectionView ItemsSource="{Binding SelectedTeams}"
+                                   IsVisible="{Binding SelectedTeams.Count, Converter={StaticResource IsNotZeroConverter}}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Team">
+                                <Border Style="{StaticResource CardBorderStyle}"
+                                        Margin="0,5"
+                                        Padding="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding TeamNumber, StringFormat='#{0} - {1}', Converter={StaticResource TeamDisplayConverter}}"
+                                               VerticalOptions="Center"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                                        
+                                        <Button Grid.Column="1"
+                                                Text="✕"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GraphsViewModel}}, Path=RemoveTeamFromComparisonCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="{StaticResource Tertiary}"
+                                                TextColor="White"
+                                                WidthRequest="30"
+                                                HeightRequest="30"
+                                                CornerRadius="15"
+                                                Padding="0"
+                                                FontSize="16" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <Label Text="Select teams to compare from the list below"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                           HorizontalTextAlignment="Center" />
+
+                    <!-- Available Teams List -->
+                    <CollectionView ItemsSource="{Binding AvailableTeams}"
+                                   HeightRequest="300"
+                                   SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Team">
+                                <Border Style="{StaticResource CardBorderStyle}"
+                                        Margin="0,5">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GraphsViewModel}}, Path=AddTeamToComparisonCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    
+                                    <Grid Padding="15" ColumnDefinitions="Auto,*,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding TeamNumber, StringFormat='#{0}'}"
+                                               FontAttributes="Bold"
+                                               FontSize="16"
+                                               TextColor="{StaticResource Primary}"
+                                               VerticalOptions="Center" />
+                                        
+                                        <VerticalStackLayout Grid.Column="1" 
+                                                           Margin="15,0,0,0"
+                                                           VerticalOptions="Center">
+                                            <Label Text="{Binding TeamName}"
+                                                   FontSize="14"
+                                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                                            <Label Text="{Binding Location}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+                                        </VerticalStackLayout>
+                                        
+                                        <Label Grid.Column="2"
+                                               Text="+"
+                                               FontSize="24"
+                                               TextColor="{StaticResource Primary}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Generate Button -->
+            <Button Text="Generate Comparison Graphs"
+                    Command="{Binding GenerateGraphsCommand}"
+                    Style="{StaticResource PrimaryGlassButton}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    HeightRequest="50"
+                    FontSize="16"
+                    FontAttributes="Bold" />
+
+            <!-- Graph Display -->
+            <Border Style="{StaticResource ElevatedGlassCard}"
+                    IsVisible="{Binding HasGraphData}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Comparison Results"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+
+                    <!-- Data View Selector -->
+                    <Border Style="{StaticResource CompactGlassCard}"
+                            Margin="0,0,0,10"
+                            Padding="10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="View Mode"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                            
+                            <Grid ColumnDefinitions="*,10,*" ColumnSpacing="10">
+                                <Button Grid.Column="0"
+                                        Text="Match-by-Match"
+                                        Command="{Binding ChangeDataViewCommand}"
+                                        CommandParameter="match_by_match"
+                                        Style="{StaticResource OutlineGlassButton}"
+                                        FontSize="13"
+                                        Padding="8"
+                                        BackgroundColor="{Binding SelectedDataView, Converter={StaticResource DataViewToColorConverter}, ConverterParameter='match_by_match'}" />
+                                
+                                <Button Grid.Column="2"
+                                        Text="Team Averages"
+                                        Command="{Binding ChangeDataViewCommand}"
+                                        CommandParameter="averages"
+                                        Style="{StaticResource OutlineGlassButton}"
+                                        FontSize="13"
+                                        Padding="8"
+                                        BackgroundColor="{Binding SelectedDataView, Converter={StaticResource DataViewToColorConverter}, ConverterParameter='averages'}" />
+                            </Grid>
+                            
+                            <Label Text="{Binding SelectedDataView, StringFormat='Current: {0}'}"
+                                   FontSize="11"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Graph Type Selector - REMOVED BAR CHART OPTION -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="Line Chart"
+                                Command="{Binding ChangeGraphTypeCommand}"
+                                CommandParameter="line"
+                                Style="{StaticResource OutlineGlassButton}" />
+                        
+                        <Button Grid.Column="1"
+                                Text="Radar Chart"
+                                Command="{Binding ChangeGraphTypeCommand}"
+                                CommandParameter="radar"
+                                Style="{StaticResource OutlineGlassButton}" />
+                    </Grid>
+
+                    <!-- Team Comparison Summary -->
+                    <CollectionView ItemsSource="{Binding ComparisonData.Teams}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TeamComparisonData">
+                                <Border Style="{StaticResource CardBorderStyle}"
+                                        Margin="0,5"
+                                        Padding="15">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                                        <BoxView Grid.Column="0"
+                                                WidthRequest="4"
+                                                HeightRequest="40"
+                                                Color="{Binding Color}"
+                                                CornerRadius="2"
+                                                VerticalOptions="Center" />
+                                        
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding TeamName, StringFormat='#{0}'}"
+                                                   FontSize="14"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                                            <Label Text="{Binding MatchCount, StringFormat='{0} matches'}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+                                        </VerticalStackLayout>
+                                        
+                                        <VerticalStackLayout Grid.Column="2" HorizontalOptions="End" VerticalOptions="Center">
+                                            <Label Text="{Binding Value, StringFormat='{0:F1}'}"
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Primary}"
+                                                   HorizontalTextAlignment="End" />
+                                            <Label Text="{Binding StdDev, StringFormat='±{0:F1}'}"
+                                                   FontSize="12"
+                                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                                                   HorizontalTextAlignment="End" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Team Charts Display - Shows ALL team charts for match-by-match -->
+                    <CollectionView ItemsSource="{Binding TeamChartsWithInfo}"
+                                   IsVisible="{Binding TeamChartsWithInfo.Count, Converter={StaticResource IsNotZeroConverter}}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TeamChartInfo">
+                                <VerticalStackLayout Spacing="10" Margin="0,10">
+                                    <!-- Team Header -->
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                        <BoxView Grid.Column="0"
+                                                WidthRequest="4"
+                                                HeightRequest="30"
+                                                Color="{Binding Color}"
+                                                CornerRadius="2"
+                                                VerticalOptions="Center" />
+                                        
+                                        <Label Grid.Column="1"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="Team #" />
+                                                    <Span Text="{Binding TeamNumber}" />
+                                                    <Span Text=" - " />
+                                                    <Span Text="{Binding TeamName}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </Grid>
+
+                                    <!-- Team Chart -->
+                                    <Border Style="{StaticResource ElevatedGlassCard}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
+                                            Padding="10"
+                                            HeightRequest="350">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        
+                                        <microcharts:ChartView Chart="{Binding Chart}"
+                                                              HeightRequest="330" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Single Chart Display (for non-match-by-match views) -->
+                    <Border Style="{StaticResource ElevatedGlassCard}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
+                            Padding="10"
+                            HeightRequest="350"
+                            IsVisible="{Binding TeamChartsWithInfo.Count, Converter={StaticResource IsZeroConverter}}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        
+                        <microcharts:ChartView x:Name="chartView"
+                                              Chart="{Binding CurrentChart}"
+                                              HeightRequest="330" />
+                    </Border>
+
+                    <Label Text="{Binding SelectedMetric.Name, StringFormat='Metric: {0} (Using Microcharts - Free!)'}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Italic" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

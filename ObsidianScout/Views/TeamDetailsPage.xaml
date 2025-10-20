@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+             x:Class="ObsidianScout.Views.TeamDetailsPage"
+             x:DataType="viewmodels:TeamDetailsViewModel"
+             Title="Team Details">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Loading State -->
+            <VerticalStackLayout Spacing="16"
+                               HorizontalOptions="Center"
+                               IsVisible="{Binding IsLoading}">
+                <ActivityIndicator IsRunning="True"
+                                 HeightRequest="60"
+                                 WidthRequest="60" />
+                <Label Text="Loading team details..."
+                       Style="{StaticResource BodyLabel}"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <!-- Error State -->
+            <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}"
+                    Style="{StaticResource ErrorBadge}"
+                    Margin="0,40,0,0">
+                <VerticalStackLayout Spacing="12" Padding="8">
+                    <Label FontSize="32"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="White"
+                           FontSize="16"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Team Hero Card -->
+            <Border IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}"
+                    Style="{StaticResource ElevatedGlassCard}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
+                    
+                    <!-- Gradient Background -->
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{StaticResource Primary}" Offset="0.0" />
+                            <GradientStop Color="{StaticResource Secondary}" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+
+                    <!-- Team Icon -->
+                    <Border Grid.Row="0"
+                            BackgroundColor="#30FFFFFF"
+                            WidthRequest="80"
+                            HeightRequest="80"
+                            HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <!-- Team Number -->
+                    <Label Grid.Row="1"
+                           Text="{Binding SelectedTeam.TeamNumber, StringFormat='Team {0}'}"
+                           FontSize="36"
+                           FontFamily="OpenSansSemibold"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalTextAlignment="Center" />
+
+                    <!-- Team Name -->
+                    <Label Grid.Row="2"
+                           Text="{Binding SelectedTeam.TeamName}"
+                           FontSize="20"
+                           TextColor="White"
+                           Opacity="0.95"
+                           HorizontalTextAlignment="Center"
+                           Margin="20,0" />
+                </Grid>
+            </Border>
+
+            <!-- Team Information Card -->
+            <Border IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}"
+                    Style="{StaticResource GlassCard}">
+                <VerticalStackLayout Spacing="20">
+                    
+                    <Label Text="Team Information"
+                           Style="{StaticResource SubheaderLabel}"
+                           Margin="0,0,0,8" />
+
+                    <!-- Location -->
+                    <HorizontalStackLayout Spacing="16">
+                        <Border BackgroundColor="{StaticResource Primary}"
+                                WidthRequest="44"
+                                HeightRequest="44">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                        </Border>
+                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                            <Label Text="Location"
+                                   Style="{StaticResource CaptionLabel}"
+                                   FontSize="12" />
+                            <Label Text="{Binding SelectedTeam.Location}"
+                                   Style="{StaticResource BodyLabel}"
+                                   FontSize="16" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <!-- Divider -->
+                    <BoxView Style="{StaticResource Divider}" />
+
+                    <!-- Scouting Reports Count -->
+                    <HorizontalStackLayout Spacing="16">
+                        <Border BackgroundColor="{StaticResource Secondary}"
+                                WidthRequest="44"
+                                HeightRequest="44">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                        </Border>
+                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                            <Label Text="Scouting Reports"
+                                   Style="{StaticResource CaptionLabel}"
+                                   FontSize="12" />
+                            <Label Text="{Binding SelectedTeam.ScoutingDataCount}"
+                                   Style="{StaticResource BodyLabel}"
+                                   FontSize="20"
+                                   FontFamily="OpenSansSemibold" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <!-- Divider -->
+                    <BoxView Style="{StaticResource Divider}" />
+
+                    <!-- Team ID -->
+                    <HorizontalStackLayout Spacing="16" Opacity="0.6">
+                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+                                WidthRequest="44"
+                                HeightRequest="44">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                        </Border>
+                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                            <Label Text="Team ID"
+                                   Style="{StaticResource CaptionLabel}"
+                                   FontSize="12" />
+                            <Label Text="{Binding SelectedTeam.Id}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   FontSize="14"
+                                   FontFamily="OpenSansSemibold" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Actions Card -->
+            <Border IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}"
+                    Style="{StaticResource GlassCard}">
+                <VerticalStackLayout Spacing="16">
+                    
+                    <Label Text="Quick Actions"
+                           Style="{StaticResource SubheaderLabel}"
+                           Margin="0,0,0,4" />
+
+                    <Button Text="Scout This Team"
+                            Style="{StaticResource GlassButton}"
+                            HeightRequest="56"
+                            FontSize="16"
+                            Command="{Binding NavigateToScoutingCommand}" />
+
+                    <Button Text="View Scouting Reports"
+                            Style="{StaticResource SecondaryGlassButton}"
+                            HeightRequest="56"
+                            FontSize="16"
+                            IsEnabled="False"
+                            Opacity="0.5" />
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Back Button -->
+            <Button Text="← Back to Teams"
+                    Style="{StaticResource OutlineGlassButton}"
+                    Command="{Binding GoBackCommand}"
+                    HeightRequest="50"
+                    Margin="0,10,0,20" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

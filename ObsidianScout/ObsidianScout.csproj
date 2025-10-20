@@ -1,0 +1,157 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+
+		<!-- Note for MacCatalyst:
+		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
+		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
+		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
+		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
+		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+
+		<OutputType>Exe</OutputType>
+		<RootNamespace>ObsidianScout</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Display name -->
+		<ApplicationTitle>ObsidianScout</ApplicationTitle>
+
+		<!-- App Identifier -->
+		<ApplicationId>com.companyname.obsidianscout</ApplicationId>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+		<WindowsPackageType>None</WindowsPackageType>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+		<DefaultLanguage>en-us</DefaultLanguage>
+		<PackageCertificateThumbprint>EDF25F767574D07C989B670C3A206DB65EDA65A0</PackageCertificateThumbprint>
+		<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
+		
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<!-- Android network security config -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<AndroidResource Include="Platforms\Android\Resources\xml\network_security_config.xml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="Resources\icons\%24placeholder%24.scale-100.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.scale-125.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.scale-150.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.scale-200.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.scale-400.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-lightunplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-unplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-lightunplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-unplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-lightunplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-unplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-lightunplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-unplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-lightunplated.png" />
+	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-unplated.png" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="Resources\icons\$placeholder$.scale-100.png" />
+	  <Content Include="Resources\icons\$placeholder$.scale-125.png" />
+	  <Content Include="Resources\icons\$placeholder$.scale-150.png" />
+	  <Content Include="Resources\icons\$placeholder$.scale-200.png" />
+	  <Content Include="Resources\icons\$placeholder$.scale-400.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-16.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-lightunplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-unplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-24.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-lightunplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-unplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-256.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-lightunplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-unplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-32.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-lightunplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-unplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-48.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-lightunplated.png" />
+	  <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-unplated.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microcharts.Maui" Version="1.0.1" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-rc.1.25451.107" />
+		<PackageReference Include="QRCoder" Version="1.7.0" />
+		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.9" />
+		<PackageReference Include="Syncfusion.Maui.Charts" Version="28.1.35" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Resources\Styles\IconFonts.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\EventsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\GraphsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\LoginPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MatchesPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MatchPredictionPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ScoutingPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\TeamDetailsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\TeamsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Package.appxmanifest">
+	    <SubType>Designer</SubType>
+	  </None>
+	</ItemGroup>
+
+</Project>

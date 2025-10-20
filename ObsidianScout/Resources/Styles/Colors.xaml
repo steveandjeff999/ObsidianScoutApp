@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Light Mode Colors -->
+    <Color x:Key="LightPrimary">#6366F1</Color>
+    <Color x:Key="LightPrimaryDark">#4F46E5</Color>
+    <Color x:Key="LightSecondary">#8B5CF6</Color>
+    <Color x:Key="LightTertiary">#EC4899</Color>
+    
+    <Color x:Key="LightBackground">#F8FAFC</Color>
+    <Color x:Key="LightSurface">#FFFFFF</Color>
+    <Color x:Key="LightSurfaceVariant">#F1F5F9</Color>
+    
+    <Color x:Key="LightTextPrimary">#0F172A</Color>
+    <Color x:Key="LightTextSecondary">#475569</Color>
+    <Color x:Key="LightTextTertiary">#94A3B8</Color>
+    
+    <Color x:Key="LightBorder">#E2E8F0</Color>
+    <Color x:Key="LightDivider">#F1F5F9</Color>
+    
+    <Color x:Key="LightSuccess">#10B981</Color>
+    <Color x:Key="LightWarning">#F59E0B</Color>
+    <Color x:Key="LightError">#EF4444</Color>
+    <Color x:Key="LightInfo">#3B82F6</Color>
+
+    <!-- Dark Mode Colors -->
+    <Color x:Key="DarkPrimary">#818CF8</Color>
+    <Color x:Key="DarkPrimaryDark">#6366F1</Color>
+    <Color x:Key="DarkSecondary">#A78BFA</Color>
+    <Color x:Key="DarkTertiary">#F472B6</Color>
+    
+    <Color x:Key="DarkBackground">#0F172A</Color>
+    <Color x:Key="DarkSurface">#1E293B</Color>
+    <Color x:Key="DarkSurfaceVariant">#334155</Color>
+    
+    <Color x:Key="DarkTextPrimary">#F8FAFC</Color>
+    <Color x:Key="DarkTextSecondary">#CBD5E1</Color>
+    <Color x:Key="DarkTextTertiary">#64748B</Color>
+    
+    <Color x:Key="DarkBorder">#334155</Color>
+    <Color x:Key="DarkDivider">#1E293B</Color>
+    
+    <Color x:Key="DarkSuccess">#34D399</Color>
+    <Color x:Key="DarkWarning">#FBBF24</Color>
+    <Color x:Key="DarkError">#F87171</Color>
+    <Color x:Key="DarkInfo">#60A5FA</Color>
+
+    <!-- Adaptive Colors (Auto-switch based on theme) -->
+    <!-- These will be used with AppThemeBinding in XAML -->
+    <Color x:Key="Primary">#6366F1</Color>
+    <Color x:Key="PrimaryDark">#4F46E5</Color>
+    <Color x:Key="Secondary">#8B5CF6</Color>
+    <Color x:Key="Tertiary">#EC4899</Color>
+    
+    <Color x:Key="Background">#F8FAFC</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="SurfaceVariant">#F1F5F9</Color>
+    
+    <Color x:Key="TextPrimary">#0F172A</Color>
+    <Color x:Key="TextSecondary">#475569</Color>
+    <Color x:Key="TextTertiary">#94A3B8</Color>
+    
+    <Color x:Key="BorderColor">#E2E8F0</Color>
+    <Color x:Key="DividerColor">#F1F5F9</Color>
+    
+    <Color x:Key="Success">#10B981</Color>
+    <Color x:Key="Warning">#F59E0B</Color>
+    <Color x:Key="Error">#EF4444</Color>
+    <Color x:Key="Info">#3B82F6</Color>
+
+    <!-- Glassmorphism Overlay Colors -->
+    <Color x:Key="GlassOverlayLight">#F0FFFFFF</Color>
+    <Color x:Key="GlassOverlayDark">#F01E293B</Color>
+    <Color x:Key="GlassOverlay">#F0FFFFFF</Color>
+
+    <!-- Legacy compatibility -->
+    <Color x:Key="Gray100">#F1F5F9</Color>
+    <Color x:Key="Gray200">#E2E8F0</Color>
+    <Color x:Key="Gray300">#CBD5E1</Color>
+    <Color x:Key="Gray400">#94A3B8</Color>
+    <Color x:Key="Gray500">#64748B</Color>
+    <Color x:Key="Gray600">#475569</Color>
+    <Color x:Key="Gray900">#0F172A</Color>
+    <Color x:Key="Gray950">#020617</Color>
+    
+    <Color x:Key="White">#FFFFFF</Color>
+    <Color x:Key="Black">#000000</Color>
+
+</ResourceDictionary>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+             xmlns:models="clr-namespace:ObsidianScout.Models"
+             x:Class="ObsidianScout.Views.TeamsPage"
+             x:DataType="viewmodels:TeamsViewModel"
+             Title="Teams">
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Header Card -->
+        <Border Grid.Row="0"
+                Style="{StaticResource CompactGlassCard}"
+                Margin="20,20,20,10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Label Grid.Column="0"
+                       Text="Teams"
+                       Style="{StaticResource HeaderLabel}"
+                       VerticalOptions="Center" />
+                
+                <Button Grid.Column="1"
+                        Text="↻"
+                        Style="{StaticResource IconButton}"
+                        Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshCommand}">
+            
+            <CollectionView ItemsSource="{Binding Teams}"
+                            SelectionMode="None"
+                            Margin="20,0,20,20">
+                
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Spacing="20"
+                                       Padding="40"
+                                       VerticalOptions="Center">
+                        
+                        <!-- Loading State -->
+                        <VerticalStackLayout Spacing="16"
+                                           HorizontalOptions="Center"
+                                           IsVisible="{Binding IsLoading}">
+                            <ActivityIndicator IsRunning="True"
+                                             HeightRequest="50"
+                                             WidthRequest="50" />
+                            <Label Text="Loading teams..."
+                                   Style="{StaticResource BodyLabel}"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <!-- Empty State -->
+                        <VerticalStackLayout Spacing="16"
+                                           HorizontalOptions="Center"
+                                           IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                            <Label FontSize="64"
+                                   HorizontalTextAlignment="Center"
+                                   Opacity="0.5" />
+                            <Label Text="No Teams Found"
+                                   Style="{StaticResource SubheaderLabel}"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="Pull down to refresh or check your connection"
+                                   Style="{StaticResource CaptionLabel}"
+                                   HorizontalTextAlignment="Center" />
+                            
+                            <!-- Error Message -->
+                            <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}"
+                                    Style="{StaticResource ErrorBadge}"
+                                    HorizontalOptions="Center"
+                                    Margin="0,10,0,0">
+                                <Label Text="{Binding ErrorMessage}"
+                                       TextColor="White"
+                                       FontSize="14"
+                                       Padding="8,4" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Team">
+                        <Border Style="{StaticResource GlassListItem}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:TeamsViewModel}}, Path=TeamSelectedCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                
+                                <!-- Team Icon -->
+                                <Border Grid.Column="0"
+                                        BackgroundColor="{StaticResource Primary}"
+                                        WidthRequest="56"
+                                        HeightRequest="56"
+                                        VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+                                </Border>
+
+                                <!-- Team Info -->
+                                <VerticalStackLayout Grid.Column="1"
+                                                   Spacing="4"
+                                                   VerticalOptions="Center">
+                                    <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}"
+                                           Style="{StaticResource SubheaderLabel}"
+                                           FontSize="18" />
+                                    <Label Text="{Binding TeamName}"
+                                           Style="{StaticResource BodyLabel}"
+                                           FontSize="14"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1" />
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Label FontSize="12"
+                                               VerticalOptions="Center" />
+                                        <Label Text="{Binding Location}"
+                                               Style="{StaticResource CaptionLabel}"
+                                               FontSize="12"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+
+                                <!-- Scouting Count Badge -->
+                                <Border Grid.Column="2"
+                                        Style="{StaticResource Badge}"
+                                        VerticalOptions="Center"
+                                        IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}}">
+                                    <Label Text="{Binding ScoutingDataCount}"
+                                           TextColor="White"
+                                           FontSize="14"
+                                           FontFamily="OpenSansSemibold" />
+                                </Border>
+
+                                <!-- Chevron -->
+                                <Label Grid.Column="2"
+                                       Text="›"
+                                       FontSize="24"
+                                       TextColor="{StaticResource TextTertiary}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}, ConverterParameter=Invert}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+
+</ContentPage>

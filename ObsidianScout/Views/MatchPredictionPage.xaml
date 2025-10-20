@@ -1,0 +1,399 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
+             xmlns:models="clr-namespace:ObsidianScout.Models"
+             x:Class="ObsidianScout.Views.MatchPredictionPage"
+             x:DataType="vm:MatchPredictionViewModel"
+             Title="Match Prediction"
+             BackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Header -->
+            <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Match Prediction"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}" />
+                    <Label Text="Select a match to predict scores based on team historical data"
+                           FontSize="14"
+                           Opacity="0.7" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Event Selection -->
+            <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Event"
+                           FontSize="18"
+                           FontAttributes="Bold" />
+                    
+                    <Picker ItemsSource="{Binding Events}"
+                            SelectedItem="{Binding SelectedEvent}"
+                            ItemDisplayBinding="{Binding Name}"
+                            Title="Select Event"
+                            Style="{StaticResource GlassPickerStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Match Selection -->
+            <Border Style="{StaticResource GlassCardStyle}" 
+                    Padding="20"
+                    IsVisible="{Binding SelectedEvent, Converter={StaticResource NullToBoolConverter}}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Match"
+                           FontSize="18"
+                           FontAttributes="Bold" />
+                    
+                    <Picker ItemsSource="{Binding Matches}"
+                            SelectedItem="{Binding SelectedMatch}"
+                            Title="Select Match"
+                            Style="{StaticResource GlassPickerStyle}">
+                        <Picker.ItemDisplayBinding>
+                            <MultiBinding StringFormat="{}{0} Match {1}">
+                                <Binding Path="MatchType" />
+                                <Binding Path="MatchNumber" />
+                            </MultiBinding>
+                        </Picker.ItemDisplayBinding>
+                    </Picker>
+
+                    <!-- Match Details Preview -->
+                    <VerticalStackLayout Spacing="8" 
+                                       IsVisible="{Binding SelectedMatch, Converter={StaticResource NullToBoolConverter}}"
+                                       Margin="0,8,0,0">
+                        <Label Text="Match Teams:" 
+                               FontSize="14" 
+                               FontAttributes="Bold"
+                               Opacity="0.8" />
+                        
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="Red:"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#FF6B6B" />
+                            <Label Text="{Binding SelectedMatch.RedAlliance}"
+                                   FontSize="14" />
+                        </HorizontalStackLayout>
+                        
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="Blue:"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="#4ECDC4" />
+                            <Label Text="{Binding SelectedMatch.BlueAlliance}"
+                                   FontSize="14" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Predict Button -->
+            <Button Text="Predict Match Outcome"
+                    Command="{Binding PredictMatchCommand}"
+                    IsEnabled="{Binding SelectedMatch, Converter={StaticResource NullToBoolConverter}}"
+                    Style="{StaticResource PrimaryGlassButton}" />
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                             IsVisible="{Binding IsLoading}"
+                             Color="{StaticResource Primary}"
+                             HeightRequest="40" />
+
+            <!-- Status Message -->
+            <Label Text="{Binding StatusMessage}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}"
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   Opacity="0.8" />
+
+            <!-- Insufficient Data Warning -->
+            <Border Style="{StaticResource GlassCardStyle}"
+                    Padding="16"
+                    BackgroundColor="#33FFB700"
+                    IsVisible="{Binding ShowInsufficientDataWarning}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Insufficient Data"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#FFB700" />
+                    <Label Text="{Binding InsufficientDataMessage}"
+                           FontSize="13"
+                           TextColor="#FFB700"
+                           Opacity="0.9" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Prediction Results -->
+            <VerticalStackLayout Spacing="20" IsVisible="{Binding HasPrediction}">
+                
+                <!-- Win Probability -->
+                <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Win Probability"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center" />
+                        
+                        <!-- Red Win Probability -->
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout HorizontalOptions="FillAndExpand" Spacing="8">
+                                <Label Text="Red Alliance"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#FF6B6B"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding Prediction.RedWinProbability, StringFormat='{0:P0}'}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="#FF6B6B"
+                                       HorizontalOptions="EndAndExpand"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                            
+                            <ProgressBar Progress="{Binding Prediction.RedWinProbability}"
+                                        ProgressColor="#FF6B6B"
+                                        HeightRequest="12" />
+                        </VerticalStackLayout>
+
+                        <!-- Blue Win Probability -->
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout HorizontalOptions="FillAndExpand" Spacing="8">
+                                <Label Text="Blue Alliance"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#4ECDC4"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding Prediction.BlueWinProbability, StringFormat='{0:P0}'}"
+                                       FontSize="24"
+                                       FontAttributes="Bold"
+                                       TextColor="#4ECDC4"
+                                       HorizontalOptions="EndAndExpand"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                            
+                            <ProgressBar Progress="{Binding Prediction.BlueWinProbability}"
+                                        ProgressColor="#4ECDC4"
+                                        HeightRequest="12" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Predicted Scores -->
+                <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Predicted Scores"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center" />
+                        
+                        <!-- Header -->
+                        <Grid ColumnDefinitions="Auto,*,*,*,*" 
+                              RowDefinitions="Auto"
+                              ColumnSpacing="8">
+                            <Label Grid.Column="0" Text="Alliance" FontSize="13" FontAttributes="Bold" Opacity="0.7" />
+                            <Label Grid.Column="1" Text="Auto" FontSize="13" FontAttributes="Bold" Opacity="0.7" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" Text="Teleop" FontSize="13" FontAttributes="Bold" Opacity="0.7" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="3" Text="Endgame" FontSize="13" FontAttributes="Bold" Opacity="0.7" HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="4" Text="Total" FontSize="13" FontAttributes="Bold" Opacity="0.7" HorizontalTextAlignment="Center" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#20000000, Dark=#20FFFFFF}" />
+
+                        <!-- Red Alliance -->
+                        <Grid ColumnDefinitions="Auto,*,*,*,*" 
+                              RowDefinitions="Auto"
+                              ColumnSpacing="8">
+                            <Label Grid.Column="0" 
+                                   Text="Red" 
+                                   FontSize="15" 
+                                   FontAttributes="Bold"
+                                   TextColor="#FF6B6B"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1" 
+                                   Text="{Binding Prediction.RedPredictedAutoPoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" 
+                                   Text="{Binding Prediction.RedPredictedTeleopPoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="3" 
+                                   Text="{Binding Prediction.RedPredictedEndgamePoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="4" 
+                                   Text="{Binding Prediction.RedPredictedTotalPoints, StringFormat='{0:F0}'}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#FF6B6B"
+                                   HorizontalTextAlignment="Center" />
+                        </Grid>
+
+                        <!-- Blue Alliance -->
+                        <Grid ColumnDefinitions="Auto,*,*,*,*" 
+                              RowDefinitions="Auto"
+                              ColumnSpacing="8">
+                            <Label Grid.Column="0" 
+                                   Text="Blue" 
+                                   FontSize="15" 
+                                   FontAttributes="Bold"
+                                   TextColor="#4ECDC4"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1" 
+                                   Text="{Binding Prediction.BluePredictedAutoPoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2" 
+                                   Text="{Binding Prediction.BluePredictedTeleopPoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="3" 
+                                   Text="{Binding Prediction.BluePredictedEndgamePoints, StringFormat='{0:F0}'}"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="4" 
+                                   Text="{Binding Prediction.BluePredictedTotalPoints, StringFormat='{0:F0}'}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#4ECDC4"
+                                   HorizontalTextAlignment="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Red Alliance Team Details -->
+                <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Red Alliance Team Breakdown"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#FF6B6B" />
+                        
+                        <CollectionView ItemsSource="{Binding Prediction.RedAlliance}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:TeamMatchPrediction">
+                                    <Border Style="{StaticResource GlassCardStyle}"
+                                            Padding="16"
+                                            Margin="0,4">
+                                        <VerticalStackLayout Spacing="8">
+                                            <!-- Team Header -->
+                                            <HorizontalStackLayout Spacing="8">
+                                                <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold" />
+                                                <Label Text="{Binding TeamName}"
+                                                       FontSize="14"
+                                                       Opacity="0.8"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
+                                            
+                                            <!-- Stats -->
+                                            <Grid ColumnDefinitions="*,*,*,*" 
+                                                  RowDefinitions="Auto,Auto"
+                                                  ColumnSpacing="8"
+                                                  RowSpacing="4">
+                                                <!-- Labels -->
+                                                <Label Grid.Row="0" Grid.Column="0" Text="Auto" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="1" Text="Teleop" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="2" Text="Endgame" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="3" Text="Total" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                
+                                                <!-- Values -->
+                                                <Label Grid.Row="1" Grid.Column="0" Text="{Binding PredictedAutoPoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding PredictedTeleopPoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="2" Text="{Binding PredictedEndgamePoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="3" Text="{Binding PredictedTotalPoints, StringFormat='{0:F1}'}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="#FF6B6B" />
+                                            </Grid>
+                                            
+                                            <!-- Additional Info -->
+                                            <HorizontalStackLayout Spacing="12" Margin="0,4,0,0">
+                                                <Label Text="{Binding MatchCount, StringFormat='{0} matches'}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                                <Label Text="{Binding Consistency, StringFormat='{0:P0} consistent'}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Blue Alliance Team Details -->
+                <Border Style="{StaticResource GlassCardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Blue Alliance Team Breakdown"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#4ECDC4" />
+                        
+                        <CollectionView ItemsSource="{Binding Prediction.BlueAlliance}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:TeamMatchPrediction">
+                                    <Border Style="{StaticResource GlassCardStyle}"
+                                            Padding="16"
+                                            Margin="0,4">
+                                        <VerticalStackLayout Spacing="8">
+                                            <!-- Team Header -->
+                                            <HorizontalStackLayout Spacing="8">
+                                                <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold" />
+                                                <Label Text="{Binding TeamName}"
+                                                       FontSize="14"
+                                                       Opacity="0.8"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
+                                            
+                                            <!-- Stats -->
+                                            <Grid ColumnDefinitions="*,*,*,*" 
+                                                  RowDefinitions="Auto,Auto"
+                                                  ColumnSpacing="8"
+                                                  RowSpacing="4">
+                                                <!-- Labels -->
+                                                <Label Grid.Row="0" Grid.Column="0" Text="Auto" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="1" Text="Teleop" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="2" Text="Endgame" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="0" Grid.Column="3" Text="Total" FontSize="11" Opacity="0.7" HorizontalTextAlignment="Center" />
+                                                
+                                                <!-- Values -->
+                                                <Label Grid.Row="1" Grid.Column="0" Text="{Binding PredictedAutoPoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding PredictedTeleopPoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="2" Text="{Binding PredictedEndgamePoints, StringFormat='{0:F1}'}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                                                <Label Grid.Row="1" Grid.Column="3" Text="{Binding PredictedTotalPoints, StringFormat='{0:F1}'}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="#4ECDC4" />
+                                            </Grid>
+                                            
+                                            <!-- Additional Info -->
+                                            <HorizontalStackLayout Spacing="12" Margin="0,4,0,0">
+                                                <Label Text="{Binding MatchCount, StringFormat='{0} matches'}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                                <Label Text="{Binding Consistency, StringFormat='{0:P0} consistent'}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

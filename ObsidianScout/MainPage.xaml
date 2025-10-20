@@ -1,0 +1,203 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+             x:Class="ObsidianScout.MainPage"
+             x:DataType="viewmodels:MainViewModel"
+             Title="Home">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Hero Card -->
+            <Border Style="{StaticResource ElevatedGlassCard}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                    
+                    <!-- Animated Gradient Background -->
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{StaticResource Primary}" Offset="0.0" />
+                            <GradientStop Color="{StaticResource Secondary}" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+
+                    <!-- Welcome Title -->
+                    <Label Grid.Row="0"
+                           Text="{Binding WelcomeMessage}"
+                           FontSize="28"
+                           FontFamily="OpenSansSemibold"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalTextAlignment="Center" />
+                    
+                    <!-- Team Badge -->
+                    <Border Grid.Row="1"
+                            BackgroundColor="#30FFFFFF"
+                            StrokeThickness="0"
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                        <Label Text="{Binding CurrentUser.TeamNumber, StringFormat='🎯 Team {0}'}"
+                               FontSize="16"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="White"
+                               Padding="16,8" />
+                    </Border>
+
+                    <!-- Quick Stats -->
+                    <HorizontalStackLayout Grid.Row="2"
+                                         Spacing="20"
+                                         HorizontalOptions="Center"
+                                         Margin="0,8,0,0"
+                                         IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📝"
+                                   FontSize="24"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="Scout"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   Opacity="0.9"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <BoxView WidthRequest="1"
+                                 HeightRequest="40"
+                                 BackgroundColor="White"
+                                 Opacity="0.3"
+                                 VerticalOptions="Center" />
+
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="👥"
+                                   FontSize="24"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="Teams"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   Opacity="0.9"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <BoxView WidthRequest="1"
+                                 HeightRequest="40"
+                                 BackgroundColor="White"
+                                 Opacity="0.3"
+                                 VerticalOptions="Center" />
+
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="📅"
+                                   FontSize="24"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="Events"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   Opacity="0.9"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Quick Actions Section -->
+            <Label Text="Quick Actions"
+                   Style="{StaticResource SectionHeader}" />
+
+            <!-- Action Cards Grid -->
+            <Grid RowDefinitions="Auto,Auto" 
+                  ColumnDefinitions="*,*"
+                  RowSpacing="15"
+                  ColumnSpacing="15">
+                
+                <!-- Scout Match Card -->
+                <Border Grid.Row="0" Grid.Column="0"
+                        Style="{StaticResource GlassCard}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToScoutingCommand}" />
+                    </Border.GestureRecognizers>
+                    
+                    <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                        <Label Text="📝"
+                               FontSize="48"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Scout Match"
+                               Style="{StaticResource SubheaderLabel}"
+                               FontSize="16"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Record match data"
+                               Style="{StaticResource CaptionLabel}"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- View Teams Card -->
+                <Border Grid.Row="0" Grid.Column="1"
+                        Style="{StaticResource GlassCard}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToTeamsCommand}" />
+                    </Border.GestureRecognizers>
+                    
+                    <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                        <Label Text="👥"
+                               FontSize="48"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Teams"
+                               Style="{StaticResource SubheaderLabel}"
+                               FontSize="16"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Browse team list"
+                               Style="{StaticResource CaptionLabel}"
+                               FontSize="12"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- View Events Card -->
+                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                        Style="{StaticResource GlassCard}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding NavigateToEventsCommand}" />
+                    </Border.GestureRecognizers>
+                    
+                    <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
+                        <Label Text="📅"
+                               FontSize="48"
+                               VerticalOptions="Center" />
+                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                            <Label Text="Events"
+                                   Style="{StaticResource SubheaderLabel}"
+                                   FontSize="18" />
+                            <Label Text="View competition events and schedules"
+                                   Style="{StaticResource CaptionLabel}"
+                                   FontSize="13" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Information Card -->
+            <Border Style="{StaticResource CompactGlassCard}"
+                    BackgroundColor="{AppThemeBinding Light=#FEF3C7, Dark=#422006}">
+                <HorizontalStackLayout Spacing="12">
+                    <Label Text="💡"
+                           FontSize="24"
+                           VerticalOptions="Start" />
+                    <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                        <Label Text="Tip: Use the menu to navigate"
+                               FontSize="14"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{AppThemeBinding Light=#92400E, Dark=#FCD34D}" />
+                        <Label Text="Tap the hamburger icon (≡) to access all features"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=#78350F, Dark=#FDE047}"
+                               Opacity="0.9" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

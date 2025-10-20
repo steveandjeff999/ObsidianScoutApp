@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="ObsidianScout.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:ObsidianScout"
+    xmlns:views="clr-namespace:ObsidianScout.Views"
+    Title="ObsidianScout"
+    FlyoutBehavior="Flyout"
+    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}"
+    FlyoutHeaderBehavior="CollapseOnScroll">
+
+    <!-- Custom Flyout Header -->
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="200" 
+              BackgroundColor="{StaticResource Primary}"
+              Padding="20">
+            <VerticalStackLayout VerticalOptions="End" Spacing="8">
+                <Label Text="ObsidianScout"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+                <Label Text="FRC Scouting System"
+                       FontSize="14"
+                       TextColor="#E0FFFFFF"
+                       Opacity="0.9" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <!-- Login Page (Always visible) -->
+    <FlyoutItem Title="Login" 
+                IsVisible="{Binding IsLoggedOut}"
+                Route="LoginPage">
+        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+    </FlyoutItem>
+
+    <!-- Authenticated Pages (Hidden when logged out) -->
+    <FlyoutItem Title="Home"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="MainPage">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Scouting"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="ScoutingPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ScoutingPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Teams"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="TeamsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Events"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="EventsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
+    </FlyoutItem>
+
+    <!-- Analytics Pages (Only visible for analytics/superadmin roles) -->
+    <FlyoutItem Title="Graphs"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="GraphsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Match Prediction"
+                IsVisible="{Binding IsLoggedIn}"
+                Route="MatchPredictionPage">
+        <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
+    </FlyoutItem>
+
+    <!-- Logout MenuItem (Only visible when logged in) -->
+    <Shell.FlyoutFooter>
+        <Grid Padding="16"
+              IsVisible="{Binding IsLoggedIn}"
+              BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
+            <Button Text="Logout"
+                    Style="{StaticResource OutlineGlassButton}"
+                    Clicked="OnLogoutClicked" />
+        </Grid>
+    </Shell.FlyoutFooter>
+
+</Shell>
