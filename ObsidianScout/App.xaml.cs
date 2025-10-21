@@ -13,7 +13,28 @@ namespace ObsidianScout
             _settingsService = settingsService;
             _dataPreloadService = dataPreloadService;
             
-            MainPage = new AppShell(settingsService);
+            // Initialize theme before showing UI
+            _ = InitializeThemeAsync();
+        }
+
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            return new Window(new AppShell(_settingsService));
+        }
+
+        private async Task InitializeThemeAsync()
+        {
+            try
+            {
+                var theme = await _settingsService.GetThemeAsync();
+                UserAppTheme = theme == "Dark" ? AppTheme.Dark : AppTheme.Light;
+                System.Diagnostics.Debug.WriteLine($"[App] Theme initialized: {theme}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Failed to initialize theme: {ex.Message}");
+                UserAppTheme = AppTheme.Unspecified; // Use system default
+            }
         }
 
         protected override async void OnStart()
@@ -36,7 +57,7 @@ namespace ObsidianScout
                 _ = Task.Run(async () => await _dataPreloadService.PreloadAllDataAsync());
                 
                 // Update auth state and navigate
-                if (MainPage is AppShell shell)
+                if (Windows[0].Page is AppShell shell)
                 {
                     shell.UpdateAuthenticationState(true);
                 }

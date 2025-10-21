@@ -19,6 +19,8 @@ public interface ISettingsService
     Task<List<string>> GetUserRolesAsync();
     Task SetUserRolesAsync(List<string> roles);
     Task ClearAuthDataAsync();
+    Task<string> GetThemeAsync();
+    Task SetThemeAsync(string theme);
 }
 
 public class SettingsService : ISettingsService
@@ -31,10 +33,13 @@ public class SettingsService : ISettingsService
     private const string TokenExpirationKey = "token_expiration";
     private const string UsernameKey = "username";
     private const string UserRolesKey = "user_roles";
+    private const string ThemeKey = "app_theme";
     
     private const string DefaultProtocol = "https";
     private const string DefaultServerAddress = "your-server.com";
-    private const string DefaultServerPort = "443";
+    // Default port is optional now - empty means use standard port for scheme
+    private const string DefaultServerPort = "";
+    private const string DefaultTheme = "Light";
 
     public async Task<string> GetProtocolAsync()
     {
@@ -60,12 +65,21 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetServerPortAsync()
     {
+        // Return empty string if not set
         return await SecureStorage.GetAsync(ServerPortKey) ?? DefaultServerPort;
     }
 
     public async Task SetServerPortAsync(string port)
     {
-        await SecureStorage.SetAsync(ServerPortKey, port);
+        // Allow empty port to indicate default for protocol
+        if (string.IsNullOrWhiteSpace(port))
+        {
+            SecureStorage.Remove(ServerPortKey);
+        }
+        else
+        {
+            await SecureStorage.SetAsync(ServerPortKey, port);
+        }
         await UpdateServerUrlAsync();
     }
 
@@ -75,7 +89,16 @@ public class SettingsService : ISettingsService
         var address = await GetServerAddressAsync();
         var port = await GetServerPortAsync();
         
-        var url = $"{protocol}://{address}:{port}";
+        string url;
+        // If port is empty or matches standard for protocol, omit it
+        if (string.IsNullOrWhiteSpace(port) || (protocol == "https" && port == "443") || (protocol == "http" && port == "80"))
+        {
+            url = $"{protocol}://{address}";
+        }
+        else
+        {
+            url = $"{protocol}://{address}:{port}";
+        }
         await SecureStorage.SetAsync(ServerUrlKey, url);
     }
 
@@ -88,7 +111,7 @@ public class SettingsService : ISettingsService
             await UpdateServerUrlAsync();
             url = await SecureStorage.GetAsync(ServerUrlKey);
         }
-        return url ?? $"{DefaultProtocol}://{DefaultServerAddress}:{DefaultServerPort}";
+        return url ?? $"{DefaultProtocol}://{DefaultServerAddress}";
     }
 
     public async Task SetServerUrlAsync(string url)
@@ -101,7 +124,15 @@ public class SettingsService : ISettingsService
             var uri = new Uri(url);
             await SecureStorage.SetAsync(ProtocolKey, uri.Scheme);
             await SecureStorage.SetAsync(ServerAddressKey, uri.Host);
-            await SecureStorage.SetAsync(ServerPortKey, uri.Port.ToString());
+            // If port is default for the scheme, store empty to indicate no explicit port
+            if (uri.IsDefaultPort)
+            {
+                SecureStorage.Remove(ServerPortKey);
+            }
+            else
+            {
+                await SecureStorage.SetAsync(ServerPortKey, uri.Port.ToString());
+            }
         }
         catch
         {
@@ -204,5 +235,15 @@ public class SettingsService : ISettingsService
         SecureStorage.Remove(UsernameKey);
         SecureStorage.Remove(UserRolesKey);
         await Task.CompletedTask;
+    }
+
+    public async Task<string> GetThemeAsync()
+    {
+   return await SecureStorage.GetAsync(ThemeKey) ?? DefaultTheme;
+    }
+
+    public async Task SetThemeAsync(string theme)
+    {
+        await SecureStorage.SetAsync(ThemeKey, theme);
     }
 }

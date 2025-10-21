@@ -156,8 +156,11 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
         <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="HeightRequest" Value="50" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="HeightRequest" Value="64" />
+        <Setter Property="MinimumHeightRequest" Value="64" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="Start" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -186,9 +189,17 @@
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
         <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="HeightRequest" Value="50" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="HeightRequest" Value="64" />
+        <Setter Property="MinimumHeightRequest" Value="64" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
+
+    <!-- Alias for GlassPickerStyle (referenced in XAML) -->
+    <Style x:Key="GlassPickerStyle" TargetType="Picker" BasedOn="{StaticResource GlassPicker}" />
+
+    <!-- Alias for GlassCardStyle (referenced in XAML) -->
+    <Style x:Key="GlassCardStyle" TargetType="Border" BasedOn="{StaticResource GlassCard}" />
 
     <!-- Label Styles -->
     <Style x:Key="HeaderLabel" TargetType="Label">

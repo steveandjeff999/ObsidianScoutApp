@@ -91,21 +91,11 @@
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
 
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                                
-                                <!-- Team Icon -->
-                                <Border Grid.Column="0"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        WidthRequest="56"
-                                        HeightRequest="56"
-                                        VerticalOptions="Center">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-                                </Border>
+                            <!-- Simplified layout without left avatar/placeholder -->
+                            <Grid ColumnDefinitions=",Auto" ColumnSpacing="16">
 
                                 <!-- Team Info -->
-                                <VerticalStackLayout Grid.Column="1"
+                                <VerticalStackLayout Grid.Column="0"
                                                    Spacing="4"
                                                    VerticalOptions="Center">
                                     <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}"
@@ -116,35 +106,30 @@
                                            FontSize="14"
                                            LineBreakMode="TailTruncation"
                                            MaxLines="1" />
-                                    <HorizontalStackLayout Spacing="8">
-                                        <Label FontSize="12"
-                                               VerticalOptions="Center" />
-                                        <Label Text="{Binding Location}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="12"
-                                               VerticalOptions="Center"
-                                               LineBreakMode="TailTruncation" />
-                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding Location}"
+                                           Style="{StaticResource CaptionLabel}"
+                                           FontSize="12"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" />
                                 </VerticalStackLayout>
 
-                                <!-- Scouting Count Badge -->
-                                <Border Grid.Column="2"
-                                        Style="{StaticResource Badge}"
-                                        VerticalOptions="Center"
-                                        IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}}">
-                                    <Label Text="{Binding ScoutingDataCount}"
-                                           TextColor="White"
-                                           FontSize="14"
-                                           FontFamily="OpenSansSemibold" />
-                                </Border>
+                                <!-- Right-side actions: Scouting Count Badge or Chevron -->
+                                <Grid Grid.Column="1" VerticalOptions="Center">
+                                    <Border Style="{StaticResource Badge}"
+                                           VerticalOptions="Center"
+                                           IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}}">
+                                        <Label Text="{Binding ScoutingDataCount}"
+                                               TextColor="White"
+                                               FontSize="14"
+                                               FontFamily="OpenSansSemibold" />
+                                    </Border>
 
-                                <!-- Chevron -->
-                                <Label Grid.Column="2"
-                                       Text="›"
-                                       FontSize="24"
-                                       TextColor="{StaticResource TextTertiary}"
-                                       VerticalOptions="Center"
-                                       IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}, ConverterParameter=Invert}" />
+                                    <Label Text="›"
+                                           FontSize="24"
+                                           TextColor="{StaticResource TextTertiary}"
+                                           VerticalOptions="Center"
+                                           IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}, ConverterParameter=Invert}" />
+                                </Grid>
                             </Grid>
                         </Border>
                     </DataTemplate>

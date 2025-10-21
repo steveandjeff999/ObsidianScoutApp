@@ -7,80 +7,127 @@
     xmlns:views="clr-namespace:ObsidianScout.Views"
     Title="ObsidianScout"
     FlyoutBehavior="Flyout"
-    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}"
+    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
     FlyoutHeaderBehavior="CollapseOnScroll">
+
+    <!-- Shell Styles and Item Template -->
+    <Shell.Resources>
+        <ResourceDictionary>
+      
+     <!-- Custom DataTemplate for Flyout Items -->
+     <DataTemplate x:Key="FlyoutItemTemplate">
+      <Grid HeightRequest="50" 
+                      Padding="16,0">
+          <Grid.ColumnDefinitions>
+     <ColumnDefinition Width="Auto" />
+         <ColumnDefinition Width="*" />
+   </Grid.ColumnDefinitions>
+      
+    <!-- Icon placeholder (optional - can add icons later) -->
+             <BoxView Grid.Column="0"
+        WidthRequest="24"
+         HeightRequest="24"
+          BackgroundColor="Transparent"
+        Margin="0,0,16,0"
+           VerticalOptions="Center" />
+
+                    <!-- Menu Item Text -->
+   <Label Grid.Column="1"
+       Text="{Binding Title}"
+  FontSize="16"
+         FontFamily="OpenSansRegular"
+  VerticalOptions="Center"
+       TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+   </Grid>
+            </DataTemplate>
+     
+    <!-- FlyoutItem Style -->
+            <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
+      <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
+        </Style>
+  
+        </ResourceDictionary>
+    </Shell.Resources>
 
     <!-- Custom Flyout Header -->
     <Shell.FlyoutHeader>
-        <Grid HeightRequest="200" 
-              BackgroundColor="{StaticResource Primary}"
-              Padding="20">
-            <VerticalStackLayout VerticalOptions="End" Spacing="8">
-                <Label Text="ObsidianScout"
-                       FontSize="28"
-                       FontAttributes="Bold"
-                       TextColor="White" />
-                <Label Text="FRC Scouting System"
-                       FontSize="14"
-                       TextColor="#E0FFFFFF"
-                       Opacity="0.9" />
+    <Grid HeightRequest="200" 
+      BackgroundColor="{StaticResource Primary}"
+      Padding="20">
+     <VerticalStackLayout VerticalOptions="End" Spacing="8">
+              <Label Text="ObsidianScout"
+                  FontSize="28"
+              FontAttributes="Bold"
+     TextColor="White" />
+     <Label Text="FRC Scouting System"
+  FontSize="14"
+   TextColor="White"
+        Opacity="0.9" />
             </VerticalStackLayout>
         </Grid>
     </Shell.FlyoutHeader>
 
     <!-- Login Page (Always visible) -->
-    <FlyoutItem Title="Login" 
-                IsVisible="{Binding IsLoggedOut}"
-                Route="LoginPage">
-        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+ <FlyoutItem Title="Login" 
+ IsVisible="{Binding IsLoggedOut}"
+     Route="LoginPage"
+     FlyoutItemIsVisible="{Binding IsLoggedOut}">
+    <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
 
     <!-- Authenticated Pages (Hidden when logged out) -->
     <FlyoutItem Title="Home"
-                IsVisible="{Binding IsLoggedIn}"
-                Route="MainPage">
-        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+     IsVisible="{Binding IsLoggedIn}"
+    Route="MainPage">
+   <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Scouting"
-                IsVisible="{Binding IsLoggedIn}"
-                Route="ScoutingPage">
-        <ShellContent ContentTemplate="{DataTemplate views:ScoutingPage}" />
+    IsVisible="{Binding IsLoggedIn}"
+      Route="ScoutingPage">
+    <ShellContent ContentTemplate="{DataTemplate views:ScoutingPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Teams"
-                IsVisible="{Binding IsLoggedIn}"
-                Route="TeamsPage">
-        <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
+   IsVisible="{Binding IsLoggedIn}"
+      Route="TeamsPage">
+   <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Events"
-                IsVisible="{Binding IsLoggedIn}"
+           IsVisible="{Binding IsLoggedIn}"
                 Route="EventsPage">
         <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
     </FlyoutItem>
 
-    <!-- Analytics Pages (Only visible for analytics/superadmin roles) -->
+    <!-- Analytics Pages -->
     <FlyoutItem Title="Graphs"
-                IsVisible="{Binding IsLoggedIn}"
-                Route="GraphsPage">
+      IsVisible="{Binding IsLoggedIn}"
+      Route="GraphsPage">
         <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Match Prediction"
-                IsVisible="{Binding IsLoggedIn}"
-                Route="MatchPredictionPage">
+    IsVisible="{Binding IsLoggedIn}"
+       Route="MatchPredictionPage">
         <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
     </FlyoutItem>
 
-    <!-- Logout MenuItem (Only visible when logged in) -->
+    <!-- Settings Page -->
+    <FlyoutItem Title="Settings"
+        IsVisible="{Binding IsLoggedIn}"
+            Route="SettingsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </FlyoutItem>
+
+    <!-- Logout Footer -->
     <Shell.FlyoutFooter>
         <Grid Padding="16"
-              IsVisible="{Binding IsLoggedIn}"
-              BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
-            <Button Text="Logout"
-                    Style="{StaticResource OutlineGlassButton}"
-                    Clicked="OnLogoutClicked" />
+        IsVisible="{Binding IsLoggedIn}"
+ BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
+      <Button Text="Logout"
+       Style="{StaticResource OutlineGlassButton}"
+               Clicked="OnLogoutClicked" />
         </Grid>
     </Shell.FlyoutFooter>
 

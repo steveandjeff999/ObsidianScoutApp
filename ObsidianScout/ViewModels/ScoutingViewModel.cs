@@ -1398,7 +1398,7 @@ public partial class ScoutingViewModel : ObservableObject
             // Try to show a notification or toast (platform-specific)
             try
             {
-                await Shell.Current.DisplayAlert("Export Successful", 
+                await Shell.Current.DisplayAlertAsync("Export Successful", 
                     $"JSON file saved to:\n{filePath}", 
                     "OK");
             }

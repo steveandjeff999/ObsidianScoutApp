@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+      xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+             x:Class="ObsidianScout.Views.SettingsPage"
+          x:DataType="viewmodels:SettingsViewModel"
+      Title="Settings">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
+            
+            <!-- Header -->
+   <Border Style="{StaticResource CompactGlassCard}">
+           <Label Text="Settings"
+           Style="{StaticResource HeaderLabel}"
+  HorizontalOptions="Center" />
+          </Border>
+
+            <!-- Theme Settings Card -->
+       <Border Style="{StaticResource GlassCard}">
+             <VerticalStackLayout Spacing="12">
+        <Label Text="Appearance"
+       Style="{StaticResource SubheaderLabel}"
+        FontSize="18" />
+         
+         <BoxView HeightRequest="1"
+        Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+    Margin="0,4" />
+    
+       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+    <VerticalStackLayout Grid.Column="0" Spacing="4">
+       <Label Text="Dark Mode"
+         Style="{StaticResource BodyLabel}"
+    FontSize="16" />
+       <Label Text="Toggle between light and dark theme"
+           Style="{StaticResource CaptionLabel}"
+           FontSize="12" />
+           </VerticalStackLayout>
+        
+    <Switch Grid.Column="1"
+          IsToggled="{Binding IsDarkMode}"
+      VerticalOptions="Center" />
+   </Grid>
+      </VerticalStackLayout>
+     </Border>
+
+  <!-- Cache Management Card -->
+            <Border Style="{StaticResource GlassCard}">
+      <VerticalStackLayout Spacing="12">
+        <Label Text="Cache Management"
+       Style="{StaticResource SubheaderLabel}"
+        FontSize="18" />
+        
+        <BoxView HeightRequest="1"
+      Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+  Margin="0,4" />
+        
+                <!-- Cache Status -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+     <!-- Use a font icon defined in IconFonts.xaml instead of emoji -->
+     <Image Grid.Column="0" Source="{StaticResource IconEvents}" WidthRequest="28" HeightRequest="28" VerticalOptions="Center" />
+         <VerticalStackLayout Grid.Column="1" Spacing="4">
+        <Label Text="Cache Status"
+     Style="{StaticResource BodyLabel}"
+       FontSize="14" />
+           <Label Text="{Binding CacheStatus}"
+           Style="{StaticResource CaptionLabel}"
+               FontSize="12"
+ TextColor="{StaticResource Primary}" />
+    </VerticalStackLayout>
+</Grid>
+           
+   <!-- Cache Actions -->
+   <HorizontalStackLayout Spacing="12" Margin="0,8,0,0">
+     <Button Text="Clear Cache"
+               Command="{Binding ClearCacheCommand}"
+   Style="{StaticResource SecondaryGlassButton}"
+   IsEnabled="{Binding IsClearing, Converter={StaticResource InvertedBoolConverter}}"
+     HorizontalOptions="FillAndExpand" />
+           
+         <Button Text="Refresh"
+       Command="{Binding RefreshCacheStatusCommand}"
+          Style="{StaticResource SecondaryGlassButton}"
+           WidthRequest="140"
+           HeightRequest="50" />
+           </HorizontalStackLayout>
+        
+         <!-- Cache Description -->
+    <Label Text="Cached data enables offline functionality. Clear the cache to free up storage space or refresh stale data."
+     Style="{StaticResource CaptionLabel}"
+           FontSize="11"
+         LineBreakMode="WordWrap"
+        Margin="0,4,0,0" />
+         </VerticalStackLayout>
+            </Border>
+
+   <!-- Status Message -->
+            <Border IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}"
+     Style="{StaticResource Badge}"
+      HorizontalOptions="Center"
+                Padding="16,8">
+    <Label Text="{Binding StatusMessage}"
+       TextColor="White"
+        FontSize="14"
+            HorizontalTextAlignment="Center" />
+  </Border>
+
+ <!-- App Info Card -->
+ <Border Style="{StaticResource GlassCard}">
+        <VerticalStackLayout Spacing="8">
+       <Label Text="About"
+        Style="{StaticResource SubheaderLabel}"
+             FontSize="18" />
+     
+       <BoxView HeightRequest="1"
+ Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+       Margin="0,4" />
+                
+                 <Label Text="ObsidianScout"
+      Style="{StaticResource BodyLabel}"
+                 FontSize="14" />
+              <Label Text="Version 1.0.0"
+ Style="{StaticResource CaptionLabel}"
+     FontSize="12" />
+           <Label Text="A modern scouting application for FRC competitions"
+            Style="{StaticResource CaptionLabel}"
+          FontSize="11"
+      LineBreakMode="WordWrap"
+      Margin="0,4,0,0" />
+          </VerticalStackLayout>
+  </Border>
+
+    </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

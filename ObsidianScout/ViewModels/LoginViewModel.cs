@@ -26,7 +26,7 @@ public partial class LoginViewModel : ObservableObject
     private string serverAddress = string.Empty;
 
     [ObservableProperty]
-    private string serverPort = "443";
+    private string serverPort = string.Empty;
 
     [ObservableProperty]
     private bool isLoading;
@@ -128,17 +128,14 @@ public partial class LoginViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(ServerPort))
+        // Port is optional now; only validate if provided
+        if (!string.IsNullOrWhiteSpace(ServerPort))
         {
-            ErrorMessage = "Please enter a port number";
-            return;
-        }
-
-        // Validate port number
-        if (!int.TryParse(ServerPort, out int portNumber) || portNumber < 1 || portNumber > 65535)
-        {
-            ErrorMessage = "Please enter a valid port number (1-65535)";
-            return;
+            if (!int.TryParse(ServerPort, out int portNumber) || portNumber < 1 || portNumber > 65535)
+            {
+                ErrorMessage = "Please enter a valid port number (1-65535)";
+                return;
+            }
         }
 
         try
@@ -172,12 +169,7 @@ public partial class LoginViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(ServerPort))
-        {
-            ErrorMessage = "Please enter a port number";
-            return;
-        }
-
+        // Port is optional for testing
         ErrorMessage = string.Empty;
         IsLoading = true;
 

@@ -36,6 +36,7 @@ namespace ObsidianScout
             builder.Services.AddSingleton<ICacheService, CacheService>();
             builder.Services.AddSingleton<IDataPreloadService, DataPreloadService>();
             builder.Services.AddSingleton<IQRCodeService, QRCodeService>();
+            builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
             
             // Configure HttpClient with custom handler for self-signed certificates
             builder.Services.AddSingleton<HttpClient>(sp =>
@@ -88,6 +89,7 @@ namespace ObsidianScout
             builder.Services.AddTransient<MatchesViewModel>();
             builder.Services.AddTransient<GraphsViewModel>();
             builder.Services.AddTransient<MatchPredictionViewModel>();
+            builder.Services.AddTransient<SettingsViewModel>();
 
             // Register Pages
             builder.Services.AddTransient<LoginPage>();
@@ -99,6 +101,7 @@ namespace ObsidianScout
             builder.Services.AddTransient<MatchesPage>();
             builder.Services.AddTransient<GraphsPage>();
             builder.Services.AddTransient<MatchPredictionPage>();
+            builder.Services.AddTransient<SettingsPage>();
 
             return builder.Build();
         }

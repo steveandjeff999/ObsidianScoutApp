@@ -12,10 +12,22 @@
                 <ResourceDictionary Source="Resources/Styles/IconFonts.xaml" />
             </ResourceDictionary.MergedDictionaries>
             
+            <!-- Shell Flyout Styling for Light Mode -->
+            <Style TargetType="Label" ApplyToDerivedTypes="True" x:Key="FlyoutItemLabel">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark=White}" />
+            </Style>
+
+            <!-- Shell FlyoutItem Style -->
+            <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
+                <Setter Property="Shell.ForegroundColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark=White}" />
+                <Setter Property="Shell.TitleColor" Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark=White}" />
+            </Style>
+
             <!-- Value Converters -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
             <converters:IntToBoolConverter x:Key="IntToBoolConverter" />
             <converters:IsNotZeroConverter x:Key="IsNotZeroConverter" />
             <converters:IsZeroConverter x:Key="IsZeroConverter" />
