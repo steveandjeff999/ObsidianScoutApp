@@ -93,17 +93,6 @@
 
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
                                 
-                                <!-- Event Icon -->
-                                <Border Grid.Column="0"
-                                        BackgroundColor="{StaticResource Secondary}"
-                                        WidthRequest="56"
-                                        HeightRequest="56"
-                                        VerticalOptions="Center">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-                                </Border>
-
                                 <!-- Event Info -->
                                 <VerticalStackLayout Grid.Column="1"
                                                    Spacing="4"

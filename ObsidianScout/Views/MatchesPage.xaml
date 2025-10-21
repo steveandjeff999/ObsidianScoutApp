@@ -91,21 +91,10 @@
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
 
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                 
-                                <!-- Match Icon -->
-                                <Border Grid.Column="0"
-                                        BackgroundColor="{StaticResource Primary}"
-                                        WidthRequest="56"
-                                        HeightRequest="56"
-                                        VerticalOptions="Center">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-                                </Border>
-
-                                <!-- Match Info -->
-                                <VerticalStackLayout Grid.Column="1"
+                                <!-- Match Info (moved to first column) -->
+                                <VerticalStackLayout Grid.Column="0"
                                                    Spacing="4"
                                                    VerticalOptions="Center">
                                     <Label Style="{StaticResource SubheaderLabel}"
@@ -139,7 +128,7 @@
                                 </VerticalStackLayout>
 
                                 <!-- Chevron -->
-                                <Label Grid.Column="2"
+                                <Label Grid.Column="1"
                                        Text="›"
                                        FontSize="24"
                                        TextColor="{StaticResource TextTertiary}"
