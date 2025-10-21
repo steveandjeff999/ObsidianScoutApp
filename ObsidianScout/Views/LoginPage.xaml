@@ -19,16 +19,9 @@
         <ScrollView>
             <VerticalStackLayout Padding="30" Spacing="24" VerticalOptions="Center">
                 
-                <!-- Logo Section -->
+                <!-- Logo Section (image removed) -->
                 <VerticalStackLayout Spacing="12" Margin="0,0,0,20">
-                    <Border BackgroundColor="#30FFFFFF"
-                            WidthRequest="100"
-                            HeightRequest="100"
-                            HorizontalOptions="Center">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="24" />
-                        </Border.StrokeShape>
-                    </Border>
+                    <!-- Logo removed per request -->
 
                     <Label Text="ObsidianScout"
                            FontSize="36"

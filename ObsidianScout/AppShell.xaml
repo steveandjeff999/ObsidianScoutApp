@@ -113,11 +113,10 @@
         <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
     </FlyoutItem>
 
-    <!-- Settings Page -->
+    <!-- Settings Page: move Route to ShellContent so Shell resolves route correctly -->
     <FlyoutItem Title="Settings"
-        IsVisible="{Binding IsLoggedIn}"
-            Route="SettingsPage">
-        <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
+        IsVisible="{Binding IsLoggedIn}">
+        <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
     </FlyoutItem>
 
     <!-- Logout Footer -->

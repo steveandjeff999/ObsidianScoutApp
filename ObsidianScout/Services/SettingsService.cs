@@ -230,10 +230,19 @@ public class SettingsService : ISettingsService
 
     public async Task ClearAuthDataAsync()
     {
-        SecureStorage.Remove(TokenKey);
-        SecureStorage.Remove(TokenExpirationKey);
-        SecureStorage.Remove(UsernameKey);
-        SecureStorage.Remove(UserRolesKey);
+        try
+        {
+            // SecureStorage.Remove can throw on some platforms or if storage is locked
+            SecureStorage.Remove(TokenKey);
+            SecureStorage.Remove(TokenExpirationKey);
+            SecureStorage.Remove(UsernameKey);
+            SecureStorage.Remove(UserRolesKey);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] Failed to clear secure storage: {ex}");
+        }
+
         await Task.CompletedTask;
     }
 

@@ -1,4 +1,6 @@
-﻿using ObsidianScout.Services;
+﻿using System;
+using System.Linq;
+using ObsidianScout.Services;
 using ObsidianScout.Views;
 
 namespace ObsidianScout
@@ -35,7 +37,7 @@ namespace ObsidianScout
         public AppShell(ISettingsService settingsService)
         {
             _settingsService = settingsService;
-         
+
  InitializeComponent();
             BindingContext = this;
 
@@ -46,7 +48,9 @@ namespace ObsidianScout
  Routing.RegisterRoute("TeamDetailsPage", typeof(TeamDetailsPage));
          Routing.RegisterRoute("MatchesPage", typeof(MatchesPage));
      Routing.RegisterRoute("GraphsPage", typeof(GraphsPage));
-            
+ // Explicitly register SettingsPage to avoid implicit ShellContent name resolution issues
+ Routing.RegisterRoute("SettingsPage", typeof(SettingsPage));
+
             // Check authentication status
             CheckAuthStatus();
       
@@ -172,17 +176,44 @@ System.Diagnostics.Debug.WriteLine($"DEBUG: Found {roles.Count} roles:");
 
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
-     var confirm = await DisplayAlertAsync("Logout", 
-            "Are you sure you want to logout?", 
-      "Yes", 
-       "No");
- 
-  if (confirm)
+ try
  {
-       await _settingsService.ClearAuthDataAsync();
-     UpdateAuthenticationState(false);
-     await GoToAsync("//LoginPage");
-   }
+ var confirm = await DisplayAlertAsync("Logout",
+ "Are you sure you want to logout?",
+ "Yes",
+ "No");
+
+ if (!confirm)
+ return;
+
+ try
+ {
+ await _settingsService.ClearAuthDataAsync();
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[AppShell] Failed to clear auth data: {ex}");
+ // Inform the user but continue with logout UI flow
+ await DisplayAlertAsync("Logout", "Warning: failed to clear some local data. You have been logged out of the app UI.", "OK");
+ }
+
+ // Update UI state
+ UpdateAuthenticationState(false);
+
+ try
+ {
+ await GoToAsync("//LoginPage");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation to LoginPage failed: {ex}");
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[AppShell] Logout failed: {ex}");
+ await DisplayAlertAsync("Logout Failed", "An error occurred while logging out. Please try again.", "OK");
+ }
+ }
     }
-}
 }
