@@ -121,13 +121,25 @@
 
     <!-- Logout Footer -->
     <Shell.FlyoutFooter>
-        <Grid Padding="16"
+        <Grid Padding="12"
         IsVisible="{Binding IsLoggedIn}"
  BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
-      <Button Text="Logout"
-       Style="{StaticResource OutlineGlassButton}"
-               Clicked="OnLogoutClicked" />
-        </Grid>
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+ <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+ <!-- Put tap on the Username label specifically for better hit testing -->
+ <Label Text="{Binding CurrentUsername}" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+ <Label.GestureRecognizers>
+ <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
+ </Label.GestureRecognizers>
+ </Label>
+ <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
+ </VerticalStackLayout>
+
+ <Button Grid.Column="1" Text="Logout"
+ Style="{StaticResource OutlineGlassButton}"
+ Clicked="OnLogoutClicked" HorizontalOptions="End" />
+ </Grid>
+    </Grid>
     </Shell.FlyoutFooter>
 
 </Shell>

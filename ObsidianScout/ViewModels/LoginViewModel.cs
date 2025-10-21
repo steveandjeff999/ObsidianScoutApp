@@ -85,16 +85,27 @@ public partial class LoginViewModel : ObservableObject
             if (result.Success)
             {
                 System.Diagnostics.Debug.WriteLine("[Login] Login successful, triggering data preload");
-                
+
+                // Persist username and team number for display in AppShell
+                try
+                {
+                    await _settingsService.SetUsernameAsync(Username);
+                    await _settingsService.SetTeamNumberAsync(teamNum);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Login] Failed to save user info: {ex}");
+                }
+
                 // Trigger data preload in background after successful login
                 _ = Task.Run(async () => await _dataPreloadService.PreloadAllDataAsync());
-                
+
                 // Update AppShell authentication state
                 if (Shell.Current is AppShell appShell)
                 {
                     appShell.UpdateAuthenticationState(true);
                 }
-                
+
                 // Navigate to main page
                 await Shell.Current.GoToAsync("//MainPage");
             }

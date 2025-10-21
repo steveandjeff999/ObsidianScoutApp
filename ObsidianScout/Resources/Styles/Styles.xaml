@@ -1,362 +1,385 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+ xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Shadows for Glassmorphism -->
-    <Shadow x:Key="GlassShadow">
-        <Shadow.Brush>
-            <LinearGradientBrush>
-                <GradientStop Color="#40000000" Offset="0.0" />
-                <GradientStop Color="#00000000" Offset="1.0" />
-            </LinearGradientBrush>
-        </Shadow.Brush>
-        <Shadow.Offset>0,4</Shadow.Offset>
-        <Shadow.Radius>16</Shadow.Radius>
-        <Shadow.Opacity>0.1</Shadow.Opacity>
-    </Shadow>
+ <!-- Glass brushes for liquid glass effect -->
+ <LinearGradientBrush x:Key="GlassBrushLight" StartPoint="0,0" EndPoint="1,1">
+ <GradientStop Color="#BFFFFFFF" Offset="0.0" />
+ <GradientStop Color="#80F5F5F7" Offset="1.0" />
+ </LinearGradientBrush>
 
-    <Shadow x:Key="CardShadow">
-        <Shadow.Brush>
-            <LinearGradientBrush>
-                <GradientStop Color="#30000000" Offset="0.0" />
-                <GradientStop Color="#00000000" Offset="1.0" />
-            </LinearGradientBrush>
-        </Shadow.Brush>
-        <Shadow.Offset>0,2</Shadow.Offset>
-        <Shadow.Radius>8</Shadow.Radius>
-        <Shadow.Opacity>0.08</Shadow.Opacity>
-    </Shadow>
+ <LinearGradientBrush x:Key="GlassBrushDark" StartPoint="0,0" EndPoint="1,1">
+ <GradientStop Color="#CC1E293B" Offset="0.0" />
+ <GradientStop Color="#801A202C" Offset="1.0" />
+ </LinearGradientBrush>
 
-    <Shadow x:Key="ElevatedShadow">
-        <Shadow.Brush>
-            <LinearGradientBrush>
-                <GradientStop Color="#50000000" Offset="0.0" />
-                <GradientStop Color="#00000000" Offset="1.0" />
-            </LinearGradientBrush>
-        </Shadow.Brush>
-        <Shadow.Offset>0,8</Shadow.Offset>
-        <Shadow.Radius>24</Shadow.Radius>
-        <Shadow.Opacity>0.12</Shadow.Opacity>
-    </Shadow>
+ <!-- Subtle frosted stroke for card edges -->
+ <LinearGradientBrush x:Key="GlassStrokeLight" StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="#40FFFFFF" Offset="0" />
+ <GradientStop Color="#10FFFFFF" Offset="1" />
+ </LinearGradientBrush>
 
-    <!-- Icon font FontImageSources (moved here so AppShell sees them at compile time)
-         Ensure 'fa-solid-900.ttf' is added to Resources/Fonts and registered as 'FA' in MauiProgram. -->
-    <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{StaticResource Primary}" Size="28" />
-    <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{StaticResource Primary}" Size="28" />
-    <FontImageSource x:Key="IconEvents" FontFamily="FA" Glyph="&#xF073;" Color="{StaticResource Primary}" Size="28" />
-    <FontImageSource x:Key="IconGraphs" FontFamily="FA" Glyph="&#xF080;" Color="{StaticResource Primary}" Size="28" />
-    <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{StaticResource Primary}" Size="28" />
-    <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{StaticResource Primary}" Size="28" />
+ <LinearGradientBrush x:Key="GlassStrokeDark" StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="#40FFFFFF" Offset="0" />
+ <GradientStop Color="#10FFFFFF" Offset="1" />
+ </LinearGradientBrush>
 
-    <!-- Base Page Style -->
-    <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}" />
-    </Style>
+ <!-- Shadows for Glassmorphism -->
+ <Shadow x:Key="GlassShadow">
+ <Shadow.Brush>
+ <LinearGradientBrush>
+ <GradientStop Color="#40000000" Offset="0.0" />
+ <GradientStop Color="#00000000" Offset="1.0" />
+ </LinearGradientBrush>
+ </Shadow.Brush>
+ <Shadow.Offset>0,4</Shadow.Offset>
+ <Shadow.Radius>16</Shadow.Radius>
+ <Shadow.Opacity>0.1</Shadow.Opacity>
+ </Shadow>
 
-    <!-- Glass Card Style -->
-    <Style x:Key="GlassCard" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
-        <Setter Property="Padding" Value="20" />
-        <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="16" />
-        </Setter>
-    </Style>
+ <Shadow x:Key="CardShadow">
+ <Shadow.Brush>
+ <LinearGradientBrush>
+ <GradientStop Color="#30000000" Offset="0.0" />
+ <GradientStop Color="#00000000" Offset="1.0" />
+ </LinearGradientBrush>
+ </Shadow.Brush>
+ <Shadow.Offset>0,2</Shadow.Offset>
+ <Shadow.Radius>8</Shadow.Radius>
+ <Shadow.Opacity>0.08</Shadow.Opacity>
+ </Shadow>
 
-    <!-- Elevated Glass Card -->
-    <Style x:Key="ElevatedGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
-        <Setter Property="Shadow" Value="{StaticResource ElevatedShadow}" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="20" />
-        </Setter>
-    </Style>
+ <Shadow x:Key="ElevatedShadow">
+ <Shadow.Brush>
+ <LinearGradientBrush>
+ <GradientStop Color="#50000000" Offset="0.0" />
+ <GradientStop Color="#00000000" Offset="1.0" />
+ </LinearGradientBrush>
+ </Shadow.Brush>
+ <Shadow.Offset>0,8</Shadow.Offset>
+ <Shadow.Radius>24</Shadow.Radius>
+ <Shadow.Opacity>0.12</Shadow.Opacity>
+ </Shadow>
 
-    <!-- Compact Glass Card -->
-    <Style x:Key="CompactGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
-        <Setter Property="Padding" Value="15" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="12" />
-        </Setter>
-    </Style>
+ <!-- Icon font FontImageSources (moved here so AppShell sees them at compile time)
+ Ensure 'fa-solid-900.ttf' is added to Resources/Fonts and registered as 'FA' in MauiProgram. -->
+ <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{StaticResource Primary}" Size="28" />
+ <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{StaticResource Primary}" Size="28" />
+ <FontImageSource x:Key="IconEvents" FontFamily="FA" Glyph="&#xF073;" Color="{StaticResource Primary}" Size="28" />
+ <FontImageSource x:Key="IconGraphs" FontFamily="FA" Glyph="&#xF080;" Color="{StaticResource Primary}" Size="28" />
+ <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{StaticResource Primary}" Size="28" />
+ <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{StaticResource Primary}" Size="28" />
 
-    <!-- CardBorderStyle for backward compatibility (used across pages) -->
-    <Style x:Key="CardBorderStyle" TargetType="Border" BasedOn="{StaticResource GlassCard}">
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
-        <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="14" />
-        </Setter>
-    </Style>
+ <!-- Base Page Style -->
+ <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}" />
+ </Style>
 
-    <!-- Glass Button Style -->
-    <Style x:Key="GlassButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="20,14" />
-        <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="Opacity" Value="0.5" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="PointerOver">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
-                            <Setter Property="Scale" Value="1.02" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
+ <!-- Glass Card Style -->
+ <Style x:Key="GlassCard" TargetType="Border">
+ <!-- Use a Brush background to get semi-transparent liquid glass look -->
+ <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource GlassBrushLight}, Dark={StaticResource GlassBrushDark}}" />
+ <Setter Property="StrokeThickness" Value="1" />
+ <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource GlassStrokeLight}, Dark={StaticResource GlassStrokeDark}}" />
+ <Setter Property="Padding" Value="20" />
+ <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="16" />
+ </Setter>
+ </Style>
 
-    <!-- Primary Glass Button (explicit for pages referencing it) -->
-    <Style x:Key="PrimaryGlassButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="HeightRequest" Value="50" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="16,8" />
-    </Style>
+ <!-- Elevated Glass Card -->
+ <Style x:Key="ElevatedGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+ <Setter Property="Shadow" Value="{StaticResource ElevatedShadow}" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="20" />
+ </Setter>
+ </Style>
 
-    <!-- Secondary Glass Button -->
-    <Style x:Key="SecondaryGlassButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
-    </Style>
+ <!-- Compact Glass Card -->
+ <Style x:Key="CompactGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+ <Setter Property="Padding" Value="15" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="12" />
+ </Setter>
+ </Style>
 
-    <!-- Outline Glass Button -->
-    <Style x:Key="OutlineGlassButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="20,14" />
-    </Style>
+ <!-- CardBorderStyle for backward compatibility (used across pages) -->
+ <Style x:Key="CardBorderStyle" TargetType="Border" BasedOn="{StaticResource GlassCard}">
+ <Setter Property="Padding" Value="16" />
+ <Setter Property="StrokeThickness" Value="1" />
+ <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+ <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="14" />
+ </Setter>
+ </Style>
 
-    <!-- Glass Entry Style -->
-    <Style x:Key="GlassEntry" TargetType="Entry">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="FontSize" Value="17" />
-        <Setter Property="HeightRequest" Value="64" />
-        <Setter Property="MinimumHeightRequest" Value="64" />
-        <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="HorizontalTextAlignment" Value="Start" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Focused">
-                        <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
+ <!-- Glass Button Style -->
+ <Style x:Key="GlassButton" TargetType="Button">
+ <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource GlassBrushLight}, Dark={StaticResource GlassBrushDark}}" />
+ <Setter Property="TextColor" Value="White" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="16" />
+ <Setter Property="CornerRadius" Value="12" />
+ <Setter Property="Padding" Value="20,14" />
+ <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+ <Setter Property="VisualStateManager.VisualStateGroups">
+ <VisualStateGroupList>
+ <VisualStateGroup x:Name="CommonStates">
+ <VisualState x:Name="Normal" />
+ <VisualState x:Name="Disabled">
+ <VisualState.Setters>
+ <Setter Property="Opacity" Value="0.5" />
+ </VisualState.Setters>
+ </VisualState>
+ <VisualState x:Name="PointerOver">
+ <VisualState.Setters>
+ <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
+ <Setter Property="Scale" Value="1.02" />
+ </VisualState.Setters>
+ </VisualState>
+ </VisualStateGroup>
+ </VisualStateGroupList>
+ </Setter>
+ </Style>
 
-    <!-- Glass Editor Style -->
-    <Style x:Key="GlassEditor" TargetType="Editor">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="MinimumHeightRequest" Value="100" />
-    </Style>
+ <!-- Primary Glass Button (explicit for pages referencing it) -->
+ <Style x:Key="PrimaryGlassButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+ <Setter Property="TextColor" Value="White" />
+ <Setter Property="HeightRequest" Value="50" />
+ <Setter Property="FontSize" Value="16" />
+ <Setter Property="CornerRadius" Value="12" />
+ <Setter Property="Padding" Value="16,8" />
+ </Style>
 
-    <!-- Glass Picker Style -->
-    <Style x:Key="GlassPicker" TargetType="Picker">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="FontSize" Value="17" />
-        <Setter Property="HeightRequest" Value="64" />
-        <Setter Property="MinimumHeightRequest" Value="64" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
+ <!-- Secondary Glass Button -->
+ <Style x:Key="SecondaryGlassButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Secondary}" />
+ </Style>
 
-    <!-- Alias for GlassPickerStyle (referenced in XAML) -->
-    <Style x:Key="GlassPickerStyle" TargetType="Picker" BasedOn="{StaticResource GlassPicker}" />
+ <!-- Outline Glass Button -->
+ <Style x:Key="OutlineGlassButton" TargetType="Button">
+ <Setter Property="BackgroundColor" Value="Transparent" />
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
+ <Setter Property="BorderWidth" Value="1" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="16" />
+ <Setter Property="CornerRadius" Value="12" />
+ <Setter Property="Padding" Value="20,14" />
+ </Style>
 
-    <!-- Alias for GlassCardStyle (referenced in XAML) -->
-    <Style x:Key="GlassCardStyle" TargetType="Border" BasedOn="{StaticResource GlassCard}" />
+ <!-- Glass Entry Style -->
+ <Style x:Key="GlassEntry" TargetType="Entry">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+ <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource GlassBrushLight}, Dark={StaticResource GlassBrushDark}}" />
+ <Setter Property="FontSize" Value="17" />
+ <Setter Property="HeightRequest" Value="64" />
+ <Setter Property="MinimumHeightRequest" Value="64" />
+ <Setter Property="VerticalOptions" Value="Center" />
+ <Setter Property="HorizontalTextAlignment" Value="Start" />
+ <Setter Property="VisualStateManager.VisualStateGroups">
+ <VisualStateGroupList>
+ <VisualStateGroup x:Name="CommonStates">
+ <VisualState x:Name="Normal" />
+ <VisualState x:Name="Focused">
+ <VisualState.Setters>
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+ </VisualState.Setters>
+ </VisualState>
+ </VisualStateGroup>
+ </VisualStateGroupList>
+ </Setter>
+ </Style>
 
-    <!-- Label Styles -->
-    <Style x:Key="HeaderLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="FontAttributes" Value="Bold" />
-    </Style>
+ <!-- Glass Editor Style -->
+ <Style x:Key="GlassEditor" TargetType="Editor">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
+ <Setter Property="FontSize" Value="16" />
+ <Setter Property="MinimumHeightRequest" Value="100" />
+ </Style>
 
-    <Style x:Key="SubheaderLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="18" />
-        <Setter Property="FontAttributes" Value="Bold" />
-    </Style>
+ <!-- Glass Picker Style -->
+ <Style x:Key="GlassPicker" TargetType="Picker">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
+ <Setter Property="FontSize" Value="17" />
+ <Setter Property="HeightRequest" Value="64" />
+ <Setter Property="MinimumHeightRequest" Value="64" />
+ <Setter Property="VerticalOptions" Value="Center" />
+ </Style>
 
-    <Style x:Key="BodyLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
-        <Setter Property="FontSize" Value="16" />
-    </Style>
+ <!-- Alias for GlassPickerStyle (referenced in XAML) -->
+ <Style x:Key="GlassPickerStyle" TargetType="Picker" BasedOn="{StaticResource GlassPicker}" />
 
-    <Style x:Key="CaptionLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-        <Setter Property="FontSize" Value="14" />
-    </Style>
+ <!-- Alias for GlassCardStyle (referenced in XAML) -->
+ <Style x:Key="GlassCardStyle" TargetType="Border" BasedOn="{StaticResource GlassCard}" />
 
-    <Style x:Key="AccentLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource Primary}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontAttributes" Value="Bold" />
-    </Style>
+ <!-- Label Styles -->
+ <Style x:Key="HeaderLabel" TargetType="Label">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="24" />
+ <Setter Property="FontAttributes" Value="Bold" />
+ </Style>
 
-    <!-- Section Header Style -->
-    <Style x:Key="SectionHeader" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource Primary}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="Margin" Value="0,10,0,10" />
-    </Style>
+ <Style x:Key="SubheaderLabel" TargetType="Label">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="18" />
+ <Setter Property="FontAttributes" Value="Bold" />
+ </Style>
 
-    <!-- Divider Style -->
-    <Style x:Key="Divider" TargetType="BoxView">
-        <Setter Property="HeightRequest" Value="1" />
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" />
-        <Setter Property="Margin" Value="0,10" />
-    </Style>
+ <Style x:Key="BodyLabel" TargetType="Label">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+ <Setter Property="FontSize" Value="16" />
+ </Style>
 
-    <!-- Glass CheckBox Style -->
-    <Style TargetType="CheckBox">
-        <Setter Property="Color" Value="{StaticResource Primary}" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="Opacity" Value="0.5" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
+ <Style x:Key="CaptionLabel" TargetType="Label">
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+ <Setter Property="FontSize" Value="14" />
+ </Style>
 
-    <!-- Glass Slider Style -->
-    <Style TargetType="Slider">
-        <Setter Property="MinimumTrackColor" Value="{StaticResource Primary}" />
-        <Setter Property="MaximumTrackColor" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
-        <Setter Property="ThumbColor" Value="{StaticResource Primary}" />
-    </Style>
+ <Style x:Key="AccentLabel" TargetType="Label">
+ <Setter Property="TextColor" Value="{StaticResource Primary}" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="16" />
+ <Setter Property="FontAttributes" Value="Bold" />
+ </Style>
 
-    <!-- Glass Switch Style -->
-    <Style TargetType="Switch">
-        <Setter Property="OnColor" Value="{StaticResource Primary}" />
-        <Setter Property="ThumbColor" Value="White" />
-    </Style>
+ <!-- Section Header Style -->
+ <Style x:Key="SectionHeader" TargetType="Label">
+ <Setter Property="TextColor" Value="{StaticResource Primary}" />
+ <Setter Property="FontFamily" Value="OpenSansSemibold" />
+ <Setter Property="FontSize" Value="20" />
+ <Setter Property="FontAttributes" Value="Bold" />
+ <Setter Property="Margin" Value="0,10,0,10" />
+ </Style>
 
-    <!-- Activity Indicator Style -->
-    <Style TargetType="ActivityIndicator">
-        <Setter Property="Color" Value="{StaticResource Primary}" />
-    </Style>
+ <!-- Divider Style -->
+ <Style x:Key="Divider" TargetType="BoxView">
+ <Setter Property="HeightRequest" Value="1" />
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" />
+ <Setter Property="Margin" Value="0,10" />
+ </Style>
 
-    <!-- Glass List Item Style -->
-    <Style x:Key="GlassListItem" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="Margin" Value="0,0,0,8" />
-        <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="12" />
-        </Setter>
-    </Style>
+ <!-- Glass CheckBox Style -->
+ <Style TargetType="CheckBox">
+ <Setter Property="Color" Value="{StaticResource Primary}" />
+ <Setter Property="VisualStateManager.VisualStateGroups">
+ <VisualStateGroupList>
+ <VisualStateGroup x:Name="CommonStates">
+ <VisualState x:Name="Normal" />
+ <VisualState x:Name="Disabled">
+ <VisualState.Setters>
+ <Setter Property="Opacity" Value="0.5" />
+ </VisualState.Setters>
+ </VisualState>
+ </VisualStateGroup>
+ </VisualStateGroupList>
+ </Setter>
+ </Style>
 
-    <!-- Counter Button Style -->
-    <Style x:Key="CounterButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="WidthRequest" Value="50" />
-        <Setter Property="HeightRequest" Value="50" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
-    </Style>
+ <!-- Glass Slider Style -->
+ <Style TargetType="Slider">
+ <Setter Property="MinimumTrackColor" Value="{StaticResource Primary}" />
+ <Setter Property="MaximumTrackColor" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
+ <Setter Property="ThumbColor" Value="{StaticResource Primary}" />
+ </Style>
 
-    <!-- Badge Style -->
-    <Style x:Key="Badge" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="Padding" Value="8,4" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <RoundRectangle CornerRadius="12" />
-        </Setter>
-    </Style>
+ <!-- Glass Switch Style -->
+ <Style TargetType="Switch">
+ <Setter Property="OnColor" Value="{StaticResource Primary}" />
+ <Setter Property="ThumbColor" Value="White" />
+ </Style>
 
-    <!-- Status Badge Styles -->
-    <Style x:Key="SuccessBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
-    </Style>
+ <!-- Activity Indicator Style -->
+ <Style TargetType="ActivityIndicator">
+ <Setter Property="Color" Value="{StaticResource Primary}" />
+ </Style>
 
-    <Style x:Key="WarningBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
-    </Style>
+ <!-- Glass List Item Style -->
+ <Style x:Key="GlassListItem" TargetType="Border">
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+ <Setter Property="StrokeThickness" Value="0" />
+ <Setter Property="Padding" Value="16" />
+ <Setter Property="Margin" Value="0,0,0,8" />
+ <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="12" />
+ </Setter>
+ </Style>
 
-    <Style x:Key="ErrorBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Error}" />
-    </Style>
+ <!-- Counter Button Style -->
+ <Style x:Key="CounterButton" TargetType="Button">
+ <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+ <Setter Property="TextColor" Value="White" />
+ <Setter Property="FontSize" Value="20" />
+ <Setter Property="FontAttributes" Value="Bold" />
+ <Setter Property="CornerRadius" Value="12" />
+ <Setter Property="WidthRequest" Value="50" />
+ <Setter Property="HeightRequest" Value="50" />
+ <Setter Property="Padding" Value="0" />
+ <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+ </Style>
 
-    <Style x:Key="InfoBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="BackgroundColor" Value="{StaticResource Info}" />
-    </Style>
+ <!-- Badge Style -->
+ <Style x:Key="Badge" TargetType="Border">
+ <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+ <Setter Property="Padding" Value="8,4" />
+ <Setter Property="StrokeThickness" Value="0" />
+ <Setter Property="StrokeShape">
+ <RoundRectangle CornerRadius="12" />
+ </Setter>
+ </Style>
 
-    <!-- Icon Button Style -->
-    <Style x:Key="IconButton" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="20" />
-    </Style>
+ <!-- Status Badge Styles -->
+ <Style x:Key="SuccessBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+ </Style>
 
-    <!-- Floating Action Button Style -->
-    <Style x:Key="FAB" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-        <Setter Property="TextColor" Value="White" />
-        <Setter Property="CornerRadius" Value="28" />
-        <Setter Property="WidthRequest" Value="56" />
-        <Setter Property="HeightRequest" Value="56" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="Shadow" Value="{StaticResource ElevatedShadow}" />
-    </Style>
+ <Style x:Key="WarningBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
+ </Style>
+
+ <Style x:Key="ErrorBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Error}" />
+ </Style>
+
+ <Style x:Key="InfoBadge" TargetType="Border" BasedOn="{StaticResource Badge}">
+ <Setter Property="BackgroundColor" Value="{StaticResource Info}" />
+ </Style>
+
+ <!-- Icon Button Style -->
+ <Style x:Key="IconButton" TargetType="Button">
+ <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}" />
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="CornerRadius" Value="12" />
+ <Setter Property="WidthRequest" Value="44" />
+ <Setter Property="HeightRequest" Value="44" />
+ <Setter Property="Padding" Value="0" />
+ <Setter Property="FontSize" Value="20" />
+ </Style>
+
+ <!-- Floating Action Button Style -->
+ <Style x:Key="FAB" TargetType="Button">
+ <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+ <Setter Property="TextColor" Value="White" />
+ <Setter Property="CornerRadius" Value="28" />
+ <Setter Property="WidthRequest" Value="56" />
+ <Setter Property="HeightRequest" Value="56" />
+ <Setter Property="Padding" Value="0" />
+ <Setter Property="FontSize" Value="24" />
+ <Setter Property="Shadow" Value="{StaticResource ElevatedShadow}" />
+ </Style>
 
 </ResourceDictionary>

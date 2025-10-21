@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ x:Class="ObsidianScout.Views.UserPage"
+ x:DataType="viewmodels:UserViewModel"
+ Title="User">
+
+ <VerticalStackLayout Padding="24" Spacing="12">
+ <Label Text="User Profile" FontSize="18" FontAttributes="Bold" />
+
+ <Label Text="Username:" />
+ <Label Text="{Binding Username}" />
+
+ <Label Text="Team:" />
+ <Label Text="{Binding TeamDisplay}" />
+
+ <Button Text="Refresh" Command="{Binding RefreshCommand}" />
+ </VerticalStackLayout>
+
+</ContentPage>

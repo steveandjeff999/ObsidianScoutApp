@@ -90,6 +90,7 @@ namespace ObsidianScout
             builder.Services.AddTransient<GraphsViewModel>();
             builder.Services.AddTransient<MatchPredictionViewModel>();
             builder.Services.AddTransient<SettingsViewModel>();
+            builder.Services.AddTransient<UserViewModel>();
 
             // Register Pages
             builder.Services.AddTransient<LoginPage>();
@@ -102,6 +103,7 @@ namespace ObsidianScout
             builder.Services.AddTransient<GraphsPage>();
             builder.Services.AddTransient<MatchPredictionPage>();
             builder.Services.AddTransient<SettingsPage>();
+            builder.Services.AddTransient<UserPage>();
 
             return builder.Build();
         }

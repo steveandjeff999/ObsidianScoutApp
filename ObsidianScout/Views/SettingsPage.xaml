@@ -1,31 +1,50 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-      xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
-             x:Class="ObsidianScout.Views.SettingsPage"
-          x:DataType="viewmodels:SettingsViewModel"
-      Title="Settings">
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ x:Class="ObsidianScout.Views.SettingsPage"
+ x:DataType="viewmodels:SettingsViewModel"
+ Title="Settings">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
+ <!-- Layered background for subtle depth -->
+ <ContentPage.Background>
+ <AppThemeBinding>
+ <AppThemeBinding.Light>
+ <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="#FFFFFFFF" Offset="0" />
+ <GradientStop Color="#F5F5F7" Offset="1" />
+ </LinearGradientBrush>
+ </AppThemeBinding.Light>
+ <AppThemeBinding.Dark>
+ <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="#0F172A" Offset="0" />
+ <GradientStop Color="#111827" Offset="1" />
+ </LinearGradientBrush>
+ </AppThemeBinding.Dark>
+ </AppThemeBinding>
+ </ContentPage.Background>
+
+ <ScrollView>
+ <VerticalStackLayout Spacing="20" Padding="20">
             
             <!-- Header -->
-   <Border Style="{StaticResource CompactGlassCard}">
-           <Label Text="Settings"
-           Style="{StaticResource HeaderLabel}"
-  HorizontalOptions="Center" />
-          </Border>
+ <Border Style="{StaticResource CompactGlassCard}" Padding="18" HorizontalOptions="FillAndExpand">
+ <HorizontalStackLayout VerticalOptions="Center" Spacing="12">
+ <Image Source="logo.svg" WidthRequest="36" HeightRequest="36" />
+ <Label Text="Settings" Style="{StaticResource HeaderLabel}" VerticalOptions="Center" />
+ </HorizontalStackLayout>
+ </Border>
 
             <!-- Theme Settings Card -->
-       <Border Style="{StaticResource GlassCard}">
-             <VerticalStackLayout Spacing="12">
-        <Label Text="Appearance"
-       Style="{StaticResource SubheaderLabel}"
-        FontSize="18" />
-         
-         <BoxView HeightRequest="1"
-        Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
-    Margin="0,4" />
+ <Border Style="{StaticResource GlassCard}">
+ <VerticalStackLayout Spacing="12">
+ <Label Text="Appearance"
+ Style="{StaticResource SubheaderLabel}"
+ FontSize="18" />
+ 
+ <BoxView HeightRequest="1"
+ Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+ Margin="0,4" />
     
        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
     <VerticalStackLayout Grid.Column="0" Spacing="4">

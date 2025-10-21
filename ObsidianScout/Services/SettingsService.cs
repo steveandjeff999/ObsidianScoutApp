@@ -19,8 +19,12 @@ public interface ISettingsService
     Task<List<string>> GetUserRolesAsync();
     Task SetUserRolesAsync(List<string> roles);
     Task ClearAuthDataAsync();
+    Task<int?> GetTeamNumberAsync();
+    Task SetTeamNumberAsync(int? teamNumber);
     Task<string> GetThemeAsync();
     Task SetThemeAsync(string theme);
+    Task<string?> GetEmailAsync();
+    Task SetEmailAsync(string? email);
 }
 
 public class SettingsService : ISettingsService
@@ -33,7 +37,9 @@ public class SettingsService : ISettingsService
     private const string TokenExpirationKey = "token_expiration";
     private const string UsernameKey = "username";
     private const string UserRolesKey = "user_roles";
+    private const string TeamNumberKey = "team_number";
     private const string ThemeKey = "app_theme";
+    private const string EmailKey = "email";
     
     private const string DefaultProtocol = "https";
     private const string DefaultServerAddress = "your-server.com";
@@ -217,7 +223,7 @@ public class SettingsService : ISettingsService
 
     public async Task SetUserRolesAsync(List<string> roles)
     {
-        if (roles == null || roles.Count == 0)
+        if (roles == null || roles.Count ==0)
         {
             SecureStorage.Remove(UserRolesKey);
         }
@@ -225,6 +231,26 @@ public class SettingsService : ISettingsService
         {
             var rolesJson = System.Text.Json.JsonSerializer.Serialize(roles);
             await SecureStorage.SetAsync(UserRolesKey, rolesJson);
+        }
+    }
+
+    public async Task<int?> GetTeamNumberAsync()
+    {
+        var val = await SecureStorage.GetAsync(TeamNumberKey);
+        if (string.IsNullOrEmpty(val)) return null;
+        if (int.TryParse(val, out var n)) return n;
+        return null;
+    }
+    
+    public async Task SetTeamNumberAsync(int? teamNumber)
+    {
+        if (teamNumber == null)
+        {
+            SecureStorage.Remove(TeamNumberKey);
+        }
+        else
+        {
+            await SecureStorage.SetAsync(TeamNumberKey, teamNumber.Value.ToString());
         }
     }
 
@@ -237,6 +263,8 @@ public class SettingsService : ISettingsService
             SecureStorage.Remove(TokenExpirationKey);
             SecureStorage.Remove(UsernameKey);
             SecureStorage.Remove(UserRolesKey);
+            SecureStorage.Remove(TeamNumberKey);
+            SecureStorage.Remove(EmailKey);
         }
         catch (Exception ex)
         {
@@ -248,11 +276,28 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetThemeAsync()
     {
-   return await SecureStorage.GetAsync(ThemeKey) ?? DefaultTheme;
+        return await SecureStorage.GetAsync(ThemeKey) ?? DefaultTheme;
     }
 
     public async Task SetThemeAsync(string theme)
     {
         await SecureStorage.SetAsync(ThemeKey, theme);
+    }
+
+    public async Task<string?> GetEmailAsync()
+    {
+        return await SecureStorage.GetAsync(EmailKey);
+    }
+
+    public async Task SetEmailAsync(string? email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            SecureStorage.Remove(EmailKey);
+        }
+        else
+        {
+            await SecureStorage.SetAsync(EmailKey, email);
+        }
     }
 }
