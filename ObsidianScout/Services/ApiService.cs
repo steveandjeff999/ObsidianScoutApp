@@ -1283,19 +1283,29 @@ public partial class ApiService : IApiService
         {
             await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
-            var url = $"{baseUrl}/chat/messages?type={Uri.EscapeDataString(type)}&limit={limit}&offset={offset}";
+
+            // Build URL conditionally: omit type when caller passes null or empty so server can infer by group param
+            var url = $"{baseUrl}/chat/messages?limit={limit}&offset={offset}";
+            if (!string.IsNullOrEmpty(type))
+                url = $"{baseUrl}/chat/messages?type={Uri.EscapeDataString(type)}&limit={limit}&offset={offset}";
+
             if (!string.IsNullOrEmpty(user)) url += $"&user={Uri.EscapeDataString(user)}";
             if (!string.IsNullOrEmpty(group)) url += $"&group={Uri.EscapeDataString(group)}";
             if (allianceId.HasValue) url += $"&alliance_id={allianceId.Value}";
 
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync GET {url}");
+
             var response = await _httpClient.GetAsync(url);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync Status: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync Response: {responseContent}");
+
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ChatMessagesResponse>(_jsonOptions);
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatMessagesResponse>(responseContent, _jsonOptions);
                 return result ?? new ChatMessagesResponse { Success = false };
             }
 
-            var error = await response.Content.ReadAsStringAsync();
             return new ChatMessagesResponse { Success = false, Messages = new List<ChatMessage>(), Count =0 };
         }
         catch (Exception ex)
@@ -1318,28 +1328,35 @@ public partial class ApiService : IApiService
             var baseUrl = await GetBaseUrlAsync();
             var endpoint = $"{baseUrl}/chat/send";
 
-            System.Diagnostics.Debug.WriteLine($"POST {endpoint} to send chat message");
+            // Log request body for debugging
+            try
+            {
+                var reqJson = System.Text.Json.JsonSerializer.Serialize(request, _jsonOptions);
+                System.Diagnostics.Debug.WriteLine($"[API] SendChatAsync POST {endpoint}");
+                System.Diagnostics.Debug.WriteLine($"[API] SendChatAsync Request: {reqJson}");
+            }
+            catch { }
 
             var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API] SendChatAsync Status: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"[API] SendChatAsync Response: {responseContent}");
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ChatSendResponse>(_jsonOptions);
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatSendResponse>(responseContent, _jsonOptions);
                 return result ?? new ChatSendResponse { Success = false, Error = "Invalid response" };
             }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"Chat send failed: {response.StatusCode} - {errorContent}");
 
             // Try to parse error as ChatSendResponse
             try
             {
-                var err = System.Text.Json.JsonSerializer.Deserialize<ChatSendResponse>(errorContent, _jsonOptions);
+                var err = System.Text.Json.JsonSerializer.Deserialize<ChatSendResponse>(responseContent, _jsonOptions);
                 if (err != null) return err;
             }
             catch { /* ignore */ }
 
-            return new ChatSendResponse { Success = false, Error = $"HTTP {response.StatusCode}: {errorContent}" };
+            return new ChatSendResponse { Success = false, Error = $"HTTP {response.StatusCode}: {responseContent}" };
         }
         catch (Exception ex)
         {
@@ -1453,6 +1470,73 @@ public partial class ApiService : IApiService
         {
             System.Diagnostics.Debug.WriteLine($"ReactToChatMessageAsync exception: {ex.Message}");
             return new ChatReactResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatGroupsResponse> GetChatGroupsAsync(int? teamNumber = null)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatGroupsResponse { Success = false, Error = "Offline - cannot fetch groups" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/chat/groups";
+            if (teamNumber.HasValue) url += $"?team_number={teamNumber.Value}";
+
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatGroupsResponse>(_jsonOptions);
+                return result ?? new ChatGroupsResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            return new ChatGroupsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetChatGroupsAsync failed: {ex.Message}");
+            return new ChatGroupsResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatCreateGroupResponse> CreateChatGroupAsync(ChatCreateGroupRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatCreateGroupResponse { Success = false, Error = "Offline - cannot create group" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/groups";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatCreateGroupResponse>(_jsonOptions);
+                return result ?? new ChatCreateGroupResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatCreateGroupResponse>(err, _jsonOptions);
+                if (parsed != null) return parsed;
+            }
+            catch { }
+
+            return new ChatCreateGroupResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CreateChatGroupAsync failed: {ex.Message}");
+            return new ChatCreateGroupResponse { Success = false, Error = ex.Message };
         }
     }
 }

@@ -81,6 +81,16 @@ public partial class ChatPage : ContentPage
  {
  System.Diagnostics.Debug.WriteLine($"ChatPage Appearing: failed to load members: {ex.Message}");
  }
+
+ // Also attempt to load groups so group picker has data
+ try
+ {
+ await cvm.LoadGroupsCommand.ExecuteAsync(null);
+ }
+ catch (System.Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"ChatPage Appearing: failed to load groups: {ex.Message}");
+ }
  }
 
  // Ensure polling is started when page appears (5s interval)
@@ -268,6 +278,73 @@ public partial class ChatPage : ContentPage
  if (BindingContext is ChatViewModel vm && vm.SendMessageCommand.CanExecute(null))
  {
  vm.SendMessageCommand.Execute(null);
+ }
+ }
+
+ // New group creation handler
+ public async void OnCreateGroupClicked(object sender, EventArgs e)
+ {
+ try
+ {
+ if (BindingContext is not ChatViewModel vm)
+ return;
+
+ // Prompt for group name
+ var title = await DisplayPromptAsync("Create group", "Enter group name:", "Create", "Cancel", placeholder: "group_name", maxLength:100);
+ if (string.IsNullOrWhiteSpace(title))
+ return;
+
+ // Ask if user wants to include all team members or only themselves
+ var choice = await DisplayActionSheet("Add members", "Cancel", null, "All team members", "Only me");
+ if (choice == "Cancel" || string.IsNullOrEmpty(choice))
+ return;
+
+ List<string> members = new();
+
+ if (choice == "All team members")
+ {
+ // Use usernames from ViewModel.Members; ensure current user included
+ try
+ {
+ foreach (var m in vm.Members)
+ {
+ if (!string.IsNullOrWhiteSpace(m.Username) && !members.Contains(m.Username))
+ members.Add(m.Username);
+ }
+ }
+ catch { }
+
+ // If no members found, fall back to only current user
+ if (members.Count ==0)
+ {
+ var cur = await vm.GetCurrentUsernamePublic();
+ if (!string.IsNullOrWhiteSpace(cur)) members.Add(cur);
+ }
+ }
+ else
+ {
+ var cur = await vm.GetCurrentUsernamePublic();
+ if (!string.IsNullOrWhiteSpace(cur)) members.Add(cur);
+ }
+
+ // Call ViewModel to create group
+ var resp = await vm.CreateGroupAsyncPublic(title.Trim(), members);
+ if (resp != null && resp.Success)
+ {
+ await DisplayAlert("Group created", $"Group '{title}' created successfully.", "OK");
+ // Refresh groups list
+ await vm.LoadGroupsAsyncPublic();
+ }
+ else
+ {
+ var err = resp?.Error ?? "Unknown error";
+ await DisplayAlert("Create failed", $"Failed to create group: {err}", "OK");
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"OnCreateGroupClicked failed: {ex.Message}");
+ await DisplayAlert("Error", "Failed to create group", "OK");
  }
  }
 }

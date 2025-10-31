@@ -28,4 +28,6 @@ public interface IApiService
     Task<ChatEditResponse> EditChatMessageAsync(ChatEditRequest request);
     Task<ChatDeleteResponse> DeleteChatMessageAsync(ChatDeleteRequest request);
     Task<ChatReactResponse> ReactToChatMessageAsync(ChatReactRequest request);
+    Task<ChatGroupsResponse> GetChatGroupsAsync(int? teamNumber = null);
+    Task<ChatCreateGroupResponse> CreateChatGroupAsync(ChatCreateGroupRequest request);
 }
