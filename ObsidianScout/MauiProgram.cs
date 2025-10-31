@@ -7,6 +7,11 @@ using Microcharts.Maui;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
+#if ANDROID
+using Android.App;
+using Android.Content;
+#endif
+
 namespace ObsidianScout
 {
     public static class MauiProgram
@@ -38,6 +43,15 @@ namespace ObsidianScout
             builder.Services.AddSingleton<IQRCodeService, QRCodeService>();
             builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
             
+            // Notification polling
+            builder.Services.AddSingleton<INotificationPollingService, NotificationPollingService>();
+
+#if ANDROID
+            builder.Services.AddSingleton<ILocalNotificationService, ObsidianScout.Platforms.Android.LocalNotificationService>();
+#elif WINDOWS
+            builder.Services.AddSingleton<ILocalNotificationService, ObsidianScout.Platforms.Windows.LocalNotificationService>();
+#endif
+
             // Configure HttpClient with custom handler for self-signed certificates
             builder.Services.AddSingleton<HttpClient>(sp =>
             {
@@ -91,6 +105,8 @@ namespace ObsidianScout
             builder.Services.AddTransient<MatchPredictionViewModel>();
             builder.Services.AddTransient<SettingsViewModel>();
             builder.Services.AddTransient<UserViewModel>();
+            builder.Services.AddTransient<DataViewModel>();
+            builder.Services.AddTransient<ChatViewModel>();
 
             // Register Pages
             builder.Services.AddTransient<LoginPage>();
@@ -104,8 +120,36 @@ namespace ObsidianScout
             builder.Services.AddTransient<MatchPredictionPage>();
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<UserPage>();
+            builder.Services.AddTransient<DataPage>();
+            builder.Services.AddTransient<ChatPage>();
 
-            return builder.Build();
+            var app = builder.Build();
+
+#if ANDROID
+            try
+            {
+                var context = Android.App.Application.Context;
+                var intent = new Intent(context, typeof(ObsidianScout.Platforms.Android.ForegroundNotificationService));
+                context.StartForegroundService(intent);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to start ForegroundNotificationService: {ex.Message}");
+            }
+#endif
+
+            // Start notification polling if available
+            try
+            {
+                var notif = app.Services.GetService<INotificationPollingService>();
+                notif?.Start();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to start notification polling: {ex.Message}");
+            }
+ 
+            return app;
         }
     }
 }

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:models="clr-namespace:ObsidianScout.Models"
+ x:Class="ObsidianScout.Views.DataPage"
+ Title="Server Data">
+
+ <!-- Main layout: header, controls, scrollable content, footer -->
+ <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16" RowSpacing="12">
+
+ <!-- HEADER: Title + Subtitle -->
+ <VerticalStackLayout Grid.Row="0" Spacing="4">
+ <Label Text="Server Data" Style="{StaticResource HeaderLabel}" />
+ <Label Text="Load and inspect events, teams, matches and scouting data from the server." Style="{StaticResource BodyLabel}" />
+ </VerticalStackLayout>
+
+ <!-- CONTROLS: Search + Load Buttons + Picker -->
+ <Grid Grid.Row="1" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+ <!-- Row0: Search + Buttons -->
+ <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="8" VerticalOptions="Center">
+ <Entry Placeholder="Search teams, events or matches" Style="{StaticResource GlassEntry}" Text="{Binding Query}" />
+ </HorizontalStackLayout>
+
+ <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8" VerticalOptions="Center">
+ <Button Text="Load" Command="{Binding LoadAllCommand}" Style="{StaticResource PrimaryGlassButton}" />
+ <Button Text="Refresh" Command="{Binding LoadAllCommand}" Style="{StaticResource OutlineGlassButton}" />
+ </HorizontalStackLayout>
+
+ <!-- Row1: Picker -->
+ <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="8" VerticalOptions="Center">
+ <Label Text="Event:" VerticalOptions="Center" Style="{StaticResource SubheaderLabel}" />
+ <Picker ItemsSource="{Binding Events}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedEvent}" Style="{StaticResource GlassPickerStyle}" />
+ </HorizontalStackLayout>
+ </Grid>
+
+ <!-- CONTENT: ScrollView only around main lists so header/footer remain visible and FAB overlay won't intercept scroll -->
+ <ScrollView Grid.Row="2">
+ <Grid ColumnDefinitions="2*,3*" ColumnSpacing="12">
+
+ <!-- LEFT: Events + Teams list -->
+ <VerticalStackLayout Grid.Column="0" Spacing="8">
+ <Label Text="Events" Style="{StaticResource SectionHeader}" />
+
+ <StackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Events}">
+ <BindableLayout.ItemTemplate>
+ <DataTemplate x:DataType="models:Event">
+ <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,8">
+ <VerticalStackLayout Spacing="4">
+ <Label Text="{Binding Name}" Style="{StaticResource SubheaderLabel}" />
+ <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" />
+ <Label Text="{Binding StartDate, StringFormat='Start: {0:yyyy-MM-dd}'}" Style="{StaticResource CaptionLabel}" />
+ </VerticalStackLayout>
+ </Border>
+ </DataTemplate>
+ </BindableLayout.ItemTemplate>
+ </StackLayout>
+
+ <Label Text="Teams" Style="{StaticResource SectionHeader}" Margin="0,12,0,0" />
+
+ <StackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Teams}">
+ <BindableLayout.ItemTemplate>
+ <DataTemplate x:DataType="models:Team">
+ <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,8">
+ <HorizontalStackLayout Spacing="12" Padding="6">
+ <VerticalStackLayout>
+ <Label Text="{Binding TeamNumber}" Style="{StaticResource HeaderLabel}" />
+ <Label Text="{Binding TeamName}" Style="{StaticResource BodyLabel}" />
+ </VerticalStackLayout>
+ <VerticalStackLayout HorizontalOptions="EndAndExpand" VerticalOptions="Center">
+ <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" />
+ <Label Text="{Binding ScoutingDataCount, StringFormat='Data: {0}'}" Style="{StaticResource CaptionLabel}" />
+ </VerticalStackLayout>
+ </HorizontalStackLayout>
+ </Border>
+ </DataTemplate>
+ </BindableLayout.ItemTemplate>
+ </StackLayout>
+ </VerticalStackLayout>
+
+ <!-- RIGHT: Matches + Scouting list -->
+ <VerticalStackLayout Grid.Column="1" Spacing="8">
+ <Label Text="Matches" Style="{StaticResource SectionHeader}" />
+
+ <StackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Matches}">
+ <BindableLayout.ItemTemplate>
+ <DataTemplate x:DataType="models:MatchCard">
+ <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,8">
+ <VerticalStackLayout Spacing="4">
+ <Label Text="{Binding EventName}" Style="{StaticResource SubheaderLabel}" />
+ <Label Text="{Binding Match.MatchNumber, StringFormat='Match #: {0}'}" Style="{StaticResource CaptionLabel}" />
+ <Label Text="{Binding Match.RedAlliance, StringFormat='Red: {0}'}" Style="{StaticResource BodyLabel}" />
+ </VerticalStackLayout>
+ </Border>
+ </DataTemplate>
+ </BindableLayout.ItemTemplate>
+ </StackLayout>
+
+ <Label Text="Scouting" Style="{StaticResource SectionHeader}" Margin="0,12,0,0" />
+
+ <StackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Scouting}">
+ <BindableLayout.ItemTemplate>
+ <DataTemplate x:DataType="models:ScoutingEntry">
+ <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,8">
+ <VerticalStackLayout Spacing="6">
+ <HorizontalStackLayout>
+ <Label Text="{Binding TeamNumber}" Style="{StaticResource HeaderLabel}" />
+ <Label Text="{Binding TeamName}" Style="{StaticResource BodyLabel}" />
+ <Label Text="{Binding MatchNumber, StringFormat='Match #{0}'}" Style="{StaticResource CaptionLabel}" HorizontalOptions="EndAndExpand" />
+ </HorizontalStackLayout>
+ <Label Text="{Binding ScoutName, StringFormat='Scout: {0}'}" Style="{StaticResource CaptionLabel}" />
+ <Label Text="{Binding Timestamp, StringFormat='Time: {0:yyyy-MM-dd HH:mm}'}" Style="{StaticResource CaptionLabel}" />
+ </VerticalStackLayout>
+ </Border>
+ </DataTemplate>
+ </BindableLayout.ItemTemplate>
+ </StackLayout>
+ </VerticalStackLayout>
+
+ </Grid>
+ </ScrollView>
+
+ <!-- FOOTER: section quick toggles -->
+ <HorizontalStackLayout Grid.Row="3" HorizontalOptions="End" Spacing="8" Padding="0,8,0,16">
+ <Button Text="Events" Command="{Binding ShowSectionCommand}" CommandParameter="events" Style="{StaticResource OutlineGlassButton}" />
+ <Button Text="Teams" Command="{Binding ShowSectionCommand}" CommandParameter="teams" Style="{StaticResource OutlineGlassButton}" />
+ <Button Text="Matches" Command="{Binding ShowSectionCommand}" CommandParameter="matches" Style="{StaticResource OutlineGlassButton}" />
+ <Button Text="Scouting" Command="{Binding ShowSectionCommand}" CommandParameter="scouting" Style="{StaticResource OutlineGlassButton}" />
+ </HorizontalStackLayout>
+
+ <!-- FAB: placed as a later child so it overlays content only in the content row; set margin so it doesn't block footer -->
+ <Button Grid.Row="2" Style="{StaticResource FAB}" Command="{Binding LoadAllCommand}" Text="↻"
+ HorizontalOptions="End" VerticalOptions="End" Margin="0,0,8,16" />
+
+ </Grid>
+</ContentPage>

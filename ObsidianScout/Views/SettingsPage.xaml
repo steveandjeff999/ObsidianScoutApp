@@ -6,28 +6,10 @@
  x:DataType="viewmodels:SettingsViewModel"
  Title="Settings">
 
- <!-- Layered background for subtle depth -->
- <ContentPage.Background>
- <AppThemeBinding>
- <AppThemeBinding.Light>
- <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
- <GradientStop Color="#FFFFFFFF" Offset="0" />
- <GradientStop Color="#F5F5F7" Offset="1" />
- </LinearGradientBrush>
- </AppThemeBinding.Light>
- <AppThemeBinding.Dark>
- <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
- <GradientStop Color="#0F172A" Offset="0" />
- <GradientStop Color="#111827" Offset="1" />
- </LinearGradientBrush>
- </AppThemeBinding.Dark>
- </AppThemeBinding>
- </ContentPage.Background>
-
  <ScrollView>
  <VerticalStackLayout Spacing="20" Padding="20">
-            
-            <!-- Header -->
+ 
+ <!-- Header -->
  <Border Style="{StaticResource CompactGlassCard}" Padding="18" HorizontalOptions="FillAndExpand">
  <HorizontalStackLayout VerticalOptions="Center" Spacing="12">
  <Image Source="logo.svg" WidthRequest="36" HeightRequest="36" />
@@ -35,7 +17,7 @@
  </HorizontalStackLayout>
  </Border>
 
-            <!-- Theme Settings Card -->
+ <!-- Theme Settings Card -->
  <Border Style="{StaticResource GlassCard}">
  <VerticalStackLayout Spacing="12">
  <Label Text="Appearance"
@@ -45,111 +27,179 @@
  <BoxView HeightRequest="1"
  Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
  Margin="0,4" />
-    
-       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-    <VerticalStackLayout Grid.Column="0" Spacing="4">
-       <Label Text="Dark Mode"
-         Style="{StaticResource BodyLabel}"
-    FontSize="16" />
-       <Label Text="Toggle between light and dark theme"
-           Style="{StaticResource CaptionLabel}"
-           FontSize="12" />
-           </VerticalStackLayout>
-        
-    <Switch Grid.Column="1"
-          IsToggled="{Binding IsDarkMode}"
-      VerticalOptions="Center" />
-   </Grid>
-      </VerticalStackLayout>
-     </Border>
+ 
+ <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+ <VerticalStackLayout Grid.Column="0" Spacing="4">
+ <Label Text="Dark Mode"
+ Style="{StaticResource BodyLabel}"
+ FontSize="16" />
+ <Label Text="Toggle between light and dark theme"
+ Style="{StaticResource CaptionLabel}"
+ FontSize="12" />
+ </VerticalStackLayout>
+ 
+ <Switch Grid.Column="1"
+ IsToggled="{Binding IsDarkMode}"
+ VerticalOptions="Center" />
+ </Grid>
+ </VerticalStackLayout>
+ </Border>
 
-  <!-- Cache Management Card -->
-            <Border Style="{StaticResource GlassCard}">
-      <VerticalStackLayout Spacing="12">
-        <Label Text="Cache Management"
-       Style="{StaticResource SubheaderLabel}"
-        FontSize="18" />
-        
-        <BoxView HeightRequest="1"
-      Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
-  Margin="0,4" />
-        
-                <!-- Cache Status -->
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-     <!-- Use a font icon defined in IconFonts.xaml instead of emoji -->
-     <Image Grid.Column="0" Source="{StaticResource IconEvents}" WidthRequest="28" HeightRequest="28" VerticalOptions="Center" />
-         <VerticalStackLayout Grid.Column="1" Spacing="4">
-        <Label Text="Cache Status"
-     Style="{StaticResource BodyLabel}"
-       FontSize="14" />
-           <Label Text="{Binding CacheStatus}"
-           Style="{StaticResource CaptionLabel}"
-               FontSize="12"
+ <!-- Cache Management Card -->
+ <Border Style="{StaticResource GlassCard}">
+ <VerticalStackLayout Spacing="12">
+ <Label Text="Cache Management"
+ Style="{StaticResource SubheaderLabel}"
+ FontSize="18" />
+ 
+ <BoxView HeightRequest="1"
+ Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+ Margin="0,4" />
+ 
+ <!-- Cache Status -->
+ <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+ <!-- Use a font icon defined in IconFonts.xaml instead of emoji -->
+ <Image Grid.Column="0" Source="{StaticResource IconEvents}" WidthRequest="28" HeightRequest="28" VerticalOptions="Center" />
+ <VerticalStackLayout Grid.Column="1" Spacing="4">
+ <Label Text="Cache Status"
+ Style="{StaticResource BodyLabel}"
+ FontSize="14" />
+ <Label Text="{Binding CacheStatus}"
+ Style="{StaticResource CaptionLabel}"
+ FontSize="12"
  TextColor="{StaticResource Primary}" />
-    </VerticalStackLayout>
+ </VerticalStackLayout>
 </Grid>
-           
-   <!-- Cache Actions -->
-   <HorizontalStackLayout Spacing="12" Margin="0,8,0,0">
-     <Button Text="Clear Cache"
-               Command="{Binding ClearCacheCommand}"
-   Style="{StaticResource SecondaryGlassButton}"
-   IsEnabled="{Binding IsClearing, Converter={StaticResource InvertedBoolConverter}}"
-     HorizontalOptions="FillAndExpand" />
-           
-         <Button Text="Refresh"
-       Command="{Binding RefreshCacheStatusCommand}"
-          Style="{StaticResource SecondaryGlassButton}"
-           WidthRequest="140"
-           HeightRequest="50" />
-           </HorizontalStackLayout>
-        
-         <!-- Cache Description -->
-    <Label Text="Cached data enables offline functionality. Clear the cache to free up storage space or refresh stale data."
-     Style="{StaticResource CaptionLabel}"
-           FontSize="11"
-         LineBreakMode="WordWrap"
-        Margin="0,4,0,0" />
-         </VerticalStackLayout>
-            </Border>
+ 
+ <!-- Cache Actions -->
+ <HorizontalStackLayout Spacing="12" Margin="0,8,0,0">
+ <Button Text="Clear Cache"
+ Command="{Binding ClearCacheCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ IsEnabled="{Binding IsClearing, Converter={StaticResource InvertedBoolConverter}}"
+ HorizontalOptions="FillAndExpand" />
 
-   <!-- Status Message -->
-            <Border IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}"
-     Style="{StaticResource Badge}"
-      HorizontalOptions="Center"
-                Padding="16,8">
-    <Label Text="{Binding StatusMessage}"
-       TextColor="White"
-        FontSize="14"
-            HorizontalTextAlignment="Center" />
-  </Border>
+ <Button Text="Cache All"
+ Command="{Binding CacheAllCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="140"
+ HeightRequest="50"
+ IsEnabled="{Binding IsCaching, Converter={StaticResource InvertedBoolConverter}}" />
+
+ <Button Text="Refresh"
+ Command="{Binding RefreshCacheStatusCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="140"
+ HeightRequest="50" />
+ </HorizontalStackLayout>
+ 
+ <!-- Cache Description -->
+ <Label Text="Cached data enables offline functionality. Clear the cache to free up storage space or refresh stale data."
+ Style="{StaticResource CaptionLabel}"
+ FontSize="11"
+ LineBreakMode="WordWrap"
+ Margin="0,4,0,0" />
+ </VerticalStackLayout>
+ </Border>
+
+ <!-- Offline Mode Card -->
+ <Border Style="{StaticResource GlassCard}">
+ <VerticalStackLayout Spacing="12">
+ <Label Text="Offline Mode" Style="{StaticResource SubheaderLabel}" FontSize="18" />
+ <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" Margin="0,4" />
+ <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+ <VerticalStackLayout Grid.Column="0" Spacing="4">
+ <Label Text="Enable Offline Mode" Style="{StaticResource BodyLabel}" FontSize="14" />
+ <Label Text="When enabled, the app will use cached data and avoid network calls." Style="{StaticResource CaptionLabel}" FontSize="12" />
+ </VerticalStackLayout>
+ <Switch Grid.Column="1" IsToggled="{Binding IsOfflineMode}" VerticalOptions="Center" />
+ </Grid>
+ </VerticalStackLayout>
+ </Border>
+
+ <!-- Test Notifications Card (separate so it's clearly visible) -->
+ <Border Style="{StaticResource GlassCard}">
+ <VerticalStackLayout Spacing="8" Padding="12" HorizontalOptions="Center">
+ <Label Text="Notifications" Style="{StaticResource SubheaderLabel}" FontSize="16" />
+ <Label Text="Run a quick check for scheduled notifications from the server." Style="{StaticResource CaptionLabel}" FontSize="12" />
+ <Button Text="Test Notifications (Server)"
+ Command="{Binding TestNotificationCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="220"
+ HeightRequest="50"
+ HorizontalOptions="Center" />
+
+ <Button Text="Local Test Notification"
+ Command="{Binding TestLocalNotificationCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="220"
+ HeightRequest="50"
+ HorizontalOptions="Center" />
+
+ <Button Text="Test Push Notification"
+ Command="{Binding TestPushNotificationCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="220"
+ HeightRequest="50"
+ HorizontalOptions="Center" />
+
+ <!-- New: delayed notification controls -->
+ <HorizontalStackLayout Spacing="12" VerticalOptions="Center" HorizontalOptions="Center">
+ <Label Text="Delay (s):" VerticalOptions="Center" />
+ <Entry WidthRequest="100" Keyboard="Numeric" Text="{Binding NotificationDelaySeconds}" />
+ <Button Text="Send Delayed Notification"
+ Command="{Binding TestPushNotificationDelayedCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="220"
+ HeightRequest="50"
+ HorizontalOptions="Center" />
+ </HorizontalStackLayout>
+ </VerticalStackLayout>
+ </Border>
+
+ <!-- Status Message -->
+ <Border IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}"
+ Style="{StaticResource Badge}"
+ HorizontalOptions="Center"
+ Padding="16,8">
+ <Label Text="{Binding StatusMessage}"
+ TextColor="White"
+ FontSize="14"
+ HorizontalTextAlignment="Center" />
+ </Border>
 
  <!-- App Info Card -->
  <Border Style="{StaticResource GlassCard}">
-        <VerticalStackLayout Spacing="8">
-       <Label Text="About"
-        Style="{StaticResource SubheaderLabel}"
-             FontSize="18" />
-     
-       <BoxView HeightRequest="1"
+ <VerticalStackLayout Spacing="8">
+ <Label Text="About"
+ Style="{StaticResource SubheaderLabel}"
+ FontSize="18" />
+ 
+ <BoxView HeightRequest="1"
  Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
-       Margin="0,4" />
-                
-                 <Label Text="ObsidianScout"
-      Style="{StaticResource BodyLabel}"
-                 FontSize="14" />
-              <Label Text="Version 1.0.0"
+ Margin="0,4" />
+ 
+ <Label Text="ObsidianScout"
+ Style="{StaticResource BodyLabel}"
+ FontSize="14" />
+ <Label Text="Version1.0.0"
  Style="{StaticResource CaptionLabel}"
-     FontSize="12" />
-           <Label Text="A modern scouting application for FRC competitions"
-            Style="{StaticResource CaptionLabel}"
-          FontSize="11"
-      LineBreakMode="WordWrap"
-      Margin="0,4,0,0" />
-          </VerticalStackLayout>
-  </Border>
+ FontSize="12" />
+ <Label Text="A modern scouting application for FRC competitions"
+ Style="{StaticResource CaptionLabel}"
+ FontSize="11"
+ LineBreakMode="WordWrap"
+ Margin="0,4,0,0" />
 
-    </VerticalStackLayout>
-    </ScrollView>
+ <Button Text="Test Notifications"
+ Command="{Binding TestNotificationCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ HorizontalOptions="Center" />
+ 
+ </VerticalStackLayout>
+ </Border>
+
+ </VerticalStackLayout>
+ </ScrollView>
 
 </ContentPage>

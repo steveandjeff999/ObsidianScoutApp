@@ -6,101 +6,105 @@ using System.Text.Json.Serialization;
 
 namespace ObsidianScout.Services;
 
-// Custom DateTime converter to handle various date formats
-public class FlexibleDateTimeConverter : JsonConverter<DateTime>
+public partial class ApiService : IApiService
 {
-    private static readonly string[] DateFormats = new[]
+    // Custom DateTime converter to handle various date formats
+    public class FlexibleDateTimeConverter : JsonConverter<DateTime>
     {
-        "yyyy-MM-dd",
-        "yyyy-MM-ddTHH:mm:ss",
-        "yyyy-MM-ddTHH:mm:ssZ",
-        "yyyy-MM-ddTHH:mm:ss.fff",
-        "yyyy-MM-ddTHH:mm:ss.fffZ",
-        "yyyy-MM-ddTHH:mm:ss.fffffffZ",
-        "MM/dd/yyyy",
-        "M/d/yyyy"
-    };
-
-    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        var dateString = reader.GetString();
-        if (string.IsNullOrEmpty(dateString))
-            return DateTime.MinValue;
-
-        // Try parsing with each format
-        foreach (var format in DateFormats)
+        private static readonly string[] DateFormats = new[]
         {
-            if (DateTime.TryParseExact(dateString, format, 
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var date))
+            "yyyy-MM-dd",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ssZ",
+            "yyyy-MM-ddTHH:mm:ss.fff",
+            "yyyy-MM-ddTHH:mm:ss.fffZ",
+            "yyyy-MM-ddTHH:mm:ss.fffffffZ",
+            "MM/dd/yyyy",
+            "M/d/yyyy"
+        };
+
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var dateString = reader.GetString();
+            if (string.IsNullOrEmpty(dateString))
+                return DateTime.MinValue;
+
+            // Try parsing with each format
+            foreach (var format in DateFormats)
             {
-                return date;
+                if (DateTime.TryParseExact(dateString, format, 
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var date))
+                {
+                    return date;
+                }
             }
+
+            // Fall back to default parsing
+            if (DateTime.TryParse(dateString, out var parsedDate))
+                return parsedDate;
+
+            // If all else fails, return MinValue
+            return DateTime.MinValue;
         }
 
-        // Fall back to default parsing
-        if (DateTime.TryParse(dateString, out var parsedDate))
-            return parsedDate;
-
-        // If all else fails, return MinValue
-        return DateTime.MinValue;
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
+        }
     }
 
-    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
-    }
-}
-
-public interface IApiService
-{
-    Task<LoginResponse> LoginAsync(string username, string password, int teamNumber);
-    Task<TokenResponse> RefreshTokenAsync();
-    Task<ApiResponse<User>> VerifyTokenAsync();
-    Task<TeamsResponse> GetTeamsAsync(int? eventId = null, int limit = 100, int offset = 0);
-    Task<EventsResponse> GetEventsAsync();
-    Task<MatchesResponse> GetMatchesAsync(int eventId, string? matchType = null, int? teamNumber = null);
-    Task<ScoutingSubmitResponse> SubmitScoutingDataAsync(ScoutingSubmission submission);
-    Task<GameConfigResponse> GetGameConfigAsync();
-    Task<ApiResponse<string>> HealthCheckAsync();
-    Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId);
-    Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request);
-    Task<MetricsResponse> GetAvailableMetricsAsync();
-    Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit = 200, int offset = 0);
-}
-
-public class ApiService : IApiService
-{
     private readonly HttpClient _httpClient;
-    private readonly ISettingsService _settingsService;
-    private readonly ICacheService _cacheService;
-    private readonly IConnectivityService _connectivityService;
+    private readonly ISettingsService _settings_service;
+    private readonly ICacheService _cache_service;
+    private readonly IConnectivityService _connectivity_service;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ApiService(HttpClient httpClient, ISettingsService settingsService, ICacheService cacheService, IConnectivityService connectivityService)
     {
         _httpClient = httpClient;
-        _settingsService = settingsService;
-        _cacheService = cacheService;
-        _connectivityService = connectivityService;
+        _settings_service = settingsService;
+        _cache_service = cacheService;
+        _connectivity_service = connectivityService;
         
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            // Removed PropertyNamingPolicy since we're using explicit JsonPropertyName attributes
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             Converters = { new FlexibleDateTimeConverter() }
         };
     }
 
+    // New helper: returns true when network calls should be attempted (offline mode disabled AND connectivity present)
+    private async Task<bool> ShouldUseNetworkAsync()
+    {
+        try
+        {
+            var offlineMode = await _settings_service.GetOfflineModeAsync();
+            if (offlineMode)
+            {
+                System.Diagnostics.Debug.WriteLine("[API] Offline mode is enabled in settings - using cache instead of network");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[API] Failed to read offline mode setting: {ex.Message}");
+            // Fall through and rely on connectivity service
+        }
+
+        return _connectivity_service.IsConnected;
+    }
+
     private async Task<string> GetBaseUrlAsync()
     {
-        var serverUrl = await _settingsService.GetServerUrlAsync();
+        var serverUrl = await _settings_service.GetServerUrlAsync();
         return $"{serverUrl.TrimEnd('/')}/api/mobile";
     }
 
     private async Task AddAuthHeaderAsync()
     {
-        var token = await _settingsService.GetTokenAsync();
+        var token = await _settings_service.GetTokenAsync();
         if (!string.IsNullOrEmpty(token))
         {
             _httpClient.DefaultRequestHeaders.Authorization = 
@@ -123,19 +127,19 @@ public class ApiService : IApiService
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
                 if (result != null && result.Success)
                 {
-                    await _settingsService.SetTokenAsync(result.Token);
-                    await _settingsService.SetTokenExpirationAsync(result.ExpiresAt);
+                    await _settings_service.SetTokenAsync(result.Token);
+                    await _settings_service.SetTokenExpirationAsync(result.ExpiresAt);
                     
                     // Store the username for auto-filling scout name
                     if (result.User != null && !string.IsNullOrEmpty(result.User.Username))
                     {
-                        await _settingsService.SetUsernameAsync(result.User.Username);
+                        await _settings_service.SetUsernameAsync(result.User.Username);
                     }
                     
                     // Store user roles
                     if (result.User != null && result.User.Roles != null && result.User.Roles.Count > 0)
                     {
-                        await _settingsService.SetUserRolesAsync(result.User.Roles);
+                        await _settings_service.SetUserRolesAsync(result.User.Roles);
                         
                         // DEBUG: Log roles
                         System.Diagnostics.Debug.WriteLine($"LOGIN: Stored {result.User.Roles.Count} roles:");
@@ -198,8 +202,8 @@ public class ApiService : IApiService
                 var result = await response.Content.ReadFromJsonAsync<TokenResponse>(_jsonOptions);
                 if (result != null && result.Success)
                 {
-                    await _settingsService.SetTokenAsync(result.Token);
-                    await _settingsService.SetTokenExpirationAsync(result.ExpiresAt);
+                    await _settings_service.SetTokenAsync(result.Token);
+                    await _settings_service.SetTokenExpirationAsync(result.ExpiresAt);
                 }
                 return result ?? new TokenResponse { Success = false };
             }
@@ -236,13 +240,13 @@ public class ApiService : IApiService
 
     public async Task<TeamsResponse> GetTeamsAsync(int? eventId = null, int limit = 100, int offset = 0)
     {
-        // If we know we're offline, return cached data quickly without attempting network
-        if (!_connectivityService.IsConnected)
+        // If we know we're offline or user requested offline mode, return cached data quickly without attempting network
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedTeams = await _cacheService.GetCachedTeamsAsync();
+            var cachedTeams = await _cache_service.GetCachedTeamsAsync();
             if (cachedTeams != null && cachedTeams.Count > 0)
             {
-                System.Diagnostics.Debug.WriteLine($"[API] Offline - returning cached teams immediately");
+                System.Diagnostics.Debug.WriteLine($"[API] Offline or offline-mode - returning cached teams immediately");
                 return new TeamsResponse
                 {
                     Success = true,
@@ -272,14 +276,14 @@ public class ApiService : IApiService
                 // Cache the teams data
                 if (result != null && result.Success && result.Teams != null && result.Teams.Count > 0)
                 {
-                    await _cacheService.CacheTeamsAsync(result.Teams);
+                    await _cache_service.CacheTeamsAsync(result.Teams);
                 }
                 
                 return result ?? new TeamsResponse { Success = false };
             }
 
             // Try to load from cache on failure
-            var cachedTeams2 = await _cacheService.GetCachedTeamsAsync();
+            var cachedTeams2 = await _cache_service.GetCachedTeamsAsync();
             if (cachedTeams2 != null && cachedTeams2.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached teams (offline mode)");
@@ -298,7 +302,7 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Teams request failed: {ex.Message}");
             
             // Try to load from cache on exception
-            var cachedTeams3 = await _cacheService.GetCachedTeamsAsync();
+            var cachedTeams3 = await _cache_service.GetCachedTeamsAsync();
             if (cachedTeams3 != null && cachedTeams3.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached teams after error (offline mode)");
@@ -316,12 +320,12 @@ public class ApiService : IApiService
 
     public async Task<EventsResponse> GetEventsAsync()
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedEvents = await _cacheService.GetCachedEventsAsync();
-            if (cachedEvents != null && cachedEvents.Count > 0)
+            var cachedEvents = await _cache_service.GetCachedEventsAsync();
+            if (cachedEvents != null && cachedEvents.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline - returning cached events immediately");
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached events immediately");
                 return new EventsResponse { Success = true, Events = cachedEvents, Error = "Using cached data (offline mode)" };
             }
             return new EventsResponse { Success = false, Error = "Offline - no cached events available" };
@@ -338,17 +342,17 @@ public class ApiService : IApiService
                 var result = await response.Content.ReadFromJsonAsync<EventsResponse>(_jsonOptions);
                 
                 // Cache the events data
-                if (result != null && result.Success && result.Events != null && result.Events.Count > 0)
+                if (result != null && result.Success && result.Events != null && result.Events.Count >0)
                 {
-                    await _cacheService.CacheEventsAsync(result.Events);
+                    await _cache_service.CacheEventsAsync(result.Events);
                 }
                 
                 return result ?? new EventsResponse { Success = false, Error = "Invalid response format" };
             }
 
             // Try to load from cache on failure
-            var cachedEvents2 = await _cacheService.GetCachedEventsAsync();
-            if (cachedEvents2 != null && cachedEvents2.Count > 0)
+            var cachedEvents2 = await _cache_service.GetCachedEventsAsync();
+            if (cachedEvents2 != null && cachedEvents2.Count >0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached events (offline mode)");
                 return new EventsResponse 
@@ -371,8 +375,8 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Events request failed: {httpEx.Message}");
             
             // Try to load from cache on exception
-            var cachedEvents3 = await _cacheService.GetCachedEventsAsync();
-            if (cachedEvents3 != null && cachedEvents3.Count > 0)
+            var cachedEvents3 = await _cache_service.GetCachedEventsAsync();
+            if (cachedEvents3 != null && cachedEvents3.Count >0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached events after error (offline mode)");
                 return new EventsResponse 
@@ -394,8 +398,8 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Events exception: {ex.Message}");
             
             // Try to load from cache on exception
-            var cachedEvents4 = await _cacheService.GetCachedEventsAsync();
-            if (cachedEvents4 != null && cachedEvents4.Count > 0)
+            var cachedEvents4 = await _cache_service.GetCachedEventsAsync();
+            if (cachedEvents4 != null && cachedEvents4.Count >0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached events after exception (offline mode)");
                 return new EventsResponse 
@@ -416,12 +420,12 @@ public class ApiService : IApiService
 
     public async Task<MatchesResponse> GetMatchesAsync(int eventId, string? matchType = null, int? teamNumber = null)
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedMatches = await _cacheService.GetCachedMatchesAsync(eventId);
-            if (cachedMatches != null && cachedMatches.Count > 0)
+            var cachedMatches = await _cache_service.GetCachedMatchesAsync(eventId);
+            if (cachedMatches != null && cachedMatches.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline - returning cached matches immediately");
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached matches immediately");
                 return new MatchesResponse { Success = true, Matches = cachedMatches, Error = "Using cached data (offline mode)" };
             }
             return new MatchesResponse { Success = false, Error = "Offline - no cached matches available" };
@@ -448,14 +452,14 @@ public class ApiService : IApiService
                 // Cache the matches data
                 if (result != null && result.Success && result.Matches != null && result.Matches.Count > 0)
                 {
-                    await _cacheService.CacheMatchesAsync(result.Matches, eventId);
+                    await _cache_service.CacheMatchesAsync(result.Matches, eventId);
                 }
                 
                 return result ?? new MatchesResponse { Success = false, Error = "Invalid response format" };
             }
 
             // Try to load from cache on failure
-            var cachedMatches2 = await _cacheService.GetCachedMatchesAsync(eventId);
+            var cachedMatches2 = await _cache_service.GetCachedMatchesAsync(eventId);
             if (cachedMatches2 != null && cachedMatches2.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached matches (offline mode)");
@@ -479,7 +483,7 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Matches request failed: {httpEx.Message}");
             
             // Try to load from cache on exception
-            var cachedMatches3 = await _cacheService.GetCachedMatchesAsync(eventId);
+            var cachedMatches3 = await _cache_service.GetCachedMatchesAsync(eventId);
             if (cachedMatches3 != null && cachedMatches3.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached matches after error (offline mode)");
@@ -502,7 +506,7 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Matches exception: {ex.Message}");
             
             // Try to load from cache on exception
-            var cachedMatches4 = await _cacheService.GetCachedMatchesAsync(eventId);
+            var cachedMatches4 = await _cache_service.GetCachedMatchesAsync(eventId);
             if (cachedMatches4 != null && cachedMatches4.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached matches after exception (offline mode)");
@@ -525,7 +529,7 @@ public class ApiService : IApiService
     public async Task<ScoutingSubmitResponse> SubmitScoutingDataAsync(ScoutingSubmission submission)
     {
         // If offline, return quickly indicating offline so UI can queue/handle
-        if (!_connectivityService.IsConnected)
+        if (!_connectivity_service.IsConnected)
         {
             return new ScoutingSubmitResponse
             {
@@ -737,12 +741,12 @@ public class ApiService : IApiService
 
     public async Task<GameConfigResponse> GetGameConfigAsync()
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedConfig = await _cacheService.GetCachedGameConfigAsync();
+            var cachedConfig = await _cache_service.GetCachedGameConfigAsync();
             if (cachedConfig != null)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline - returning cached game config immediately");
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached game config immediately");
                 return new GameConfigResponse { Success = true, Config = cachedConfig, Error = "Using cached data (offline mode)" };
             }
             return new GameConfigResponse { Success = false, Error = "Offline - no cached game config available" };
@@ -761,14 +765,14 @@ public class ApiService : IApiService
                 // Cache the game config
                 if (result != null && result.Success && result.Config != null)
                 {
-                    await _cacheService.CacheGameConfigAsync(result.Config);
+                    await _cache_service.CacheGameConfigAsync(result.Config);
                 }
                 
                 return result ?? new GameConfigResponse { Success = false, Error = "Invalid response" };
             }
 
             // Try to load from cache on failure
-            var cachedConfig2 = await _cacheService.GetCachedGameConfigAsync();
+            var cachedConfig2 = await _cache_service.GetCachedGameConfigAsync();
             if (cachedConfig2 != null)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached game config (offline mode)");
@@ -791,7 +795,7 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Game config request failed: {ex.Message}");
             
             // Try to load from cache on failure
-            var cachedConfig3 = await _cacheService.GetCachedGameConfigAsync();
+            var cachedConfig3 = await _cache_service.GetCachedGameConfigAsync();
             if (cachedConfig3 != null)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached game config after error (offline mode)");
@@ -813,7 +817,7 @@ public class ApiService : IApiService
 
     public async Task<ApiResponse<string>> HealthCheckAsync()
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
             return new ApiResponse<string> { Success = false, Error = "Offline - cannot perform health check" };
         }
@@ -847,7 +851,7 @@ public class ApiService : IApiService
 
     public async Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId)
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
             return new TeamMetricsResponse { Success = false, Error = "Offline - no cached metrics available" };
         }
@@ -882,7 +886,7 @@ public class ApiService : IApiService
 
     public async Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request)
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
             return new CompareTeamsResponse { Success = false, Error = "Offline - cannot compare teams" };
         }
@@ -962,12 +966,12 @@ public class ApiService : IApiService
 
     public async Task<MetricsResponse> GetAvailableMetricsAsync()
     {
-        if (!_connectivityService.IsConnected)
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedMetrics = await _cacheService.GetCachedAvailableMetricsAsync();
-            if (cachedMetrics != null && cachedMetrics.Count > 0)
+            var cachedMetrics = await _cache_service.GetCachedAvailableMetricsAsync();
+            if (cachedMetrics != null && cachedMetrics.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline - returning cached metrics immediately");
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached metrics immediately");
                 return new MetricsResponse { Success = true, Metrics = cachedMetrics, Error = "Using cached data (offline mode)" };
             }
             return new MetricsResponse { Success = false, Error = "Offline - no cached metrics available" };
@@ -986,14 +990,14 @@ public class ApiService : IApiService
                 // Cache the metrics
                 if (result != null && result.Success && result.Metrics != null && result.Metrics.Count > 0)
                 {
-                    await _cacheService.CacheAvailableMetricsAsync(result.Metrics);
+                    await _cache_service.CacheAvailableMetricsAsync(result.Metrics);
                 }
                 
                 return result ?? new MetricsResponse { Success = false, Error = "Invalid response" };
             }
 
             // Try to load from cache on failure
-            var cachedMetrics2 = await _cacheService.GetCachedAvailableMetricsAsync();
+            var cachedMetrics2 = await _cache_service.GetCachedAvailableMetricsAsync();
             if (cachedMetrics2 != null && cachedMetrics2.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached metrics (offline mode)");
@@ -1016,7 +1020,7 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Metrics request failed: {ex.Message}");
             
             // Try to load from cache on exception
-            var cachedMetrics3 = await _cacheService.GetCachedAvailableMetricsAsync();
+            var cachedMetrics3 = await _cache_service.GetCachedAvailableMetricsAsync();
             if (cachedMetrics3 != null && cachedMetrics3.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[API] Using cached metrics after error (offline mode)");
@@ -1036,15 +1040,27 @@ public class ApiService : IApiService
         }
     }
 
-    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit = 200, int offset = 0)
+    // Helper to filter cached scouting entries by optional parameters
+    private List<ScoutingEntry> FilterScoutingEntries(List<ScoutingEntry>? entries, int? teamNumber, int? eventId, int? matchId)
     {
-        if (!_connectivityService.IsConnected)
+        if (entries == null) return new List<ScoutingEntry>();
+        var query = entries.AsEnumerable();
+        if (teamNumber.HasValue) query = query.Where(e => e.TeamNumber == teamNumber.Value);
+        if (eventId.HasValue) query = query.Where(e => e.EventId == eventId.Value);
+        if (matchId.HasValue) query = query.Where(e => e.MatchId == matchId.Value);
+        return query.ToList();
+    }
+
+    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0)
+    {
+        if (!await ShouldUseNetworkAsync())
         {
-            var cachedData = await _cacheService.GetCachedScoutingDataAsync();
-            if (cachedData != null && cachedData.Count > 0)
+            var cachedData = await _cache_service.GetCachedScoutingDataAsync();
+            var filtered = FilterScoutingEntries(cachedData, teamNumber, eventId, matchId);
+            if (filtered != null && filtered.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline - returning cached scouting data immediately");
-                return new ScoutingListResponse { Success = true, Entries = cachedData, Error = "Using cached data (offline mode)" };
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached scouting data immediately (filtered)");
+                return new ScoutingListResponse { Success = true, Entries = filtered, Error = "Using cached data (offline mode)" };
             }
             return new ScoutingListResponse { Success = false, Error = "Offline - no cached scouting data available" };
         }
@@ -1078,22 +1094,23 @@ public class ApiService : IApiService
                 // Cache the scouting data
                 if (result != null && result.Success && result.Entries != null && result.Entries.Count > 0)
                 {
-                    await _cacheService.CacheScoutingDataAsync(result.Entries);
+                    await _cache_service.CacheScoutingDataAsync(result.Entries);
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"Success: Fetched {result?.Entries.Count ?? 0} scouting entries");
+                System.Diagnostics.Debug.WriteLine($"Success: Fetched {result?.Entries.Count ??0} scouting entries");
                 return result ?? new ScoutingListResponse { Success = false, Error = "Invalid response" };
             }
 
             // Try to load from cache on failure
-            var cachedData2 = await _cacheService.GetCachedScoutingDataAsync();
-            if (cachedData2 != null && cachedData2.Count > 0)
+            var cachedData2 = await _cache_service.GetCachedScoutingDataAsync();
+            var filtered2 = FilterScoutingEntries(cachedData2, teamNumber, eventId, matchId);
+            if (filtered2 != null && filtered2.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine($"[API] Using cached scouting data (offline mode)");
+                System.Diagnostics.Debug.WriteLine($"[API] Using cached scouting data (offline mode) - filtered");
                 return new ScoutingListResponse 
                 { 
                     Success = true, 
-                    Entries = cachedData2,
+                    Entries = filtered2,
                     Error = "Using cached data (offline mode)"
                 };
             }
@@ -1112,14 +1129,15 @@ public class ApiService : IApiService
             System.Diagnostics.Debug.WriteLine($"[API] Scouting data request failed: {ex.Message}");
             
             // Try to load from cache on exception
-            var cachedData3 = await _cacheService.GetCachedScoutingDataAsync();
-            if (cachedData3 != null && cachedData3.Count > 0)
+            var cachedData3 = await _cache_service.GetCachedScoutingDataAsync();
+            var filtered3 = FilterScoutingEntries(cachedData3, teamNumber, eventId, matchId);
+            if (filtered3 != null && filtered3.Count >0)
             {
-                System.Diagnostics.Debug.WriteLine($"[API] Using cached scouting data after error (offline mode)");
+                System.Diagnostics.Debug.WriteLine($"[API] Using cached scouting data after error (offline mode) - filtered");
                 return new ScoutingListResponse 
                 { 
                     Success = true, 
-                    Entries = cachedData3,
+                    Entries = filtered3,
                     Error = "Using cached data (offline mode)"
                 };
             }
@@ -1129,6 +1147,312 @@ public class ApiService : IApiService
                 Success = false,
                 Error = $"Connection error: {ex.Message}"
             };
+        }
+    }
+
+    public async Task<byte[]?> GetGraphsImageAsync(GraphImageRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            System.Diagnostics.Debug.WriteLine("[API] Offline-mode - cannot fetch server graph image");
+            return null;
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/graphs";
+
+            System.Diagnostics.Debug.WriteLine($"POST {endpoint} to generate graph image");
+
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                System.Diagnostics.Debug.WriteLine($"Received {bytes.Length} bytes for graph image");
+                return bytes;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Graph image request failed: {response.StatusCode} - {errorContent}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error fetching graph image: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<ScheduledNotificationsResponse> GetScheduledNotificationsAsync(int limit =200, int offset =0)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ScheduledNotificationsResponse { Success = false, Error = "Offline - cannot fetch scheduled notifications" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/notifications/scheduled?limit={limit}&offset={offset}";
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ScheduledNotificationsResponse>(_jsonOptions);
+                return result ?? new ScheduledNotificationsResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            return new ScheduledNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    // Implementations for chat members endpoints (ensure these are inside the ApiService class)
+    public async Task<ChatMembersResponse> GetChatMembersAsync(string scope = "team")
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatMembersResponse { Success = false, Error = "Offline - cannot fetch members" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/chat/members?scope={Uri.EscapeDataString(scope)}";
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatMembersResponse>(_jsonOptions);
+                return result ?? new ChatMembersResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            return new ChatMembersResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            return new ChatMembersResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatMembersResponse> GetChatMembersForTeamAsync(int teamNumber)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatMembersResponse { Success = false, Error = "Offline - cannot fetch members" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/chat/members?scope=team&team_number={teamNumber}";
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatMembersResponse>(_jsonOptions);
+                return result ?? new ChatMembersResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            return new ChatMembersResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            return new ChatMembersResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatMessagesResponse> GetChatMessagesAsync(string type = "dm", string? user = null, string? group = null, int? allianceId = null, int limit =50, int offset =0)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatMessagesResponse { Success = false, Messages = new List<ChatMessage>(), Count =0 };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/chat/messages?type={Uri.EscapeDataString(type)}&limit={limit}&offset={offset}";
+            if (!string.IsNullOrEmpty(user)) url += $"&user={Uri.EscapeDataString(user)}";
+            if (!string.IsNullOrEmpty(group)) url += $"&group={Uri.EscapeDataString(group)}";
+            if (allianceId.HasValue) url += $"&alliance_id={allianceId.Value}";
+
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatMessagesResponse>(_jsonOptions);
+                return result ?? new ChatMessagesResponse { Success = false };
+            }
+
+            var error = await response.Content.ReadAsStringAsync();
+            return new ChatMessagesResponse { Success = false, Messages = new List<ChatMessage>(), Count =0 };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetChatMessagesAsync failed: {ex.Message}");
+            return new ChatMessagesResponse { Success = false, Messages = new List<ChatMessage>(), Count =0 };
+        }
+    }
+
+    public async Task<ChatSendResponse> SendChatAsync(ChatSendRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatSendResponse { Success = false, Error = "Offline - cannot send message", ErrorCode = "OFFLINE" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/send";
+
+            System.Diagnostics.Debug.WriteLine($"POST {endpoint} to send chat message");
+
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatSendResponse>(_jsonOptions);
+                return result ?? new ChatSendResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Chat send failed: {response.StatusCode} - {errorContent}");
+
+            // Try to parse error as ChatSendResponse
+            try
+            {
+                var err = System.Text.Json.JsonSerializer.Deserialize<ChatSendResponse>(errorContent, _jsonOptions);
+                if (err != null) return err;
+            }
+            catch { /* ignore */ }
+
+            return new ChatSendResponse { Success = false, Error = $"HTTP {response.StatusCode}: {errorContent}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SendChatAsync exception: {ex.Message}");
+            return new ChatSendResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatEditResponse> EditChatMessageAsync(ChatEditRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatEditResponse { Success = false, Error = "Offline - cannot edit message" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/edit-message";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatEditResponse>(_jsonOptions);
+                return result ?? new ChatEditResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatEditResponse>(err, _jsonOptions);
+                if (parsed != null) return parsed;
+            }
+            catch { }
+
+            return new ChatEditResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"EditChatMessageAsync exception: {ex.Message}");
+            return new ChatEditResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatDeleteResponse> DeleteChatMessageAsync(ChatDeleteRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatDeleteResponse { Success = false, Error = "Offline - cannot delete message" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/delete-message";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatDeleteResponse>(_jsonOptions);
+                return result ?? new ChatDeleteResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatDeleteResponse>(err, _jsonOptions);
+                if (parsed != null) return parsed;
+            }
+            catch { }
+
+            return new ChatDeleteResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"DeleteChatMessageAsync exception: {ex.Message}");
+            return new ChatDeleteResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatReactResponse> ReactToChatMessageAsync(ChatReactRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatReactResponse { Success = false, Error = "Offline - cannot react to message" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/react-message";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatReactResponse>(_jsonOptions);
+                return result ?? new ChatReactResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatReactResponse>(err, _jsonOptions);
+                if (parsed != null) return parsed;
+            }
+            catch { }
+
+            return new ChatReactResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ReactToChatMessageAsync exception: {ex.Message}");
+            return new ChatReactResponse { Success = false, Error = ex.Message };
         }
     }
 }

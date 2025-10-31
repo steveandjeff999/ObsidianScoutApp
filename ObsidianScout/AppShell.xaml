@@ -113,6 +113,17 @@
         <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Server Data"
+    IsVisible="{Binding IsLoggedIn}"
+       Route="DataPage">
+        <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
+    </FlyoutItem>
+
+    <!-- Chat -->
+    <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
+    </FlyoutItem>
+
     <!-- Settings Page: move Route to ShellContent so Shell resolves route correctly -->
     <FlyoutItem Title="Settings"
         IsVisible="{Binding IsLoggedIn}">
@@ -135,9 +146,12 @@
  <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
  </VerticalStackLayout>
 
- <Button Grid.Column="1" Text="Logout"
+ <!-- Logout button only (offline toggle moved to Settings) -->
+ <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+ <Button Text="Logout"
  Style="{StaticResource OutlineGlassButton}"
  Clicked="OnLogoutClicked" HorizontalOptions="End" />
+ </HorizontalStackLayout>
  </Grid>
     </Grid>
     </Shell.FlyoutFooter>

@@ -13,6 +13,7 @@ namespace ObsidianScout
         private readonly ISettingsService _settingsService;
         private bool _isLoggedIn;
         private bool _hasAnalyticsAccess;
+        private bool _isOfflineMode;
 
         public string CurrentUsername { get; set; } = string.Empty;
         public string CurrentTeamInfo { get; set; } = string.Empty;
@@ -40,6 +41,16 @@ namespace ObsidianScout
             }
         }
 
+        public bool IsOfflineMode
+        {
+            get => _isOfflineMode;
+            set
+            {
+                _isOfflineMode = value;
+                OnPropertyChanged();
+            }
+        }
+
         public AppShell(ISettingsService settingsService)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -59,7 +70,39 @@ namespace ObsidianScout
 
             CheckAuthStatus();
 
+            // Load offline mode state
+            _ = LoadOfflineModeStateAsync();
+
             Navigating += OnNavigating;
+        }
+
+        private async Task LoadOfflineModeStateAsync()
+        {
+            try
+            {
+                IsOfflineMode = await _settingsService.GetOfflineModeAsync();
+                OnPropertyChanged(nameof(IsOfflineMode));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load offline mode state: {ex.Message}");
+            }
+        }
+
+        // Make handler public to satisfy XAML loader
+        public async void OnOfflineModeToggled(object sender, ToggledEventArgs e)
+        {
+            try
+            {
+                var value = e.Value;
+                await _settingsService.SetOfflineModeAsync(value);
+                IsOfflineMode = value;
+                System.Diagnostics.Debug.WriteLine($"Offline mode set to: {value}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to set offline mode: {ex.Message}");
+            }
         }
 
         private async void CheckAuthStatus()

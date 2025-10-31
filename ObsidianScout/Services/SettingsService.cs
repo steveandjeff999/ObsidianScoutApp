@@ -25,6 +25,8 @@ public interface ISettingsService
     Task SetThemeAsync(string theme);
     Task<string?> GetEmailAsync();
     Task SetEmailAsync(string? email);
+    Task<bool> GetOfflineModeAsync();
+    Task SetOfflineModeAsync(bool enabled);
 }
 
 public class SettingsService : ISettingsService
@@ -40,10 +42,10 @@ public class SettingsService : ISettingsService
     private const string TeamNumberKey = "team_number";
     private const string ThemeKey = "app_theme";
     private const string EmailKey = "email";
-    
+    private const string OfflineModeKey = "offline_mode";
+
     private const string DefaultProtocol = "https";
     private const string DefaultServerAddress = "your-server.com";
-    // Default port is optional now - empty means use standard port for scheme
     private const string DefaultServerPort = "";
     private const string DefaultTheme = "Light";
 
@@ -71,13 +73,11 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetServerPortAsync()
     {
-        // Return empty string if not set
         return await SecureStorage.GetAsync(ServerPortKey) ?? DefaultServerPort;
     }
 
     public async Task SetServerPortAsync(string port)
     {
-        // Allow empty port to indicate default for protocol
         if (string.IsNullOrWhiteSpace(port))
         {
             SecureStorage.Remove(ServerPortKey);
@@ -96,7 +96,6 @@ public class SettingsService : ISettingsService
         var port = await GetServerPortAsync();
         
         string url;
-        // If port is empty or matches standard for protocol, omit it
         if (string.IsNullOrWhiteSpace(port) || (protocol == "https" && port == "443") || (protocol == "http" && port == "80"))
         {
             url = $"{protocol}://{address}";
@@ -113,7 +112,6 @@ public class SettingsService : ISettingsService
         var url = await SecureStorage.GetAsync(ServerUrlKey);
         if (string.IsNullOrEmpty(url))
         {
-            // Build URL from components if not set
             await UpdateServerUrlAsync();
             url = await SecureStorage.GetAsync(ServerUrlKey);
         }
@@ -124,13 +122,11 @@ public class SettingsService : ISettingsService
     {
         await SecureStorage.SetAsync(ServerUrlKey, url);
         
-        // Try to parse the URL and update components
         try
         {
             var uri = new Uri(url);
             await SecureStorage.SetAsync(ProtocolKey, uri.Scheme);
             await SecureStorage.SetAsync(ServerAddressKey, uri.Host);
-            // If port is default for the scheme, store empty to indicate no explicit port
             if (uri.IsDefaultPort)
             {
                 SecureStorage.Remove(ServerPortKey);
@@ -142,7 +138,6 @@ public class SettingsService : ISettingsService
         }
         catch
         {
-            // If parsing fails, just store the URL as-is
         }
     }
 
@@ -241,7 +236,7 @@ public class SettingsService : ISettingsService
         if (int.TryParse(val, out var n)) return n;
         return null;
     }
-    
+
     public async Task SetTeamNumberAsync(int? teamNumber)
     {
         if (teamNumber == null)
@@ -258,7 +253,6 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            // SecureStorage.Remove can throw on some platforms or if storage is locked
             SecureStorage.Remove(TokenKey);
             SecureStorage.Remove(TokenExpirationKey);
             SecureStorage.Remove(UsernameKey);
@@ -298,6 +292,32 @@ public class SettingsService : ISettingsService
         else
         {
             await SecureStorage.SetAsync(EmailKey, email);
+        }
+    }
+
+    public async Task<bool> GetOfflineModeAsync()
+    {
+        try
+        {
+            var val = await SecureStorage.GetAsync(OfflineModeKey);
+            if (string.IsNullOrEmpty(val)) return false;
+            return bool.TryParse(val, out var b) && b;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task SetOfflineModeAsync(bool enabled)
+    {
+        try
+        {
+            await SecureStorage.SetAsync(OfflineModeKey, enabled ? "true" : "false");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] Failed to set offline mode: {ex}");
         }
     }
 }

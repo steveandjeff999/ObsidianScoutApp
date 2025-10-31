@@ -1,0 +1,73 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ xmlns:models="clr-namespace:ObsidianScout.Models"
+ x:Class="ObsidianScout.Views.ChatPage"
+ x:DataType="viewmodels:ChatViewModel"
+ x:Name="RootPage"
+ Title="Chat">
+
+ <ContentPage.Content>
+ <Grid Padding="12">
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ <RowDefinition Height="Auto"/>
+ </Grid.RowDefinitions>
+
+ <Label Grid.Row="0" Text="Chat" FontAttributes="Bold" HorizontalOptions="Center" />
+
+ <!-- Member picker -->
+ <Picker Grid.Row="1"
+ Title="Select recipient"
+ ItemsSource="{Binding Members}"
+ ItemDisplayBinding="{Binding DisplayName}"
+ SelectedItem="{Binding SelectedMember}"
+ HorizontalOptions="FillAndExpand" />
+
+ <CollectionView x:Name="MessagesList" Grid.Row="2" ItemsSource="{Binding Messages}" SelectionMode="None" ItemsLayout="VerticalList">
+ <CollectionView.ItemTemplate>
+ <DataTemplate x:DataType="models:ChatMessage">
+ <!-- Use a SwipeView so users can reveal Edit/Delete actions on swipe (mobile)
+ and provide a consistent action menu for messages. -->
+ <SwipeView>
+ <SwipeView.RightItems>
+ <SwipeItems Mode="Reveal">
+ <SwipeItem Text="React" BackgroundColor="LightGoldenrodYellow" Invoked="OnMessageReactInvoked" />
+ <SwipeItem Text="Edit" BackgroundColor="LightBlue" Command="{Binding BindingContext.EditMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" CommandParameter="{Binding .}" IsVisible="{Binding IsFromCurrentUser}"/>
+ <SwipeItem Text="Delete" BackgroundColor="LightCoral" Command="{Binding BindingContext.DeleteMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" CommandParameter="{Binding .}" IsVisible="{Binding IsFromCurrentUser}"/>
+ </SwipeItems>
+ </SwipeView.RightItems>
+
+ <Frame Margin="6" Padding="8" HasShadow="False" BorderColor="LightGray" CornerRadius="6">
+ <!-- TapGestureRecognizer will be handled in code-behind to show edit/delete action sheet -->
+ <Frame.GestureRecognizers>
+ <TapGestureRecognizer Tapped="OnMessageTapped" NumberOfTapsRequired="1" />
+ </Frame.GestureRecognizers>
+
+ <StackLayout>
+ <StackLayout Spacing="6">
+ <Label Text="{Binding Sender}" FontSize="12" TextColor="Gray" />
+ <!-- Keep a single message text label -->
+ <Label Text="{Binding Text}" FontSize="16" TextColor="White" />
+
+ <!-- Reactions display: use fallback joined preview only (avoid separate framed items that can show empty glyph) -->
+ <Label Text="{Binding ReactionPreview}" FontSize="16" TextColor="White" HorizontalOptions="Start" />
+
+ <Label Text="{Binding Timestamp, StringFormat='{0:G}'}" FontSize="10" TextColor="Gray" HorizontalOptions="End" />
+ </StackLayout>
+ </StackLayout>
+ </Frame>
+ </SwipeView>
+ </DataTemplate>
+ </CollectionView.ItemTemplate>
+ </CollectionView>
+
+ <StackLayout Grid.Row="3" Orientation="Horizontal" Spacing="8">
+ <Entry Placeholder="Type a message..." Text="{Binding MessageText}" HorizontalOptions="FillAndExpand" Completed="OnEntryCompleted" />
+ <Button Text="Send" Command="{Binding SendMessageCommand}" IsEnabled="{Binding IsSendEnabled}" />
+ </StackLayout>
+ </Grid>
+ </ContentPage.Content>
+</ContentPage>

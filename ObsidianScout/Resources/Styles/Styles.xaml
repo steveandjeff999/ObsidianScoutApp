@@ -2,7 +2,11 @@
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
- xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:converters="clr-namespace:ObsidianScout.Converters">
+
+ <!-- Converters -->
+ <converters:InvertedBoolConverter x:Key="InverseBooleanConverter" />
 
  <!-- Glass brushes for liquid glass effect -->
  <LinearGradientBrush x:Key="GlassBrushLight" StartPoint="0,0" EndPoint="1,1">

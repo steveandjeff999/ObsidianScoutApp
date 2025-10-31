@@ -33,7 +33,7 @@
         Description="$placeholder$"
         Square150x150Logo="Resources\appicon.png"
         Square44x44Logo="Resources\appicon.png"
-        BackgroundColor="transparent">
+        BackgroundColor="#0A0A0C">
         <uap:DefaultTile Square71x71Logo="Resources\appicon.png" Wide310x150Logo="Resources\appicon.png" Square310x310Logo="Resources\appicon.png" />
         <uap:SplashScreen Image="Resources\appicon.png" />
         <uap:InitialRotationPreference>

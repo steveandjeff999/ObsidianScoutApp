@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+ package="com.companyname.obsidianscout">
+
+ <!-- Required to start foreground services on Android -->
+ <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+ <application android:allowBackup="true" android:label="@string/app_name">
+ <!-- Foreground service declaration with the required foregroundServiceType -->
+ <service
+ android:name="com.companyname.obsidianscout.ForegroundNotificationService"
+ android:exported="false"
+ android:foregroundServiceType="dataSync" />
+ </application>
+</manifest>

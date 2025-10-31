@@ -9,10 +9,11 @@
          ======================================== -->
     
     <!-- Primary Brand Colors for Light Mode -->
- <Color x:Key="LightPrimary">#5B21B6</Color><!-- Deep Purple - Better visibility -->
-    <Color x:Key="LightPrimaryDark">#4C1D95</Color><!-- Darker Purple -->
-  <Color x:Key="LightSecondary">#7C3AED</Color><!-- Vibrant Purple -->
-    <Color x:Key="LightTertiary">#DB2777</Color><!-- Pink Accent -->
+    <!-- Adjusted to darker neutral grays -->
+    <Color x:Key="LightPrimary">#4B5563</Color><!-- Darker Gray (Gray600) -->
+    <Color x:Key="LightPrimaryDark">#374151</Color><!-- Darker Gray (Gray700) -->
+    <Color x:Key="LightSecondary">#6B7280</Color><!-- Gray500 -->
+    <Color x:Key="LightTertiary">#111827</Color><!-- Very dark gray / near-black -->
     
     <!-- Backgrounds for Light Mode -->
     <Color x:Key="LightBackground">#F5F5F7</Color><!-- Soft Gray Background -->
@@ -31,28 +32,29 @@
     <!-- Status Colors for Light Mode -->
     <Color x:Key="LightSuccess">#059669</Color><!-- Green -->
     <Color x:Key="LightWarning">#D97706</Color><!-- Amber -->
-  <Color x:Key="LightError">#DC2626</Color><!-- Red -->
+    <Color x:Key="LightError">#DC2626</Color><!-- Red -->
     <Color x:Key="LightInfo">#2563EB</Color><!-- Blue -->
 
     <!-- ========================================
-         DARK MODE COLORS - Existing Design
+         DARK MODE COLORS - Existing Design (converted to neutral greys)
          ======================================== -->
     
-    <Color x:Key="DarkPrimary">#818CF8</Color>
-    <Color x:Key="DarkPrimaryDark">#6366F1</Color>
-    <Color x:Key="DarkSecondary">#A78BFA</Color>
-    <Color x:Key="DarkTertiary">#F472B6</Color>
+    <Color x:Key="DarkPrimary">#6B7280</Color>
+    <Color x:Key="DarkPrimaryDark">#4B5563</Color>
+    <Color x:Key="DarkSecondary">#9CA3AF</Color>
+    <Color x:Key="DarkTertiary">#94A3B8</Color>
     
-    <Color x:Key="DarkBackground">#0F172A</Color>
-    <Color x:Key="DarkSurface">#1E293B</Color>
-    <Color x:Key="DarkSurfaceVariant">#334155</Color>
+    <!-- Changed dark background to a deeper near-black for improved contrast -->
+    <Color x:Key="DarkBackground">#0A0A0C</Color>
+    <Color x:Key="DarkSurface">#121217</Color>
+    <Color x:Key="DarkSurfaceVariant">#1B1D22</Color>
     
     <Color x:Key="DarkTextPrimary">#F8FAFC</Color>
     <Color x:Key="DarkTextSecondary">#CBD5E1</Color>
-    <Color x:Key="DarkTextTertiary">#64748B</Color>
+    <Color x:Key="DarkTextTertiary">#9CA3AF</Color>
     
-    <Color x:Key="DarkBorder">#334155</Color>
-    <Color x:Key="DarkDivider">#1E293B</Color>
+    <Color x:Key="DarkBorder">#1F2933</Color>
+    <Color x:Key="DarkDivider">#16181C</Color>
     
     <Color x:Key="DarkSuccess">#34D399</Color>
     <Color x:Key="DarkWarning">#FBBF24</Color>
@@ -64,10 +66,10 @@
          Used without AppThemeBinding
     ======================================== -->
     
-    <Color x:Key="Primary">#5B21B6</Color>
-    <Color x:Key="PrimaryDark">#4C1D95</Color>
-    <Color x:Key="Secondary">#7C3AED</Color>
-    <Color x:Key="Tertiary">#DB2777</Color>
+    <Color x:Key="Primary">#4B5563</Color>
+    <Color x:Key="PrimaryDark">#2C3136</Color>
+    <Color x:Key="Secondary">#6B7280</Color>
+    <Color x:Key="Tertiary">#111827</Color>
     
     <Color x:Key="Background">#F5F5F7</Color>
     <Color x:Key="Surface">#FFFFFF</Color>
@@ -75,7 +77,7 @@
     
     <Color x:Key="TextPrimary">#1C1C1E</Color>
     <Color x:Key="TextSecondary">#3A3A3C</Color>
- <Color x:Key="TextTertiary">#8E8E93</Color>
+    <Color x:Key="TextTertiary">#8E8E93</Color>
     
     <Color x:Key="BorderColor">#C7C7CC</Color>
     <Color x:Key="DividerColor">#D1D1D6</Color>
@@ -87,7 +89,7 @@
 
     <!-- Glassmorphism Overlay Colors -->
     <Color x:Key="GlassOverlayLight">#FCFFFFFF</Color><!-- Slightly transparent white -->
-    <Color x:Key="GlassOverlayDark">#F01E293B</Color>
+    <Color x:Key="GlassOverlayDark">#0A0A0C</Color>
     <Color x:Key="GlassOverlay">#FCFFFFFF</Color>
 
     <!-- ========================================
@@ -117,9 +119,9 @@
     <Color x:Key="LightDisabledText">#C7C7CC</Color>
     
     <!-- Interactive States for Dark Mode -->
-    <Color x:Key="DarkHover">#2D3748</Color>
-    <Color x:Key="DarkPressed">#3D4A5C</Color>
-    <Color x:Key="DarkDisabled">#1A202C</Color>
+    <Color x:Key="DarkHover">#0F172A</Color>
+    <Color x:Key="DarkPressed">#0D1116</Color>
+    <Color x:Key="DarkDisabled">#0A0A0C</Color>
     <Color x:Key="DarkDisabledText">#4A5568</Color>
 
 </ResourceDictionary>

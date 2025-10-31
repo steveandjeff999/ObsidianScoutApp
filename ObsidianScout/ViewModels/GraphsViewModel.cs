@@ -5,6 +5,8 @@ using ObsidianScout.Services;
 using System.Collections.ObjectModel;
 using Microcharts;
 using SkiaSharp;
+using System.IO;
+using Microsoft.Maui.Controls;
 
 namespace ObsidianScout.ViewModels;
 
@@ -12,6 +14,7 @@ public partial class GraphsViewModel : ObservableObject
 {
     private readonly IApiService _apiService;
     private readonly ISettingsService _settingsService;
+    private readonly IConnectivityService _connectivityService;
     private GameConfig? _gameConfig;
 
     [ObservableProperty]
@@ -63,16 +66,26 @@ public partial class GraphsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<TeamChartInfo> teamChartsWithInfo = new();
 
+    [ObservableProperty]
+    private ImageSource? serverGraphImage;
+
+    [ObservableProperty]
+    private bool useServerImage;
+
+    [ObservableProperty]
+    private bool showMicrocharts = true;
+
     // Define team colors
     private readonly string[] TeamColors = new[]
     {
         "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"
     };
 
-    public GraphsViewModel(IApiService apiService, ISettingsService settingsService)
+    public GraphsViewModel(IApiService apiService, ISettingsService settingsService, IConnectivityService connectivityService)
     {
         _apiService = apiService;
         _settingsService = settingsService;
+        _connectivityService = connectivityService;
     }
 
     public async Task InitializeAsync()
@@ -320,8 +333,59 @@ public partial class GraphsViewModel : ObservableObject
             HasGraphData = false;
             TeamCharts.Clear();
             TeamChartsWithInfo.Clear();
+            ServerGraphImage = null;
+            UseServerImage = false;
+            ShowMicrocharts = true;
+
             System.Diagnostics.Debug.WriteLine("Cleared old chart and comparison data");
             
+            // If online and offline-mode NOT enabled, try server image endpoint first
+            var offlineMode = await _settingsService.GetOfflineModeAsync();
+            if (!offlineMode && _connectivityService.IsConnected)
+            {
+                try
+                {
+                    StatusMessage = "Requesting server-generated graph image...";
+
+                    var request = new GraphImageRequest
+                    {
+                        TeamNumbers = SelectedTeams.Select(t => t.TeamNumber).ToList(),
+                        EventId = SelectedEvent.Id,
+                        Metric = SelectedMetric.Id,
+                        GraphTypes = new List<string> { SelectedGraphType },
+                        DataView = SelectedDataView == "match_by_match" ? "matches" : SelectedDataView
+                    };
+
+                    var bytes = await _apiService.GetGraphsImageAsync(request);
+                    if (bytes != null && bytes.Length >0)
+                    {
+                        ServerGraphImage = ImageSource.FromStream(() => new MemoryStream(bytes));
+                        UseServerImage = true;
+                        ShowMicrocharts = false;
+                        HasGraphData = true;
+                        StatusMessage = "Server graph image loaded";
+
+                        // Notify UI
+                        OnPropertyChanged(nameof(ServerGraphImage));
+                        OnPropertyChanged(nameof(UseServerImage));
+                        OnPropertyChanged(nameof(ShowMicrocharts));
+                        OnPropertyChanged(nameof(HasGraphData));
+
+                        return; // done
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Server did not return an image, falling back to local generation");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Server image request failed: {ex.Message}");
+                    // fall back to local generation
+                }
+            }
+
+            // Existing offline/local processing (unchanged)
             System.Diagnostics.Debug.WriteLine($"=== GENERATING GRAPHS FROM SCOUTING DATA ===");
             System.Diagnostics.Debug.WriteLine($"Selected Event ID: {SelectedEvent.Id}, Name: {SelectedEvent.Name}");
             System.Diagnostics.Debug.WriteLine($"Selected Teams Count: {SelectedTeams.Count}");
@@ -396,7 +460,33 @@ public partial class GraphsViewModel : ObservableObject
 
             System.Diagnostics.Debug.WriteLine($"Total entries fetched: {allEntries.Count}");
             System.Diagnostics.Debug.WriteLine($"Entries by team: {string.Join(", ", allEntries.GroupBy(e => e.TeamNumber).Select(g => $"Team {g.Key}={g.Count()}"))}");
-            
+
+            // Fallback: If we fetched nothing per-team (maybe cached API returns empty for per-team queries), try fetching all cached scouting data for the event and filter locally
+            if (allEntries.Count ==0)
+            {
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine("No per-team entries found. Attempting to fetch all cached scouting data for event and filter locally as fallback.");
+                    var allResponse = await _apiService.GetAllScoutingDataAsync(teamNumber: null, eventId: SelectedEvent.Id, limit:1000);
+                    if (allResponse.Success && allResponse.Entries != null && allResponse.Entries.Count >0)
+                    {
+                        var fallbackFiltered = allResponse.Entries.Where(e => selectedTeamNumbers.Contains(e.TeamNumber)).ToList();
+                        System.Diagnostics.Debug.WriteLine($"Fallback: found {allResponse.Entries.Count} entries for event; {fallbackFiltered.Count} match selected teams");
+                        allEntries.AddRange(fallbackFiltered);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Fallback fetch returned no entries");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Fallback fetch failed: {ex.Message}");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Total entries after fallback: {allEntries.Count}");
+
             // CRITICAL VALIDATION: Ensure only selected teams are in the data
             var entriesTeamNumbers = allEntries.Select(e => e.TeamNumber).Distinct().ToHashSet();
             var unexpectedTeams = entriesTeamNumbers.Except(selectedTeamNumbers).ToList();
@@ -406,7 +496,7 @@ public partial class GraphsViewModel : ObservableObject
                 System.Diagnostics.Debug.WriteLine($"⚠️ CRITICAL WARNING: Found data for {unexpectedTeams.Count} unexpected teams!");
                 System.Diagnostics.Debug.WriteLine($"Unexpected teams: {string.Join(", ", unexpectedTeams)}");
                 System.Diagnostics.Debug.WriteLine($"Filtering out unexpected teams...");
-                
+
                 // Remove entries for teams that weren't selected
                 allEntries = allEntries.Where(e => selectedTeamNumbers.Contains(e.TeamNumber)).ToList();
                 System.Diagnostics.Debug.WriteLine($"After filtering: {allEntries.Count} entries remain");
@@ -673,7 +763,29 @@ public partial class GraphsViewModel : ObservableObject
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"  Metric '{metricId}' not found, returning 0");
+        // Fallback: try partial key matches (some cached payloads may have slightly different keys)
+        try
+        {
+            var lowerMetric = metricId.ToLower();
+            foreach (var kvp in data)
+            {
+                if (kvp.Key != null && kvp.Key.ToLower().Contains(lowerMetric))
+                {
+                    var v = ConvertToDouble(kvp.Value);
+                    if (v !=0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($" Fallback: found value for key '{kvp.Key}' = {v}");
+                        return v;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($" Fallback key scan failed: {ex.Message}");
+        }
+
+        System.Diagnostics.Debug.WriteLine($" Metric '{metricId}' not found, returning 0");
         return 0;
     }
 
@@ -983,8 +1095,7 @@ public partial class GraphsViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"Available teams: {AvailableTeams.Count}");
         System.Diagnostics.Debug.WriteLine($"Current selected: {SelectedTeams.Count}");
         
-        var teamsToAdd = AvailableTeams.ToList(); // Create a copy to avoid collection modification issues
-        
+        var teamsToAdd = AvailableTeams.ToList(); // Create a copy to avoid collection modification issues        
         foreach (var team in teamsToAdd)
         {
             if (!SelectedTeams.Any(t => t.TeamNumber == team.TeamNumber))
@@ -1066,6 +1177,11 @@ public partial class GraphsViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine($"Using team averages (fallback)");
             GenerateChartFromTeamAverages();
         }
+
+        UseServerImage = false;
+        ShowMicrocharts = true;
+        OnPropertyChanged(nameof(UseServerImage));
+        OnPropertyChanged(nameof(ShowMicrocharts));
     }
 
     private void GenerateChartFromServerData(GraphData graphData)
@@ -1367,7 +1483,7 @@ public partial class GraphsViewModel : ObservableObject
             };
         }).ToList();
 
-        System.Diagnostics.Debug.WriteLine($"=== GenerateChartFromTeamAverages ===");
+        System.Diagnostics.Debug.WriteLine($"{DateTime.Now:HH:mm:ss} === GenerateChartFromTeamAverages ===");
         System.Diagnostics.Debug.WriteLine($"Created {entries.Count} entries from team averages");
         System.Diagnostics.Debug.WriteLine($"⚠️ CRITICAL TEAM AVERAGES DEBUG:");
         for (int i = 0; i < entries.Count; i++)
