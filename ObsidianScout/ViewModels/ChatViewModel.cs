@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Linq;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 
 namespace ObsidianScout.ViewModels;
 
@@ -1068,6 +1069,119 @@ public partial class ChatViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"CreateGroupAsync failed: {ex.Message}");
             return new ChatCreateGroupResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    [RelayCommand]
+    private async Task JoinGroupAsync()
+    {
+        // Prompt user to enter group name
+        try
+        {
+            // Use the application's main page to show a prompt
+            var promptOwner = Application.Current?.MainPage;
+            if (promptOwner == null)
+            {
+                StatusMessage = "UI not available to prompt for group name";
+                await Task.Delay(900);
+                StatusMessage = string.Empty;
+                return;
+            }
+
+            var groupName = await promptOwner.DisplayPromptAsync("Join group", "Enter group name to join:", "Join", "Cancel", "Group name", -1, Keyboard.Default, string.Empty);
+            if (string.IsNullOrWhiteSpace(groupName))
+            {
+                // user cancelled or entered nothing
+                return;
+            }
+
+            groupName = groupName.Trim();
+
+            StatusMessage = "Joining group...";
+            var currentUser = await GetCurrentUsernameAsync();
+            if (string.IsNullOrEmpty(currentUser))
+            {
+                StatusMessage = "Unable to determine current username";
+                await Task.Delay(900);
+                StatusMessage = string.Empty;
+                return;
+            }
+
+            var req = new GroupMembersRequest { Members = new List<string> { currentUser } };
+            var resp = await _apiService.AddChatGroupMembersAsync(groupName, req);
+            if (resp != null && resp.Success)
+            {
+                StatusMessage = "Joined group";
+                // Refresh groups to update is_member flag
+                await LoadGroupsAsync();
+
+                // Select the newly joined group if present
+                var matched = Groups.FirstOrDefault(g => string.Equals(g.Name, groupName, System.StringComparison.OrdinalIgnoreCase) || string.Equals(g.Title, groupName, System.StringComparison.OrdinalIgnoreCase));
+                if (matched != null)
+                {
+                    SelectedGroup = matched;
+                }
+            }
+            else
+            {
+                StatusMessage = resp?.Error ?? "Failed to join group";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Join error: {ex.Message}";
+        }
+        finally
+        {
+            await Task.Delay(900);
+            StatusMessage = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private async Task LeaveGroupAsync()
+    {
+        if (SelectedGroup == null)
+        {
+            StatusMessage = "Select a group to leave";
+            await Task.Delay(900);
+            StatusMessage = string.Empty;
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Leaving group...";
+            var currentUser = await GetCurrentUsernameAsync();
+            if (string.IsNullOrEmpty(currentUser))
+            {
+                StatusMessage = "Unable to determine current username";
+                await Task.Delay(900);
+                StatusMessage = string.Empty;
+                return;
+            }
+
+            var req = new GroupMembersRequest { Members = new List<string> { currentUser } };
+            var resp = await _apiService.RemoveChatGroupMembersAsync(SelectedGroup.Name, req);
+            if (resp != null && resp.Success)
+            {
+                StatusMessage = "Left group";
+                // Refresh groups to update is_member flag
+                await LoadGroupsAsync();
+            }
+            else
+            {
+                StatusMessage = resp?.Error ?? "Failed to leave group";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Leave error: {ex.Message}";
+        }
+        finally
+        {
+            await Task.Delay(900);
+            StatusMessage = string.Empty;
         }
     }
 }

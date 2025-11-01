@@ -1539,4 +1539,123 @@ public partial class ApiService : IApiService
             return new ChatCreateGroupResponse { Success = false, Error = ex.Message };
         }
     }
+
+    public async Task<ChatGroupMembersResponse> GetChatGroupMembersAsync(string group)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatGroupMembersResponse { Success = false, Error = "Offline - cannot fetch group members" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/chat/groups/{Uri.EscapeDataString(group)}/members";
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatGroupMembers GET {url}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response: {content}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(content, _jsonOptions);
+                return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+            }
+
+            return new ChatGroupMembersResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetChatGroupMembersAsync failed: {ex.Message}");
+            return new ChatGroupMembersResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatGroupMembersResponse> AddChatGroupMembersAsync(string group, GroupMembersRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatGroupMembersResponse { Success = false, Error = "Offline - cannot add group members" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/groups/{Uri.EscapeDataString(group)}/members";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API] POST {endpoint} Request: {System.Text.Json.JsonSerializer.Serialize(request)}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response: {content}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(content, _jsonOptions);
+                return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+            }
+
+            return new ChatGroupMembersResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"AddChatGroupMembersAsync failed: {ex.Message}");
+            return new ChatGroupMembersResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ChatGroupMembersResponse> RemoveChatGroupMembersAsync(string group, GroupMembersRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ChatGroupMembersResponse { Success = false, Error = "Offline - cannot remove group members" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/chat/groups/{Uri.EscapeDataString(group)}/members";
+
+            // First attempt: if request has members, send them in DELETE body
+            if (request != null && request.Members != null && request.Members.Count >0)
+            {
+                var httpRequest = new HttpRequestMessage(HttpMethod.Delete, endpoint)
+                {
+                    Content = JsonContent.Create(request, options: _jsonOptions)
+                };
+                var response = await _httpClient.SendAsync(httpRequest);
+                var content = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} Request: {System.Text.Json.JsonSerializer.Serialize(request)}");
+                System.Diagnostics.Debug.WriteLine($"[API] Response: {content}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(content, _jsonOptions);
+                    return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+                }
+
+                System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync: first attempt failed with HTTP {response.StatusCode}, trying fallback delete-with-empty-body...");
+            }
+
+            // Fallback attempt: send DELETE with no body so server will remove the requesting user
+            var fallbackRequest = new HttpRequestMessage(HttpMethod.Delete, endpoint);
+            var fallbackResponse = await _httpClient.SendAsync(fallbackRequest);
+            var fallbackContent = await fallbackResponse.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} (no body) Response: {fallbackContent}");
+
+            if (fallbackResponse.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(fallbackContent, _jsonOptions);
+                return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+            }
+
+            return new ChatGroupMembersResponse { Success = false, Error = $"HTTP {fallbackResponse.StatusCode}: {fallbackContent}" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync failed: {ex.Message}");
+            return new ChatGroupMembersResponse { Success = false, Error = ex.Message };
+        }
+    }
 }

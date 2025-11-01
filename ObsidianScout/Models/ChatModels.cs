@@ -395,7 +395,21 @@ public class ChatGroupsResponse
  public bool Success { get; set; }
  public List<ChatGroup>? Groups { get; set; }
  public string? Error { get; set; }
-}
+ }
+ 
+ // Request model for adding/removing members from a group
+ public class GroupMembersRequest
+ {
+ [JsonPropertyName("members")]
+ public List<string> Members { get; set; } = new List<string>();
+ }
+ 
+ public class ChatGroupMembersResponse
+ {
+ public bool Success { get; set; }
+ public List<string>? Members { get; set; }
+ public string? Error { get; set; }
+ }
 
 // Request model for creating groups: uses 'group' and 'members' (usernames) per API docs
 public class ChatCreateGroupRequest

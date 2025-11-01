@@ -30,4 +30,9 @@ public interface IApiService
     Task<ChatReactResponse> ReactToChatMessageAsync(ChatReactRequest request);
     Task<ChatGroupsResponse> GetChatGroupsAsync(int? teamNumber = null);
     Task<ChatCreateGroupResponse> CreateChatGroupAsync(ChatCreateGroupRequest request);
+
+    // Group member management
+    Task<ChatGroupMembersResponse> GetChatGroupMembersAsync(string group);
+    Task<ChatGroupMembersResponse> AddChatGroupMembersAsync(string group, GroupMembersRequest request);
+    Task<ChatGroupMembersResponse> RemoveChatGroupMembersAsync(string group, GroupMembersRequest request);
 }

@@ -53,6 +53,11 @@
 
  <!-- New group button (visible when group chat enabled) -->
  <Button Text="New group" Clicked="OnCreateGroupClicked" IsVisible="{Binding IsAllianceChat}" />
+ <!-- Join/Leave buttons for selected group -->
+ <StackLayout Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsAllianceChat}">
+ <Button Text="Join group" Command="{Binding JoinGroupCommand}" />
+ <Button Text="Leave group" Command="{Binding LeaveGroupCommand}" />
+ </StackLayout>
  </StackLayout>
 
  <CollectionView x:Name="MessagesList" Grid.Row="2" ItemsSource="{Binding Messages}" SelectionMode="None" ItemsLayout="VerticalList">
