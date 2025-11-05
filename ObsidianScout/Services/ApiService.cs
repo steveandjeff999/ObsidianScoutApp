@@ -775,12 +775,12 @@ public partial class ApiService : IApiService
             var cachedConfig2 = await _cache_service.GetCachedGameConfigAsync();
             if (cachedConfig2 != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[API] Using cached game config (offline mode)");
+                System.Diagnostics.Debug.WriteLine($"[API] Using cached game config (server returned {response.StatusCode})");
                 return new GameConfigResponse 
                 { 
                     Success = true, 
                     Config = cachedConfig2,
-                    Error = "Using cached data (offline mode)"
+                    Error = $"?? Using cached data (server error: {response.StatusCode})"
                 };
             }
 
@@ -790,29 +790,52 @@ public partial class ApiService : IApiService
                 Error = $"Request failed with status {response.StatusCode}" 
             };
         }
-        catch (Exception ex)
+ catch (TaskCanceledException tcEx)
         {
-            System.Diagnostics.Debug.WriteLine($"[API] Game config request failed: {ex.Message}");
+          System.Diagnostics.Debug.WriteLine($"[API] Game config request timed out: {tcEx.Message}");
             
-            // Try to load from cache on failure
-            var cachedConfig3 = await _cache_service.GetCachedGameConfigAsync();
-            if (cachedConfig3 != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"[API] Using cached game config after error (offline mode)");
-                return new GameConfigResponse 
-                { 
-                    Success = true, 
-                    Config = cachedConfig3,
-                    Error = "Using cached data (offline mode)"
-                };
-            }
+  // Try to load from cache on timeout
+    var cachedConfig3 = await _cache_service.GetCachedGameConfigAsync();
+    if (cachedConfig3 != null)
+  {
+       System.Diagnostics.Debug.WriteLine($"[API] Using cached game config after timeout");
+     return new GameConfigResponse 
+            { 
+       Success = true, 
+   Config = cachedConfig3,
+        Error = "?? Using cached data (server timeout)"
+ };
+          }
             
             return new GameConfigResponse
-            {
-                Success = false,
-                Error = $"Connection error: {ex.Message}"
-            };
+    {
+           Success = false,
+   Error = $"Connection timeout: Server took too long to respond"
+          };
         }
+        catch (Exception ex)
+   {
+            System.Diagnostics.Debug.WriteLine($"[API] Game config request failed: {ex.Message}");
+
+      // Try to load from cache on failure
+            var cachedConfig4 = await _cache_service.GetCachedGameConfigAsync();
+            if (cachedConfig4 != null)
+            {
+        System.Diagnostics.Debug.WriteLine($"[API] Using cached game config after error (offline mode)");
+       return new GameConfigResponse 
+   { 
+       Success = true, 
+             Config = cachedConfig4,
+    Error = $"?? Using cached data ({ex.Message})"
+     };
+    }
+   
+  return new GameConfigResponse
+      {
+         Success = false,
+           Error = $"Connection error: {ex.Message}"
+  };
+     }
     }
 
     public async Task<ApiResponse<string>> HealthCheckAsync()
@@ -1193,29 +1216,58 @@ public partial class ApiService : IApiService
             return new ScheduledNotificationsResponse { Success = false, Error = "Offline - cannot fetch scheduled notifications" };
         }
 
-        try
+    try
         {
-            await AddAuthHeaderAsync();
-            var baseUrl = await GetBaseUrlAsync();
+    await AddAuthHeaderAsync();
+    var baseUrl = await GetBaseUrlAsync();
             var url = $"{baseUrl}/notifications/scheduled?limit={limit}&offset={offset}";
-            var response = await _httpClient.GetAsync(url);
+   var response = await _httpClient.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<ScheduledNotificationsResponse>(_jsonOptions);
-                return result ?? new ScheduledNotificationsResponse { Success = false, Error = "Invalid response" };
-            }
+   if (response.IsSuccessStatusCode)
+        {
+     var result = await response.Content.ReadFromJsonAsync<ScheduledNotificationsResponse>(_jsonOptions);
+  return result ?? new ScheduledNotificationsResponse { Success = false, Error = "Invalid response" };
+     }
 
-            var err = await response.Content.ReadAsStringAsync();
-            return new ScheduledNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+   var err = await response.Content.ReadAsStringAsync();
+     return new ScheduledNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
-        {
-            return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
+      {
+         return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
         }
     }
 
-    // Implementations for chat members endpoints (ensure these are inside the ApiService class)
+    public async Task<PastNotificationsResponse> GetPastNotificationsAsync(int limit =200, int offset =0)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+ return new PastNotificationsResponse { Success = false, Error = "Offline - cannot fetch past notifications" };
+        }
+
+        try
+   {
+  await AddAuthHeaderAsync();
+     var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/notifications/past?limit={limit}&offset={offset}";
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+        {
+ var result = await response.Content.ReadFromJsonAsync<PastNotificationsResponse>(_jsonOptions);
+        return result ?? new PastNotificationsResponse { Success = false, Error = "Invalid response" };
+          }
+
+            var err = await response.Content.ReadAsStringAsync();
+            return new PastNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+        }
+    catch (Exception ex)
+      {
+            return new PastNotificationsResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+ // Implementations for chat members endpoints (ensure these are inside the ApiService class)
     public async Task<ChatMembersResponse> GetChatMembersAsync(string scope = "team")
     {
         if (!await ShouldUseNetworkAsync())
@@ -1617,45 +1669,148 @@ public partial class ApiService : IApiService
             var baseUrl = await GetBaseUrlAsync();
             var endpoint = $"{baseUrl}/chat/groups/{Uri.EscapeDataString(group)}/members";
 
-            // First attempt: if request has members, send them in DELETE body
-            if (request != null && request.Members != null && request.Members.Count >0)
+        // First attempt: if request has members, send them in DELETE body
+          if (request != null && request.Members != null && request.Members.Count >0)
+      {
+          var httpRequest = new HttpRequestMessage(HttpMethod.Delete, endpoint)
+ {
+      Content = JsonContent.Create(request, options: _jsonOptions)
+     };
+       var response = await _httpClient.SendAsync(httpRequest);
+    var content = await response.Content.ReadAsStringAsync();
+         System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} Request: {System.Text.Json.JsonSerializer.Serialize(request)}");
+      System.Diagnostics.Debug.WriteLine($"[API] Response: {content}");
+
+         if (response.IsSuccessStatusCode)
             {
-                var httpRequest = new HttpRequestMessage(HttpMethod.Delete, endpoint)
-                {
-                    Content = JsonContent.Create(request, options: _jsonOptions)
-                };
-                var response = await _httpClient.SendAsync(httpRequest);
-                var content = await response.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} Request: {System.Text.Json.JsonSerializer.Serialize(request)}");
-                System.Diagnostics.Debug.WriteLine($"[API] Response: {content}");
+      var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(content, _jsonOptions);
+              return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+           }
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(content, _jsonOptions);
-                    return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
-                }
-
-                System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync: first attempt failed with HTTP {response.StatusCode}, trying fallback delete-with-empty-body...");
+         System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync: first attempt failed with HTTP {response.StatusCode}, trying fallback delete-with-empty-body...");
             }
 
-            // Fallback attempt: send DELETE with no body so server will remove the requesting user
+// Fallback attempt: send DELETE with no body so server will remove the requesting user
             var fallbackRequest = new HttpRequestMessage(HttpMethod.Delete, endpoint);
             var fallbackResponse = await _httpClient.SendAsync(fallbackRequest);
-            var fallbackContent = await fallbackResponse.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} (no body) Response: {fallbackContent}");
+      var fallbackContent = await fallbackResponse.Content.ReadAsStringAsync();
+      System.Diagnostics.Debug.WriteLine($"[API] DELETE {endpoint} (no body) Response: {fallbackContent}");
 
             if (fallbackResponse.IsSuccessStatusCode)
-            {
-                var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(fallbackContent, _jsonOptions);
-                return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
+  {
+        var result = System.Text.Json.JsonSerializer.Deserialize<ChatGroupMembersResponse>(fallbackContent, _jsonOptions);
+           return result ?? new ChatGroupMembersResponse { Success = false, Error = "Invalid response" };
             }
 
             return new ChatGroupMembersResponse { Success = false, Error = $"HTTP {fallbackResponse.StatusCode}: {fallbackContent}" };
         }
+    catch (Exception ex)
+        {
+    System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync failed: {ex.Message}");
+       return new ChatGroupMembersResponse { Success = false, Error = ex.Message };
+      }
+    }
+
+    public async Task<ChatStateResponse> GetChatStateAsync()
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+         return new ChatStateResponse { Success = false, Error = "Offline - cannot fetch chat state" };
+ }
+
+  try
+        {
+  await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+  var url = $"{baseUrl}/chat/state";
+   
+   System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync GET {url}");
+      
+        var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+ 
+      System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Status: {(int)response.StatusCode} {response.StatusCode}");
+  System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Response: {content}");
+
+            if (response.IsSuccessStatusCode)
+    {
+   var result = System.Text.Json.JsonSerializer.Deserialize<ChatStateResponse>(content, _jsonOptions);
+        return result ?? new ChatStateResponse { Success = false, Error = "Invalid response" };
+       }
+
+            return new ChatStateResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"RemoveChatGroupMembersAsync failed: {ex.Message}");
-            return new ChatGroupMembersResponse { Success = false, Error = ex.Message };
+       System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync failed: {ex.Message}");
+   return new ChatStateResponse { Success = false, Error = ex.Message };
         }
+    }
+
+    public async Task<ApiResponse<bool>> MarkChatMessagesAsReadAsync(string conversationId, string lastReadMessageId)
+  {
+  if (!await ShouldUseNetworkAsync())
+    {
+  return new ApiResponse<bool> { Success = false, Error = "Offline - cannot mark messages as read" };
+  }
+
+        try
+   {
+   await AddAuthHeaderAsync();
+  var baseUrl = await GetBaseUrlAsync();
+     // FIXED: Correct endpoint per API docs - no conversationId in URL path
+       var endpoint = $"{baseUrl}/chat/conversations/read";
+   
+     // FIXED: Parse conversationId to extract type and id
+    // Format: "dm_username", "group_groupname", or "alliance_id"
+            string type = "dm";
+       string id = conversationId;
+          
+         if (conversationId.StartsWith("dm_"))
+            {
+     type = "dm";
+   id = conversationId.Substring(3); // Remove "dm_" prefix
+       }
+        else if (conversationId.StartsWith("group_"))
+       {
+    type = "group";
+         id = conversationId.Substring(6); // Remove "group_" prefix
+         }
+ else if (conversationId.StartsWith("alliance_"))
+       {
+   type = "alliance";
+    id = conversationId.Substring(9); // Remove "alliance_" prefix
+    }
+            
+ // FIXED: Use correct request body format per API docs
+        var requestBody = new 
+            { 
+         type = type,
+   id = id,
+       last_read_message_id = lastReadMessageId 
+       };
+ 
+    System.Diagnostics.Debug.WriteLine($"[API] MarkChatMessagesAsReadAsync POST {endpoint}");
+     System.Diagnostics.Debug.WriteLine($"[API] Request: {System.Text.Json.JsonSerializer.Serialize(requestBody)}");
+       
+     var response = await _httpClient.PostAsJsonAsync(endpoint, requestBody, _jsonOptions);
+    var content = await response.Content.ReadAsStringAsync();
+       
+   System.Diagnostics.Debug.WriteLine($"[API] MarkChatMessagesAsReadAsync Status: {(int)response.StatusCode} {response.StatusCode}");
+   System.Diagnostics.Debug.WriteLine($"[API] MarkChatMessagesAsReadAsync Response: {content}");
+
+      if (response.IsSuccessStatusCode)
+ {
+       var result = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<bool>>(content, _jsonOptions);
+        return result ?? new ApiResponse<bool> { Success = true };
+ }
+
+    return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+     System.Diagnostics.Debug.WriteLine($"[API] MarkChatMessagesAsReadAsync failed: {ex.Message}");
+         return new ApiResponse<bool> { Success = false, Error = ex.Message };
+   }
     }
 }

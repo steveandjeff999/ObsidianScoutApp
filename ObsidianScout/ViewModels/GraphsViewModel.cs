@@ -1049,19 +1049,22 @@ public partial class GraphsViewModel : ObservableObject
 
     private void UpdateAvailableTeams()
     {
-        // Filter out teams that are already selected and sort by team number
+      // Use HashSet for O(1) lookups instead of O(n) per team - HUGE performance improvement!
+     var selectedNumbers = SelectedTeams.Select(t => t.TeamNumber).ToHashSet();
+  
+    // Filter out teams that are already selected and sort by team number
         var available = Teams
-            .Where(t => !SelectedTeams.Any(st => st.TeamNumber == t.TeamNumber))
-            .OrderBy(t => t.TeamNumber)
+         .Where(t => !selectedNumbers.Contains(t.TeamNumber))
+       .OrderBy(t => t.TeamNumber)
             .ToList();
         
-        // Update the backing field, not the generated property
+  // Update the backing field, not the generated property
         availableTeams.Clear();
         foreach (var team in available)
         {
             availableTeams.Add(team);
-        }
-        
+      }
+   
         System.Diagnostics.Debug.WriteLine($"Available teams updated: {availableTeams.Count} teams available, {SelectedTeams.Count} teams selected");
     }
 
@@ -1091,19 +1094,26 @@ public partial class GraphsViewModel : ObservableObject
     [RelayCommand]
     private void SelectAllTeams()
     {
-        System.Diagnostics.Debug.WriteLine($"=== SELECT ALL TEAMS ===");
+        System.Diagnostics.Debug.WriteLine($"=== SELECT ALL TEAMS (HashSet Optimized) ===");
         System.Diagnostics.Debug.WriteLine($"Available teams: {AvailableTeams.Count}");
         System.Diagnostics.Debug.WriteLine($"Current selected: {SelectedTeams.Count}");
         
-        var teamsToAdd = AvailableTeams.ToList(); // Create a copy to avoid collection modification issues        
+        // Create HashSet of already-selected team numbers for O(1) lookups
+        var selectedNumbers = SelectedTeams.Select(t => t.TeamNumber).ToHashSet();
+        
+        // Filter once with HashSet instead of repeated .Any() calls
+        var teamsToAdd = AvailableTeams
+            .Where(t => !selectedNumbers.Contains(t.TeamNumber))
+            .ToList();
+    
+        System.Diagnostics.Debug.WriteLine($"Teams to add: {teamsToAdd.Count}");
+        
+        // Add teams (still triggers UI updates, but much faster now)
         foreach (var team in teamsToAdd)
         {
-            if (!SelectedTeams.Any(t => t.TeamNumber == team.TeamNumber))
-            {
-                SelectedTeams.Add(team);
-            }
+          SelectedTeams.Add(team);
         }
-        
+     
         UpdateAvailableTeams();
         StatusMessage = $"Selected all {SelectedTeams.Count} teams";
         System.Diagnostics.Debug.WriteLine($"After select all: {SelectedTeams.Count} teams selected");

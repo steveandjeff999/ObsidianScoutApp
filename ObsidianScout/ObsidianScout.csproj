@@ -145,6 +145,9 @@
 	  <MauiXaml Update="Views\MatchPredictionPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\NotificationsViewerPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\ScoutingPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

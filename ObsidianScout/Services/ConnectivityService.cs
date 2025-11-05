@@ -12,15 +12,14 @@ namespace ObsidianScout.Services
     public class ConnectivityService : IConnectivityService, IDisposable
     {
         private readonly System.Timers.Timer _timer;
-        private bool _isConnected;
 
         public event EventHandler<bool>? ConnectivityChanged;
 
         public ConnectivityService()
         {
-            _isConnected = CheckNetworkAccess();
+            // Don't cache initial state, check live every time
 
-            // Poll every 30 seconds
+            // Poll every 30 seconds to fire connectivity changed events
             _timer = new System.Timers.Timer(30_000);
             _timer.AutoReset = true;
             _timer.Elapsed += Timer_Elapsed;
@@ -39,13 +38,20 @@ namespace ObsidianScout.Services
 
         private void OnMauiConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
         {
-            UpdateConnectivity(e.NetworkAccess == NetworkAccess.Internet);
+            var isOnline = e.NetworkAccess == NetworkAccess.Internet;
+            System.Diagnostics.Debug.WriteLine($"[ConnectivityService] MAUI connectivity changed: {e.NetworkAccess} (IsOnline={isOnline})");
+            ConnectivityChanged?.Invoke(this, isOnline);
         }
 
         private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
             var current = CheckNetworkAccess();
-            UpdateConnectivity(current);
+            var previous = IsConnected; // Check live, then compare
+            if (previous != current)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ConnectivityService] Connectivity changed via timer: {previous} ? {current}");
+                ConnectivityChanged?.Invoke(this, current);
+            }
         }
 
         private bool CheckNetworkAccess()
@@ -60,16 +66,25 @@ namespace ObsidianScout.Services
             }
         }
 
-        private void UpdateConnectivity(bool current)
+        // CRITICAL FIX: Check live every time instead of caching
+        public bool IsConnected
         {
-            if (_isConnected != current)
+            get
             {
-                _isConnected = current;
-                ConnectivityChanged?.Invoke(this, _isConnected);
+                try
+                {
+                    var networkAccess = Connectivity.Current.NetworkAccess;
+                    var isConnected = networkAccess == NetworkAccess.Internet;
+                    System.Diagnostics.Debug.WriteLine($"[ConnectivityService] IsConnected called: NetworkAccess={networkAccess}, Result={isConnected}");
+                    return isConnected;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ConnectivityService] IsConnected check failed: {ex.Message}");
+                    return false;
+                }
             }
         }
-
-        public bool IsConnected => _isConnected;
 
         public void Dispose()
         {

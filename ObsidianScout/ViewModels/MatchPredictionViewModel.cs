@@ -6,6 +6,10 @@ using System.Collections.ObjectModel;
 
 namespace ObsidianScout.ViewModels;
 
+// CRITICAL: Add QueryProperty attributes for deep linking support from notifications
+[QueryProperty(nameof(EventId), "eventId")]
+[QueryProperty(nameof(EventCode), "eventCode")]
+[QueryProperty(nameof(MatchNumber), "matchNumber")]
 public partial class MatchPredictionViewModel : ObservableObject
 {
     private readonly IApiService _apiService;
@@ -42,6 +46,41 @@ public partial class MatchPredictionViewModel : ObservableObject
     [ObservableProperty]
     private string insufficientDataMessage = string.Empty;
 
+  // NEW: Properties for deep linking from notifications
+    private string? _eventId;
+    public string? EventId
+    {
+        get => _eventId;
+        set
+        {
+            _eventId = value;
+        System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] EventId set to: {value}");
+     _ = HandleDeepLinkAsync();
+   }
+    }
+
+    private string? _eventCode;
+    public string? EventCode
+    {
+        get => _eventCode;
+        set
+      {
+        _eventCode = value;
+            System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] EventCode set to: {value}");
+        }
+    }
+
+    private string? _matchNumber;
+    public string? MatchNumber
+    {
+  get => _matchNumber;
+        set
+        {
+            _matchNumber = value;
+         System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] MatchNumber set to: {value}");
+     }
+    }
+
     public MatchPredictionViewModel(IApiService apiService, ISettingsService settingsService)
     {
         _apiService = apiService;
@@ -50,8 +89,70 @@ public partial class MatchPredictionViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        await LoadGameConfigAsync();
+    await LoadGameConfigAsync();
         await LoadEventsAsync();
+    }
+
+    // NEW: Handle deep link from notification
+    private async Task HandleDeepLinkAsync()
+    {
+        // Wait for initialization to complete
+        if (Events.Count == 0)
+     {
+   await Task.Delay(500);
+            if (Events.Count == 0)
+            {
+   System.Diagnostics.Debug.WriteLine("[MatchPredictionVM] Events not loaded yet, waiting...");
+       return;
+     }
+        }
+
+        if (!string.IsNullOrEmpty(_eventId) && int.TryParse(_eventId, out var eventIdInt))
+        {
+       System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Handling deep link to event {eventIdInt}, match {_matchNumber}");
+
+            // Find and select the event
+            var targetEvent = Events.FirstOrDefault(e => e.Id == eventIdInt);
+ if (targetEvent != null)
+            {
+      System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Found event: {targetEvent.Name}");
+        SelectedEvent = targetEvent;
+
+         // Wait for matches to load
+  await Task.Delay(1000);
+
+     // If match number specified, find and select it
+             if (!string.IsNullOrEmpty(_matchNumber) && int.TryParse(_matchNumber, out var matchNumInt))
+      {
+       var targetMatch = Matches.FirstOrDefault(m => m.MatchNumber == matchNumInt);
+ if (targetMatch != null)
+         {
+  System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Found match {matchNumInt}, auto-selecting");
+              SelectedMatch = targetMatch;
+
+          // Give UI time to update, then auto-predict
+  await Task.Delay(500);
+     await PredictMatchAsync();
+       
+      StatusMessage = $"?? Opened from notification - Match {matchNumInt}";
+          }
+  else
+          {
+    System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Match {matchNumInt} not found in loaded matches");
+        StatusMessage = $"Match {matchNumInt} selected - tap 'Predict Match' to analyze";
+             }
+       }
+else
+       {
+  StatusMessage = $"Event {targetEvent.Name} selected - choose a match to predict";
+        }
+            }
+       else
+  {
+                System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Event {eventIdInt} not found");
+     StatusMessage = $"Could not find event (ID: {eventIdInt})";
+     }
+        }
     }
 
     private async Task LoadGameConfigAsync()
@@ -59,75 +160,84 @@ public partial class MatchPredictionViewModel : ObservableObject
         try
         {
             System.Diagnostics.Debug.WriteLine("Loading game config for predictions...");
-            var response = await _apiService.GetGameConfigAsync();
-            
-            if (response.Success && response.Config != null)
+     var response = await _apiService.GetGameConfigAsync();
+          
+    if (response.Success && response.Config != null)
             {
-                _gameConfig = response.Config;
-                System.Diagnostics.Debug.WriteLine($"Game config loaded: {_gameConfig.GameName}");
-            }
+        _gameConfig = response.Config;
+        System.Diagnostics.Debug.WriteLine($"Game config loaded: {_gameConfig.GameName}");
+         }
             else
-            {
+        {
                 System.Diagnostics.Debug.WriteLine($"Failed to load game config: {response.Error}");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading game config: {ex.Message}");
-        }
+     System.Diagnostics.Debug.WriteLine($"Error loading game config: {ex.Message}");
+  }
     }
 
     private async Task LoadEventsAsync()
     {
-        try
-        {
-            IsLoading = true;
-            StatusMessage = "Loading events...";
+try
+   {
+         IsLoading = true;
+   StatusMessage = "Loading events...";
 
-            var response = await _apiService.GetEventsAsync();
-            
+var response = await _apiService.GetEventsAsync();
+         
             if (response.Success && response.Events != null)
-            {
+ {
                 Events = new ObservableCollection<Event>(response.Events);
-                StatusMessage = $"{Events.Count} events loaded";
+    StatusMessage = $"{Events.Count} events loaded";
+            
+                // Try to auto-select the current event from game config (if not deep linking)
+              Event? eventToSelect = null;
                 
-                // Try to auto-select the current event from game config
-                Event? eventToSelect = null;
-                
-                if (_gameConfig != null && !string.IsNullOrEmpty(_gameConfig.CurrentEventCode))
-                {
-                    eventToSelect = Events.FirstOrDefault(e => 
-                        e.Code.Equals(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
-                    
-                    if (eventToSelect != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Auto-selected current event: {eventToSelect.Name}");
-                    }
-                }
-                
-                // Fallback to first event if current event not found
-                if (eventToSelect == null && Events.Count > 0)
-                {
-                    eventToSelect = Events[0];
-                }
-                
-                if (eventToSelect != null)
-                {
-                    SelectedEvent = eventToSelect;
-                }
+         // Don't auto-select if we're handling a deep link
+          if (string.IsNullOrEmpty(_eventId))
+          {
+         if (_gameConfig != null && !string.IsNullOrEmpty(_gameConfig.CurrentEventCode))
+     {
+   eventToSelect = Events.FirstOrDefault(e => 
+    e.Code.Equals(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+         
+       if (eventToSelect != null)
+      {
+  System.Diagnostics.Debug.WriteLine($"Auto-selected current event: {eventToSelect.Name}");
+         }
+  }
+            
+    // Fallback to first event if current event not found
+            if (eventToSelect == null && Events.Count > 0)
+    {
+      eventToSelect = Events[0];
+          }
+ 
+   if (eventToSelect != null)
+           {
+        SelectedEvent = eventToSelect;
+    }
+      }
+      else
+      {
+       // We have a deep link, trigger the handler
+  await HandleDeepLinkAsync();
+    }
             }
-            else
+    else
             {
-                StatusMessage = response.Error ?? "Failed to load events";
-            }
+   StatusMessage = response.Error ?? "Failed to load events";
+     }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error loading events: {ex.Message}";
+   StatusMessage = $"Error loading events: {ex.Message}";
         }
-        finally
-        {
-            IsLoading = false;
+    finally
+   {
+     IsLoading = false;
         }
     }
 
@@ -135,11 +245,16 @@ public partial class MatchPredictionViewModel : ObservableObject
     {
         if (newValue != null)
         {
-            SelectedMatch = null;
-            Prediction = null;
+        // Don't clear selected match if we're handling a deep link
+  if (string.IsNullOrEmpty(_matchNumber))
+{
+     SelectedMatch = null;
+       }
+            
+   Prediction = null;
             HasPrediction = false;
             _ = LoadMatchesAsync();
-        }
+}
     }
 
     private async Task LoadMatchesAsync()

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using ObsidianScout.Services;
 using ObsidianScout.ViewModels;
 using ObsidianScout.Views;
@@ -42,54 +42,69 @@ namespace ObsidianScout
             builder.Services.AddSingleton<IDataPreloadService, DataPreloadService>();
             builder.Services.AddSingleton<IQRCodeService, QRCodeService>();
             builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
+            builder.Services.AddSingleton<IUIThreadingService, UIThreadingService>();
             
-            // Notification polling
-            builder.Services.AddSingleton<INotificationPollingService, NotificationPollingService>();
-
+            // Register platform-specific services
 #if ANDROID
-            builder.Services.AddSingleton<ILocalNotificationService, ObsidianScout.Platforms.Android.LocalNotificationService>();
+            builder.Services.AddSingleton<ILocalNotificationService, Platforms.Android.LocalNotificationService>();
 #elif WINDOWS
-            builder.Services.AddSingleton<ILocalNotificationService, ObsidianScout.Platforms.Windows.LocalNotificationService>();
+            builder.Services.AddSingleton<ILocalNotificationService, Platforms.Windows.LocalNotificationService>();
+#else
+            // For iOS/Mac, register a null implementation or stub
+            builder.Services.AddSingleton<ILocalNotificationService>(sp => null!);
 #endif
+
+            // Register notification services
+            builder.Services.AddSingleton<IBackgroundNotificationService>(sp =>
+            {
+                var apiService = sp.GetRequiredService<IApiService>();
+                var settingsService = sp.GetRequiredService<ISettingsService>();
+                var localNotificationService = sp.GetService<ILocalNotificationService>();
+                return new BackgroundNotificationService(apiService, settingsService, localNotificationService);
+            });
+ 
+            builder.Services.AddSingleton<INotificationPollingService>(sp =>
+            {
+                var apiService = sp.GetRequiredService<IApiService>();
+                var settingsService = sp.GetRequiredService<ISettingsService>();
+                var localNotificationService = sp.GetService<ILocalNotificationService>();
+                return new NotificationPollingService(apiService, settingsService, localNotificationService);
+            });
 
             // Configure HttpClient with custom handler for self-signed certificates
             builder.Services.AddSingleton<HttpClient>(sp =>
             {
                 var handler = new HttpClientHandler();
-                
+     
 #if DEBUG
                 // WARNING: Only use this in development/testing
-                // Accept all SSL certificates (including self-signed)
-                handler.ServerCertificateCustomValidationCallback = 
-                    (sender, cert, chain, sslPolicyErrors) =>
-                    {
-                        // In debug mode, accept all certificates
-                        return true;
-                    };
+                handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+             {
+      // Accept all certificates in debug mode
+          return true;
+       };
 #else
-                // In production, you might want to validate specific certificates
-                handler.ServerCertificateCustomValidationCallback = 
-                    (sender, cert, chain, sslPolicyErrors) =>
-                    {
-                        if (sslPolicyErrors == SslPolicyErrors.None)
-                        {
-                            return true;
-                        }
-                        
-                        // You can add specific certificate validation here
-                        // For example, check the certificate thumbprint
-                        // return cert?.Thumbprint == "YOUR_CERT_THUMBPRINT";
-                        
-                        // For now, accept all in release too (adjust as needed)
-                        return true;
-                    };
+     // Production: Only allow valid certificates or your specific cert
+  handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+ {
+        // Check for your specific certificate thumbprint
+                // Replace with your actual certificate thumbprint
+        if (cert != null)
+       {
+     // For now, accept all in production too (update with your cert thumbprint)
+  return true;
+     }
+       return sslPolicyErrors == SslPolicyErrors.None;
+        };
 #endif
-                
-                return new HttpClient(handler)
-                {
-                    Timeout = TimeSpan.FromSeconds(30)
-                };
-            });
+
+     var client = new HttpClient(handler);
+    
+              // Set timeout to 15 seconds (was default 100 seconds)
+client.Timeout = TimeSpan.FromSeconds(15);
+    
+        return client;
+          });
             
             builder.Services.AddSingleton<IApiService, ApiService>();
 
@@ -129,12 +144,21 @@ namespace ObsidianScout
             try
             {
                 var context = Android.App.Application.Context;
+                
+                // Use persistent preferences that survive reboots
+                ObsidianScout.Platforms.Android.PersistentPreferences.SetAppLaunched(context, true);
+          
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] ===== APP LAUNCHED =====");
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] App launched flag set - starting ForegroundNotificationService");
+            
                 var intent = new Intent(context, typeof(ObsidianScout.Platforms.Android.ForegroundNotificationService));
                 context.StartForegroundService(intent);
+          
+                System.Diagnostics.Debug.WriteLine("[MauiProgram] ? ForegroundNotificationService started successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to start ForegroundNotificationService: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] ? Failed to start ForegroundNotificationService: {ex.Message}");
             }
 #endif
 

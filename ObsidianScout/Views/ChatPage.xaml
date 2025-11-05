@@ -1,107 +1,226 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
- xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
- xmlns:models="clr-namespace:ObsidianScout.Models"
- xmlns:converters="clr-namespace:ObsidianScout.Converters"
- x:Class="ObsidianScout.Views.ChatPage"
+      xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+     xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+    xmlns:models="clr-namespace:ObsidianScout.Models"
+        xmlns:converters="clr-namespace:ObsidianScout.Converters"
+             x:Class="ObsidianScout.Views.ChatPage"
  x:DataType="viewmodels:ChatViewModel"
- x:Name="RootPage"
- Title="Chat">
+   x:Name="RootPage"
+             Title="Chat">
 
- <ContentPage.Resources>
- <ResourceDictionary>
- <converters:InvertedBoolConverter x:Key="InvertedBool" />
- </ResourceDictionary>
- </ContentPage.Resources>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+   <converters:InvertedBoolConverter x:Key="InvertedBool" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
- <ContentPage.Content>
- <Grid Padding="12">
- <Grid.RowDefinitions>
- <RowDefinition Height="Auto"/>
- <RowDefinition Height="Auto"/>
- <RowDefinition Height="*"/>
- <RowDefinition Height="Auto"/>
- </Grid.RowDefinitions>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20" RowSpacing="12">
 
- <Label Grid.Row="0" Text="Chat" FontAttributes="Bold" HorizontalOptions="Center" />
+   <!-- HEADER -->
+        <Border Grid.Row="0" Style="{StaticResource CompactGlassCard}">
+       <HorizontalStackLayout Spacing="12">
+  <Border BackgroundColor="{StaticResource Primary}"
+WidthRequest="40"
+     HeightRequest="40"
+       VerticalOptions="Center">
+   <Border.StrokeShape>
+     <RoundRectangle CornerRadius="10" />
+   </Border.StrokeShape>
+        <Label Text="C"
+   FontSize="20"
+      FontFamily="OpenSansSemibold"
+         FontAttributes="Bold"
+ TextColor="White"
+   HorizontalOptions="Center"
+      VerticalOptions="Center" />
+ </Border>
+     <Label Text="Chat" 
+   Style="{StaticResource HeaderLabel}" 
+FontSize="24"
+     VerticalOptions="Center" />
+    </HorizontalStackLayout>
+        </Border>
 
- <!-- Toggle + Member picker + Group picker -->
- <StackLayout Grid.Row="1" Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
- <StackLayout Orientation="Horizontal" VerticalOptions="Center" Spacing="6">
- <Label Text="Group chat" VerticalOptions="Center" />
- <Switch IsToggled="{Binding IsAllianceChat}" VerticalOptions="Center" />
- </StackLayout>
+  <!-- CONTROLS -->
+        <Border Grid.Row="1" Style="{StaticResource ModernCard}">
+<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                
+ <!-- Row 0: Group Chat Toggle -->
+          <HorizontalStackLayout Grid.Row="0" Spacing="12" VerticalOptions="Center">
+        <Label Text="Group Chat" 
+        Style="{StaticResource BodyLabel}" 
+      VerticalOptions="Center" />
+   <Switch IsToggled="{Binding IsAllianceChat}" 
+      VerticalOptions="Center" />
+        </HorizontalStackLayout>
 
- <!-- Direct recipient picker (hidden when group chat enabled) -->
- <Picker
- Title="Select recipient"
- ItemsSource="{Binding Members}"
- ItemDisplayBinding="{Binding DisplayName}"
- SelectedItem="{Binding SelectedMember}"
- HorizontalOptions="FillAndExpand"
- IsVisible="{Binding IsAllianceChat, Converter={StaticResource InvertedBool}}"
- IsEnabled="{Binding IsAllianceChat, Converter={StaticResource InvertedBool}}" />
+         <!-- Row 1: Recipient/Group Picker -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <!-- Direct recipient picker -->
+  <Border Grid.Column="0"
+    BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+    StrokeThickness="0"
+        Padding="0"
+              IsVisible="{Binding IsAllianceChat, Converter={StaticResource InvertedBool}}">
+            <Border.StrokeShape>
+    <RoundRectangle CornerRadius="12" />
+      </Border.StrokeShape>
+    <Picker Title="Select recipient"
+           ItemsSource="{Binding Members}"
+      ItemDisplayBinding="{Binding DisplayName}"
+            SelectedItem="{Binding SelectedMember}"
+        Style="{StaticResource ModernPicker}"
+    BackgroundColor="Transparent"
+               IsEnabled="{Binding IsAllianceChat, Converter={StaticResource InvertedBool}}" />
+        </Border>
 
- <!-- Group picker (visible when group chat enabled) -->
- <Picker
- Title="Select group"
- ItemsSource="{Binding Groups}"
- ItemDisplayBinding="{Binding Title}"
- SelectedItem="{Binding SelectedGroup}"
- HorizontalOptions="FillAndExpand"
- IsVisible="{Binding IsAllianceChat}" />
+ <!-- Group picker -->
+    <Border Grid.Column="0"
+      BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+                StrokeThickness="0"
+   Padding="0"
+                 IsVisible="{Binding IsAllianceChat}">
+        <Border.StrokeShape>
+        <RoundRectangle CornerRadius="12" />
+     </Border.StrokeShape>
+             <Picker Title="Select group"
+    ItemsSource="{Binding Groups}"
+            ItemDisplayBinding="{Binding Title}"
+    SelectedItem="{Binding SelectedGroup}"
+      Style="{StaticResource ModernPicker}"
+      BackgroundColor="Transparent" />
+       </Border>
 
- <!-- New group button (visible when group chat enabled) -->
- <Button Text="New group" Clicked="OnCreateGroupClicked" IsVisible="{Binding IsAllianceChat}" />
- <!-- Join/Leave buttons for selected group -->
- <StackLayout Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsAllianceChat}">
- <Button Text="Join group" Command="{Binding JoinGroupCommand}" />
- <Button Text="Leave group" Command="{Binding LeaveGroupCommand}" />
- </StackLayout>
- </StackLayout>
+         <!-- New Group Button -->
+     <Button Grid.Column="1"
+     Text="+"
+       Style="{StaticResource IconButton}"
+       Clicked="OnCreateGroupClicked"
+             IsVisible="{Binding IsAllianceChat}"
+      ToolTipProperties.Text="New Group" />
+      </Grid>
 
- <CollectionView x:Name="MessagesList" Grid.Row="2" ItemsSource="{Binding Messages}" SelectionMode="None" ItemsLayout="VerticalList">
- <CollectionView.ItemTemplate>
+  <!-- Row 2: Group Actions -->
+   <HorizontalStackLayout Grid.Row="2" 
+     Spacing="12" 
+   IsVisible="{Binding IsAllianceChat}">
+           <Button Text="Join Group"
+        Command="{Binding JoinGroupCommand}"
+         Style="{StaticResource OutlineButton}"
+                FontSize="14"
+       Padding="16,10"
+     HeightRequest="44"
+        HorizontalOptions="FillAndExpand" />
+           <Button Text="Leave Group"
+    Command="{Binding LeaveGroupCommand}"
+            Style="{StaticResource OutlineButton}"
+         FontSize="14"
+       Padding="16,10"
+    HeightRequest="44"
+   HorizontalOptions="FillAndExpand" />
+            </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- MESSAGES LIST -->
+        <CollectionView x:Name="MessagesList" 
+         Grid.Row="2" 
+              ItemsSource="{Binding Messages}" 
+              SelectionMode="None">
+         <CollectionView.ItemTemplate>
  <DataTemplate x:DataType="models:ChatMessage">
- <!-- Use a SwipeView so users can reveal Edit/Delete actions on swipe (mobile)
- and provide a consistent action menu for messages. -->
- <SwipeView>
- <SwipeView.RightItems>
- <SwipeItems Mode="Reveal">
- <SwipeItem Text="React" BackgroundColor="LightGoldenrodYellow" Invoked="OnMessageReactInvoked" />
- <SwipeItem Text="Edit" BackgroundColor="LightBlue" Command="{Binding BindingContext.EditMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" CommandParameter="{Binding .}" IsVisible="{Binding IsFromCurrentUser}"/>
- <SwipeItem Text="Delete" BackgroundColor="LightCoral" Command="{Binding BindingContext.DeleteMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" CommandParameter="{Binding .}" IsVisible="{Binding IsFromCurrentUser}"/>
- </SwipeItems>
- </SwipeView.RightItems>
+             <SwipeView Margin="0,0,0,12">
+            <SwipeView.RightItems>
+              <SwipeItems Mode="Reveal">
+      <SwipeItem Text="React" 
+          BackgroundColor="{AppThemeBinding Light={StaticResource LightWarning}, Dark={StaticResource DarkWarning}}" 
+         Invoked="OnMessageReactInvoked" />
+           <SwipeItem Text="Edit" 
+    BackgroundColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}" 
+           Command="{Binding BindingContext.EditMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" 
+     CommandParameter="{Binding .}" 
+        IsVisible="{Binding IsFromCurrentUser}"/>
+        <SwipeItem Text="Delete" 
+  BackgroundColor="{AppThemeBinding Light={StaticResource LightError}, Dark={StaticResource DarkError}}" 
+      Command="{Binding BindingContext.DeleteMessageCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}" 
+  CommandParameter="{Binding .}" 
+      IsVisible="{Binding IsFromCurrentUser}"/>
+         </SwipeItems>
+                 </SwipeView.RightItems>
 
- <Frame Margin="6" Padding="8" HasShadow="False" BorderColor="LightGray" CornerRadius="6">
- <!-- TapGestureRecognizer will be handled in code-behind to show edit/delete action sheet -->
- <Frame.GestureRecognizers>
- <TapGestureRecognizer Tapped="OnMessageTapped" NumberOfTapsRequired="1" />
- </Frame.GestureRecognizers>
+        <Border Style="{StaticResource ModernCard}" Padding="16">
+       <Border.GestureRecognizers>
+     <TapGestureRecognizer Tapped="OnMessageTapped" NumberOfTapsRequired="1" />
+   </Border.GestureRecognizers>
 
- <StackLayout>
- <StackLayout Spacing="6">
- <Label Text="{Binding Sender}" FontSize="12" TextColor="Gray" />
- <!-- Keep a single message text label -->
- <Label Text="{Binding Text}" FontSize="16" TextColor="White" />
+         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+  <!-- Sender -->
+           <Label Grid.Row="0"
+    Text="{Binding Sender}" 
+         Style="{StaticResource AccentLabel}"
+     FontSize="14" />
 
- <!-- Reactions display: use fallback joined preview only (avoid separate framed items that can show empty glyph) -->
- <Label Text="{Binding ReactionPreview}" FontSize="16" TextColor="White" HorizontalOptions="Start" />
+   <!-- Message Text with WordWrap -->
+   <Label Grid.Row="1"
+       Text="{Binding Text}" 
+          Style="{StaticResource BodyLabel}"
+              FontSize="16"
+    LineBreakMode="WordWrap"
+                MaxLines="-1" />
 
- <Label Text="{Binding Timestamp, StringFormat='{0:G}'}" FontSize="10" TextColor="Gray" HorizontalOptions="End" />
- </StackLayout>
- </StackLayout>
- </Frame>
- </SwipeView>
- </DataTemplate>
- </CollectionView.ItemTemplate>
- </CollectionView>
+      <!-- Reactions -->
+     <Label Grid.Row="2"
+       Text="{Binding ReactionPreview}" 
+      FontSize="16"
+                HorizontalOptions="Start"
+          IsVisible="{Binding ReactionPreview, Converter={StaticResource StringNotEmptyConverter}}"
+     LineBreakMode="WordWrap" />
 
- <StackLayout Grid.Row="3" Orientation="Horizontal" Spacing="8">
- <Entry Placeholder="Type a message..." Text="{Binding MessageText}" HorizontalOptions="FillAndExpand" Completed="OnEntryCompleted" />
- <Button Text="Send" Command="{Binding SendMessageCommand}" IsEnabled="{Binding IsSendEnabled}" />
- </StackLayout>
- </Grid>
- </ContentPage.Content>
+            <!-- Timestamp -->
+     <Label Grid.Row="3"
+         Text="{Binding Timestamp, StringFormat='{0:g}'}" 
+      Style="{StaticResource CaptionLabel}"
+   FontSize="12"
+   HorizontalOptions="End" />
+</Grid>
+</Border>
+               </SwipeView>
+     </DataTemplate>
+            </CollectionView.ItemTemplate>
+   </CollectionView>
+
+        <!-- MESSAGE INPUT -->
+        <Border Grid.Row="3" 
+       Style="{StaticResource ModernCard}" 
+         Padding="12">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+     <!-- Message Entry -->
+    <Border Grid.Column="0"
+       BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+      StrokeThickness="0"
+            Padding="0">
+           <Border.StrokeShape>
+         <RoundRectangle CornerRadius="12" />
+        </Border.StrokeShape>
+      <Entry Placeholder="Type a message..." 
+       Text="{Binding MessageText}"
+        Style="{StaticResource ModernEntry}"
+ BackgroundColor="Transparent"
+          Completed="OnEntryCompleted"
+      MaxLength="500" />
+     </Border>
+
+        <!-- Send Button -->
+       <Button Grid.Column="1"
+     Text="📤"
+            Command="{Binding SendMessageCommand}"
+      IsEnabled="{Binding IsSendEnabled}"
+Style="{StaticResource IconButton}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+  TextColor="White"
+             ToolTipProperties.Text="Send Message" />
+      </Grid>
+        </Border>
+
+    </Grid>
 </ContentPage>

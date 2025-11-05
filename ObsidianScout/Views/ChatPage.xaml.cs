@@ -8,10 +8,39 @@ using System.Windows.Input;
 
 namespace ObsidianScout.Views;
 
+// Add QueryProperty attributes to handle deep link parameters
+[QueryProperty(nameof(SourceType), "sourceType")]
+[QueryProperty(nameof(SourceId), "sourceId")]
 public partial class ChatPage : ContentPage
 {
  private bool _membersLoaded = false;
  private ChatViewModel? _vm;
+
+ // Properties for query parameters from deep link
+ private string? _sourceType;
+ private string? _sourceId;
+
+ public string? SourceType
+ {
+  get => _sourceType;
+     set
+        {
+   _sourceType = value;
+ System.Diagnostics.Debug.WriteLine($"[ChatPage] SourceType set to: {value}");
+      HandleDeepLink();
+ }
+    }
+
+    public string? SourceId
+ {
+   get => _sourceId;
+  set
+      {
+     _sourceId = value;
+   System.Diagnostics.Debug.WriteLine($"[ChatPage] SourceId set to: {value}");
+            HandleDeepLink();
+}
+ }
 
  public ICommand ReactSwipeCommand { get; }
 
@@ -102,6 +131,10 @@ public partial class ChatPage : ContentPage
  {
  System.Diagnostics.Debug.WriteLine($"ChatPage Appearing: failed to start polling: {ex.Message}");
  }
+ 
+ // Mark messages as read when page appears and messages exist
+ await Task.Delay(1000); // Give messages time to load
+ MarkMessagesAsRead();
  };
 
  // Stop polling when page disappears to avoid background network activity
@@ -115,8 +148,193 @@ public partial class ChatPage : ContentPage
  {
  System.Diagnostics.Debug.WriteLine($"ChatPage Disappearing: failed to stop polling: {ex.Message}");
  }
+ 
+ // Mark as read when leaving page
+ MarkMessagesAsRead();
  };
  }
+
+    // New method to mark messages as read
+    private void MarkMessagesAsRead()
+    {
+        try
+        {
+      if (_vm == null || _vm.Messages == null || _vm.Messages.Count == 0)
+        return;
+    
+            // Get the last message ID
+    var lastMessage = _vm.Messages.LastOrDefault();
+  if (lastMessage == null || string.IsNullOrEmpty(lastMessage.Id))
+      return;
+       
+   // Determine conversation ID based on chat type
+          string? conversationId = null;
+      
+            if (_vm.ChatType == "dm" && _vm.SelectedMember != null)
+ {
+     conversationId = $"dm_{_vm.SelectedMember.Username}";
+     }
+            else if (_vm.ChatType == "group" && _vm.SelectedGroup != null)
+       {
+        conversationId = $"group_{_vm.SelectedGroup.Name}";
+          }
+  
+          if (string.IsNullOrEmpty(conversationId))
+            return;
+    
+         // Call API to mark as read (fire and forget)
+         _ = MarkAsReadAsync(conversationId, lastMessage.Id);
+        }
+        catch (Exception ex)
+        {
+         System.Diagnostics.Debug.WriteLine($"[ChatPage] MarkMessagesAsRead error: {ex.Message}");
+}
+    }
+    
+    private async Task MarkAsReadAsync(string conversationId, string lastMessageId)
+    {
+        try
+    {
+        System.Diagnostics.Debug.WriteLine($"[ChatPage] Marking messages as read: {conversationId}, last: {lastMessageId}");
+  
+   // Get API service
+var services = Application.Current?.Handler?.MauiContext?.Services;
+            if (services == null) return;
+          
+        var apiService = services.GetService<IApiService>();
+            if (apiService == null) return;
+            
+            // Call API
+     var result = await apiService.MarkChatMessagesAsReadAsync(conversationId, lastMessageId);
+            
+          if (result.Success)
+   {
+            System.Diagnostics.Debug.WriteLine($"[ChatPage] ✓ Messages marked as read successfully");
+            }
+  else
+            {
+       System.Diagnostics.Debug.WriteLine($"[ChatPage] ✗ Failed to mark as read: {result.Error}");
+     }
+        }
+        catch (Exception ex)
+ {
+         System.Diagnostics.Debug.WriteLine($"[ChatPage] MarkAsReadAsync error: {ex.Message}");
+    }
+    }
+
+    private void HandleDeepLink()
+    {
+  // Only handle when both parameters are set
+ if (string.IsNullOrEmpty(_sourceType) || string.IsNullOrEmpty(_sourceId) || _vm == null)
+         return;
+
+  try
+     {
+  System.Diagnostics.Debug.WriteLine($"[ChatPage] Handling deep link: {_sourceType}/{_sourceId}");
+
+    MainThread.BeginInvokeOnMainThread(async () =>
+   {
+ try
+    {
+    // Give UI time to initialize
+    await Task.Delay(500);
+
+    if (_sourceType == "dm")
+   {
+       // Open DM with specific user
+     System.Diagnostics.Debug.WriteLine($"[ChatPage] Opening DM with user: {_sourceId}");
+  
+          // Find the user in members list
+  var member = _vm.Members.FirstOrDefault(m => 
+    string.Equals(m.Username, _sourceId, StringComparison.OrdinalIgnoreCase));
+
+  if (member != null)
+    {
+       _vm.SelectedMember = member;
+  _vm.ChatType = "dm";
+      await _vm.LoadMessagesCommand.ExecuteAsync(null);
+    System.Diagnostics.Debug.WriteLine($"[ChatPage] ✓ Opened DM with {_sourceId}");
+    }
+            else
+     {
+  System.Diagnostics.Debug.WriteLine($"[ChatPage] User {_sourceId} not found in members list");
+      // Try reloading members in case they weren't loaded yet
+      await _vm.LoadMembersCommand.ExecuteAsync(null);
+   await Task.Delay(200);
+      
+       // Try again
+   member = _vm.Members.FirstOrDefault(m => 
+         string.Equals(m.Username, _sourceId, StringComparison.OrdinalIgnoreCase));
+  
+          if (member != null)
+          {
+      _vm.SelectedMember = member;
+            _vm.ChatType = "dm";
+  await _vm.LoadMessagesCommand.ExecuteAsync(null);
+ System.Diagnostics.Debug.WriteLine($"[ChatPage] ✓ Opened DM with {_sourceId} after reload");
+   }
+  else
+  {
+    System.Diagnostics.Debug.WriteLine($"[ChatPage] User {_sourceId} still not found after reload");
+       }
+   }
+       }
+   else if (_sourceType == "group")
+  {
+     // Open specific group
+        System.Diagnostics.Debug.WriteLine($"[ChatPage] Opening group: {_sourceId}");
+ 
+ // Find the group in groups list
+   var group = _vm.Groups.FirstOrDefault(g => 
+       string.Equals(g.Name, _sourceId, StringComparison.OrdinalIgnoreCase));
+
+        if (group != null)
+     {
+      _vm.SelectedGroup = group;
+_vm.ChatType = "group";
+      await _vm.LoadMessagesCommand.ExecuteAsync(null);
+ System.Diagnostics.Debug.WriteLine($"[ChatPage] ✓ Opened group {_sourceId}");
+            }
+      else
+ {
+  System.Diagnostics.Debug.WriteLine($"[ChatPage] Group {_sourceId} not found in groups list");
+  // Try reloading groups
+  await _vm.LoadGroupsCommand.ExecuteAsync(null);
+     await Task.Delay(200);
+       
+   // Try again
+         group = _vm.Groups.FirstOrDefault(g => 
+            string.Equals(g.Name, _sourceId, StringComparison.OrdinalIgnoreCase));
+         
+ if (group != null)
+ {
+        _vm.SelectedGroup = group;
+      _vm.ChatType = "group";
+      await _vm.LoadMessagesCommand.ExecuteAsync(null);
+            System.Diagnostics.Debug.WriteLine($"[ChatPage] ✓ Opened group {_sourceId} after reload");
+    }
+  else
+       {
+        System.Diagnostics.Debug.WriteLine($"[ChatPage] Group {_sourceId} still not found after reload");
+          }
+     }
+       }
+
+// Clear parameters after handling
+             _sourceType = null;
+    _sourceId = null;
+      }
+  catch (Exception ex)
+     {
+    System.Diagnostics.Debug.WriteLine($"[ChatPage] Error in deep link handler: {ex.Message}");
+       }
+    });
+ }
+    catch (Exception ex)
+     {
+  System.Diagnostics.Debug.WriteLine($"[ChatPage] HandleDeepLink error: {ex.Message}");
+        }
+    }
 
  private async Task OnReactSwipeCommand(object? parameter)
  {
@@ -150,7 +368,12 @@ public partial class ChatPage : ContentPage
  // When items added, scroll to bottom
  if (e.Action == NotifyCollectionChangedAction.Add)
  {
- MainThread.BeginInvokeOnMainThread(() => ScrollToBottom());
+ MainThread.BeginInvokeOnMainThread(() =>
+ {
+ ScrollToBottom();
+ // Mark as read when new messages arrive
+ MarkMessagesAsRead();
+ });
  }
  }
 

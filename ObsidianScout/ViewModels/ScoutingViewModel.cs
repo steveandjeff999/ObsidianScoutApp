@@ -49,6 +49,19 @@ public partial class ScoutingViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTime? lastRefresh;
+    
+    // Points display properties
+    [ObservableProperty]
+    private int totalPoints;
+
+    [ObservableProperty]
+    private int autoPoints;
+
+    [ObservableProperty]
+    private int teleopPoints;
+
+    [ObservableProperty]
+    private int endgamePoints;
 
     // Store dynamic field values
     private Dictionary<string, object?> fieldValues = new();
@@ -99,9 +112,40 @@ public partial class ScoutingViewModel : ObservableObject
 
     private void StartPeriodicRefresh()
     {
-        // Refresh every 60 seconds
+        // Refresh every 60 seconds - runs OFF UI thread to prevent lag
         _refreshTimer = new System.Threading.Timer(
-            async _ => await RefreshDataInBackground(),
+            async _ =>
+            {
+                // Run refresh on background thread to avoid UI freezes
+                await Task.Run(async () =>
+                {
+                    try
+                    {
+                        System.Diagnostics.Debug.WriteLine("=== BACKGROUND REFRESH (Off UI Thread) ===");
+                        
+                        // Refresh teams silently
+                        await LoadTeamsAsync(silent: true);
+                        
+                        // Refresh matches if we have an event
+                        if (GameConfig != null && !string.IsNullOrEmpty(GameConfig.CurrentEventCode))
+                        {
+                            await AutoLoadMatchesAsync(silent: true);
+                        }
+                        
+                        // Update timestamp on UI thread
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            LastRefresh = DateTime.Now;
+                        });
+                        
+                        System.Diagnostics.Debug.WriteLine($"✓ Background refresh completed at {DateTime.Now:HH:mm:ss}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Background refresh failed: {ex.Message}");
+                    }
+                });
+            },
             null,
             TimeSpan.FromSeconds(60),  // Initial delay
             TimeSpan.FromSeconds(60)); // Repeat interval
@@ -692,6 +736,9 @@ public partial class ScoutingViewModel : ObservableObject
         {
             fieldValues[element.Id] = string.Empty;
         }
+        
+        // Calculate initial points (all zeros or defaults)
+        CalculatePoints();
     }
 
     private object GetDefaultForType(string type)
@@ -817,6 +864,9 @@ public partial class ScoutingViewModel : ObservableObject
         fieldValues[fieldId] = value;
         // Notify that field values changed
         OnPropertyChanged("FieldValuesChanged");
+     
+        // Recalculate points
+        CalculatePoints();
     }
 
     public void IncrementCounter(string fieldId)
@@ -830,16 +880,19 @@ public partial class ScoutingViewModel : ObservableObject
                 _ => 0
             };
 
-            // Find the element to check max value
-            var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
-                ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
-                ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
+ // Find the element to check max value
+   var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
+              ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
+         ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
 
-            if (element != null && element.Max.HasValue && intValue >= element.Max.Value)
-                return;
+     if (element != null && element.Max.HasValue && intValue >= element.Max.Value)
+           return;
 
-            fieldValues[fieldId] = intValue + 1;
-            OnPropertyChanged("FieldValuesChanged");
+       fieldValues[fieldId] = intValue + 1;
+     OnPropertyChanged("FieldValuesChanged");
+    
+            // Recalculate points
+     CalculatePoints();
         }
     }
 
@@ -847,47 +900,132 @@ public partial class ScoutingViewModel : ObservableObject
     {
         if (fieldValues.TryGetValue(fieldId, out var value))
         {
-            var intValue = value switch
-            {
-                int i => i,
+var intValue = value switch
+    {
+      int i => i,
                 string s when int.TryParse(s, out var parsed) => parsed,
-                _ => 0
-            };
+       _ => 0
+  };
 
-            // Find the element to check min value
-            var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
-                ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
-                ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
+   // Find the element to check min value
+      var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
+            ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
+         ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
 
-            var minValue = element?.Min ?? 0;
-            if (intValue > minValue)
+        var minValue = element?.Min ?? 0;
+   if (intValue > minValue)
             {
-                fieldValues[fieldId] = intValue - 1;
-                OnPropertyChanged("FieldValuesChanged");
-            }
+        fieldValues[fieldId] = intValue - 1;
+          OnPropertyChanged("FieldValuesChanged");
+ 
+             // Recalculate points
+             CalculatePoints();
+    }
         }
+    }
+  
+    private void CalculatePoints()
+    {
+        if (GameConfig == null) return;
+
+        double auto = 0, teleop = 0, endgame = 0;
+
+  // Calculate auto points
+        if (GameConfig.AutoPeriod?.ScoringElements != null)
+        {
+            foreach (var element in GameConfig.AutoPeriod.ScoringElements)
+     {
+             if (fieldValues.TryGetValue(element.Id, out var value))
+       {
+        if (element.Type == "counter" || element.Type == "number")
+   {
+  var count = SafeConvertToInt(value);
+          auto += count * element.Points;
+             }
+         else if (element.Type == "boolean" && SafeConvertToBool(value))
+        {
+        auto += element.Points;
+        }
+    }
+     }
+        }
+
+        // Calculate teleop points
+        if (GameConfig.TeleopPeriod?.ScoringElements != null)
+   {
+            foreach (var element in GameConfig.TeleopPeriod.ScoringElements)
+{
+                if (fieldValues.TryGetValue(element.Id, out var value))
+      {
+             if (element.Type == "counter" || element.Type == "number")
+    {
+    var count = SafeConvertToInt(value);
+      teleop += count * element.Points;
+        }
+ else if (element.Type == "boolean" && SafeConvertToBool(value))
+    {
+        teleop += element.Points;
+      }
+     }
+        }
+    }
+
+   // Calculate endgame points
+        if (GameConfig.EndgamePeriod?.ScoringElements != null)
+        {
+            foreach (var element in GameConfig.EndgamePeriod.ScoringElements)
+      {
+       if (fieldValues.TryGetValue(element.Id, out var value))
+     {
+   if (element.Type == "counter" || element.Type == "number")
+         {
+          var count = SafeConvertToInt(value);
+   endgame += count * element.Points;
+        }
+     else if (element.Type == "boolean" && SafeConvertToBool(value))
+     {
+     endgame += element.Points;
+        }
+           else if (element.Type == "multiple_choice" && element.Options != null)
+         {
+                 var valueStr = SafeConvertToString(value);
+          var selectedOption = element.Options.FirstOrDefault(o => o.Name == valueStr);
+if (selectedOption != null)
+       {
+      endgame += selectedOption.Points;
+            }
+     }
+      }
+       }
+        }
+
+        // Update properties
+  AutoPoints = (int)auto;
+        TeleopPoints = (int)teleop;
+    EndgamePoints = (int)endgame;
+        TotalPoints = AutoPoints + TeleopPoints + EndgamePoints;
     }
 
     [RelayCommand]
     private async Task SubmitAsync()
     {
-        // Validate inputs first
-        if (TeamId <= 0 || MatchId <= 0)
+ // Validate inputs first
+   if (TeamId <= 0 || MatchId <= 0)
         {
             StatusMessage = "Please select a team and match";
             return;
         }
 
-        if (SelectedTeam == null)
+   if (SelectedTeam == null)
         {
-            StatusMessage = "Please select a valid team";
-            return;
+  StatusMessage = "Please select a valid team";
+  return;
         }
 
-        if (SelectedMatch == null)
+     if (SelectedMatch == null)
         {
-            StatusMessage = "Please select a valid match";
-            return;
+    StatusMessage = "Please select a valid match";
+     return;
         }
 
         IsLoading = true;
@@ -896,304 +1034,126 @@ public partial class ScoutingViewModel : ObservableObject
         try
         {
             // Convert all field values to simple types (handle JsonElement)
-            var convertedData = new Dictionary<string, object?>();
-            foreach (var kvp in fieldValues)
-            {
-                var converted = ConvertValueForSerialization(kvp.Value);
-                convertedData[kvp.Key] = converted;
-                System.Diagnostics.Debug.WriteLine($"  Field: {kvp.Key} = {converted} (Type: {converted?.GetType().Name ?? "null"})");
+       var convertedData = new Dictionary<string, object?>();
+    foreach (var kvp in fieldValues)
+     {
+      var converted = ConvertValueForSerialization(kvp.Value);
+        convertedData[kvp.Key] = converted;
             }
 
-            // Add scout_name to the data as required by the API
-            if (!string.IsNullOrEmpty(ScoutName))
-            {
-                convertedData["scout_name"] = ScoutName;
-            }
+         // Add scout_name to the data as required by the API
+     if (!string.IsNullOrEmpty(ScoutName))
+        {
+  convertedData["scout_name"] = ScoutName;
+    }
 
-            var submission = new ScoutingSubmission
-            {
-                TeamId = TeamId,
-                MatchId = MatchId,
-                Data = convertedData
-            };
+        var submission = new ScoutingSubmission
+    {
+           TeamId = TeamId,
+     MatchId = MatchId,
+     Data = convertedData
+     };
 
-            // Debug: Log submission details
-            System.Diagnostics.Debug.WriteLine("=== SUBMIT SCOUTING DATA ===");
-            System.Diagnostics.Debug.WriteLine($"Team ID: {TeamId} (Team #{SelectedTeam.TeamNumber})");
-            System.Diagnostics.Debug.WriteLine($"Match ID: {MatchId} (Match #{SelectedMatch.MatchNumber} - {SelectedMatch.MatchType})");
-            System.Diagnostics.Debug.WriteLine($"Scout Name: '{ScoutName}'");
-            System.Diagnostics.Debug.WriteLine($"Data Fields Count: {convertedData.Count}");
-            System.Diagnostics.Debug.WriteLine($"Offline ID: {submission.OfflineId}");
-            
-            // Log each field in the data
-            System.Diagnostics.Debug.WriteLine("Field Details:");
-            foreach (var field in convertedData)
-            {
-                System.Diagnostics.Debug.WriteLine($"  - {field.Key}: {field.Value} ({field.Value?.GetType().Name ?? "null"})");
-            }
-
-            // Serialize to JSON to see what's being sent
-            try
-            {
-                var jsonOptions = new System.Text.Json.JsonSerializerOptions
-                {
-                    WriteIndented = true
-                };
-                var jsonPreview = System.Text.Json.JsonSerializer.Serialize(submission, jsonOptions);
-                System.Diagnostics.Debug.WriteLine("JSON Preview:");
-                System.Diagnostics.Debug.WriteLine(jsonPreview);
-            }
-            catch (Exception jsonEx)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to serialize preview: {jsonEx.Message}");
-            }
-
-            var result = await _apiService.SubmitScoutingDataAsync(submission);
-
-            // Debug: Log result details
-            System.Diagnostics.Debug.WriteLine("=== SUBMIT RESULT ===");
-            System.Diagnostics.Debug.WriteLine($"Success: {result.Success}");
-            System.Diagnostics.Debug.WriteLine($"Message: {result.Message}");
-            System.Diagnostics.Debug.WriteLine($"Error: {result.Error}");
-            System.Diagnostics.Debug.WriteLine($"Error Code: {result.ErrorCode}");
-            System.Diagnostics.Debug.WriteLine($"Scouting ID: {result.ScoutingId}");
+       var result = await _apiService.SubmitScoutingDataAsync(submission);
 
             if (result.Success)
-            {
-                StatusMessage = "✓ Scouting data submitted successfully!";
-                System.Diagnostics.Debug.WriteLine($"SUCCESS! Scouting entry created with ID: {result.ScoutingId}");
-                
-                // Clear success message after 3 seconds and reset form
-                await Task.Delay(3000);
-                if (StatusMessage == "✓ Scouting data submitted successfully!")
+   {
+     StatusMessage = "✓ Scouting data submitted successfully!";
+     
+       await Task.Delay(3000);
+  if (StatusMessage == "✓ Scouting data submitted successfully!")
                 {
-                    StatusMessage = string.Empty;
-                    ResetForm();
-                }
+            StatusMessage = string.Empty;
+    ResetForm();
+       }
             }
-            else
-            {
-                // Show detailed error message with debugging hints
-                var errorMsg = !string.IsNullOrEmpty(result.Error) ? result.Error : 
-                               !string.IsNullOrEmpty(result.Message) ? result.Message : 
-                               "Submission failed - no error message provided";
-                
-                if (!string.IsNullOrEmpty(result.ErrorCode))
-                {
-                    errorMsg = $"[{result.ErrorCode}] {errorMsg}";
-                }
-
-                // Add troubleshooting hints based on error code
-                var troubleshootHint = result.ErrorCode switch
-                {
-                    "TEAM_NOT_FOUND" => "\n💡 Tip: Team may not exist or doesn't belong to your scouting team",
-                    "MATCH_NOT_FOUND" => "\n💡 Tip: Match may not exist or doesn't belong to your scouting team",
-                    "SUBMIT_ERROR" => "\n💡 Tip: Check server logs for database errors. Verify team/match IDs are valid.",
-                    "MISSING_FIELD" => "\n💡 Tip: Required field missing from submission",
-                    "INVALID_TOKEN" => "\n💡 Tip: Please log in again",
-                    _ => ""
-                };
-
-                StatusMessage = $"✗ {errorMsg}{troubleshootHint}";
-                System.Diagnostics.Debug.WriteLine($"FAILED: {errorMsg}");
-                System.Diagnostics.Debug.WriteLine($"ERROR CODE: {result.ErrorCode}");
-                
-                // Log additional context for debugging
-                System.Diagnostics.Debug.WriteLine("DEBUG CONTEXT:");
-                System.Diagnostics.Debug.WriteLine($"  - Team exists in local list: {Teams.Any(t => t.Id == TeamId)}");
-                System.Diagnostics.Debug.WriteLine($"  - Match exists in local list: {Matches.Any(m => m.Id == MatchId)}");
-                System.Diagnostics.Debug.WriteLine($"  - Total fields sent: {convertedData.Count}");
-            }
+   else
+{
+     StatusMessage = $"✗ {result.Error}";
+       }
         }
         catch (Exception ex)
         {
-            var errorMsg = $"Error: {ex.Message}";
-            StatusMessage = $"✗ {errorMsg}";
-            System.Diagnostics.Debug.WriteLine("=== SUBMIT EXCEPTION ===");
-            System.Diagnostics.Debug.WriteLine($"Exception Type: {ex.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"Message: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack Trace:\n{ex.StackTrace}");
-            
-            if (ex.InnerException != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-                System.Diagnostics.Debug.WriteLine($"Inner Stack:\n{ex.InnerException.StackTrace}");
-            }
+            StatusMessage = $"✗ Error: {ex.Message}";
         }
         finally
         {
-            IsLoading = false;
-            System.Diagnostics.Debug.WriteLine("=== END SUBMIT ===\n");
-        }
+         IsLoading = false;
+ }
     }
 
     [RelayCommand]
     private async Task SaveWithQRCodeAsync()
     {
-        // Debug logging
-        System.Diagnostics.Debug.WriteLine("=== SAVE WITH QR CODE ===");
-        System.Diagnostics.Debug.WriteLine($"SelectedTeam: {SelectedTeam?.TeamNumber} (ID: {SelectedTeam?.Id})");
-        System.Diagnostics.Debug.WriteLine($"SelectedMatch: {SelectedMatch?.MatchNumber} {SelectedMatch?.MatchType} (ID: {SelectedMatch?.Id})");
-        System.Diagnostics.Debug.WriteLine($"TeamId: {TeamId}");
-        System.Diagnostics.Debug.WriteLine($"MatchId: {MatchId}");
-        
-        // Validate - check SelectedTeam and SelectedMatch first
         if (SelectedTeam == null || SelectedMatch == null)
-        {
+    {
             StatusMessage = "❌ Please select both a team and a match";
-            System.Diagnostics.Debug.WriteLine("Validation failed: Team or Match not selected");
-            return;
+  return;
         }
 
-        // Update IDs from selected items (in case they weren't set)
         TeamId = SelectedTeam.Id;
-        MatchId = SelectedMatch.Id;
+ MatchId = SelectedMatch.Id;
         
-        // Double-check IDs
-        if (TeamId <= 0 || MatchId <= 0)
+  if (TeamId <= 0 || MatchId <= 0)
         {
             StatusMessage = "❌ Invalid team or match selection";
-            System.Diagnostics.Debug.WriteLine($"Validation failed: Invalid IDs - TeamId: {TeamId}, MatchId: {MatchId}");
-            return;
-        }
+      return;
+}
 
-        IsLoading = true;
+ IsLoading = true;
         StatusMessage = "Generating QR Code...";
 
         try
         {
-            // Build the complete data object matching the format
-            var qrData = new Dictionary<string, object?>
-            {
-                ["team_id"] = TeamId,
-                ["team_number"] = SelectedTeam.TeamNumber,
-                ["match_id"] = MatchId,
+    var qrData = new Dictionary<string, object?>
+     {
+  ["team_id"] = TeamId,
+           ["team_number"] = SelectedTeam.TeamNumber,
+     ["match_id"] = MatchId,
                 ["match_number"] = SelectedMatch.MatchNumber,
-                ["alliance"] = "unknown",
-                ["scout_name"] = ScoutName
-            };
+      ["alliance"] = "unknown",
+            ["scout_name"] = ScoutName
+        };
 
-            // Add all field values with proper conversion (handle JsonElement)
-            foreach (var kvp in fieldValues)
-            {
-                qrData[kvp.Key] = ConvertValueForSerialization(kvp.Value);
-            }
+foreach (var kvp in fieldValues)
+   {
+       qrData[kvp.Key] = ConvertValueForSerialization(kvp.Value);
+         }
 
-            // Calculate points if configured
-            if (GameConfig != null)
-            {
-                qrData["auto_period_timer_enabled"] = false;
-                
-                // Calculate auto points
-                double autoPoints = 0;
-                if (GameConfig.AutoPeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.AutoPeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                autoPoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                autoPoints += element.Points;
-                            }
-                        }
-                    }
-                }
-                qrData["auto_points_points"] = (int)autoPoints;
+        if (GameConfig != null)
+      {
+    qrData["auto_period_timer_enabled"] = false;
+ qrData["auto_points_points"] = AutoPoints;
+      qrData["teleop_points_points"] = TeleopPoints;
+           qrData["endgame_points_points"] = EndgamePoints;
+     qrData["total_points_points"] = TotalPoints;
+    }
 
-                // Calculate teleop points
-                double teleopPoints = 0;
-                if (GameConfig.TeleopPeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.TeleopPeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                teleopPoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                teleopPoints += element.Points;
-                            }
-                        }
-                    }
-                }
-                qrData["teleop_points_points"] = (int)teleopPoints;
-
-                // Calculate endgame points
-                double endgamePoints = 0;
-                if (GameConfig.EndgamePeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.EndgamePeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                endgamePoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                endgamePoints += element.Points;
-                            }
-                            else if (element.Type == "multiple_choice" && element.Options != null)
-                            {
-                                var valueStr = SafeConvertToString(value);
-                                var selectedOption = element.Options.FirstOrDefault(o => o.Name == valueStr);
-                                if (selectedOption != null)
-                                {
-                                    endgamePoints += selectedOption.Points;
-                                }
-                            }
-                        }
-                    }
-                }
-                qrData["endgame_points_points"] = (int)endgamePoints;
-
-                // Total points
-                qrData["total_points_points"] = (int)(autoPoints + teleopPoints + endgamePoints);
-            }
-
-            // Add metadata
-            qrData["generated_at"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-            qrData["offline_generated"] = true;
+       // Add metadata
+ qrData["generated_at"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+qrData["offline_generated"] = true;
 
             System.Diagnostics.Debug.WriteLine($"Generating QR code with {qrData.Count} fields");
 
-            // Serialize to JSON
-            var jsonData = _qrCodeService.SerializeScoutingData(qrData);
-
-            // Generate QR code
+     // Serialize to JSON
+      var jsonData = _qrCodeService.SerializeScoutingData(qrData);
             QrCodeImage = _qrCodeService.GenerateQRCode(jsonData);
             IsQRCodeVisible = true;
-
-            StatusMessage = string.Empty; // Clear status when showing QR
-            System.Diagnostics.Debug.WriteLine("✓ QR Code generated successfully");
-        }
+            StatusMessage = string.Empty;
+      }
         catch (Exception ex)
-        {
-            StatusMessage = $"✗ Error generating QR code: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"✗ QR Code generation failed: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+   {
+         StatusMessage = $"✗ Error generating QR code: {ex.Message}";
         }
         finally
-        {
+      {
             IsLoading = false;
-        }
+     }
     }
 
     [RelayCommand]
     private void CloseQRCode()
-    {
+  {
         IsQRCodeVisible = false;
         QrCodeImage = null;
     }
@@ -1201,176 +1161,80 @@ public partial class ScoutingViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportJsonAsync()
     {
-        System.Diagnostics.Debug.WriteLine("=== EXPORT JSON ===");
-        System.Diagnostics.Debug.WriteLine($"SelectedTeam: {SelectedTeam?.TeamNumber} (ID: {SelectedTeam?.Id})");
-        System.Diagnostics.Debug.WriteLine($"SelectedMatch: {SelectedMatch?.MatchNumber} {SelectedMatch?.MatchType} (ID: {SelectedMatch?.Id})");
-        
-        // Validate - check SelectedTeam and SelectedMatch first
         if (SelectedTeam == null || SelectedMatch == null)
-        {
+     {
             StatusMessage = "❌ Please select both a team and a match";
-            System.Diagnostics.Debug.WriteLine("Validation failed: Team or Match not selected");
-            return;
+       return;
         }
 
-        // Update IDs from selected items
-        TeamId = SelectedTeam.Id;
+    TeamId = SelectedTeam.Id;
         MatchId = SelectedMatch.Id;
-        
-        // Double-check IDs
+    
         if (TeamId <= 0 || MatchId <= 0)
-        {
-            StatusMessage = "❌ Invalid team or match selection";
-            System.Diagnostics.Debug.WriteLine($"Validation failed: Invalid IDs - TeamId: {TeamId}, MatchId: {MatchId}");
+    {
+    StatusMessage = "❌ Invalid team or match selection";
             return;
-        }
+  }
 
         try
-        {
+    {
             StatusMessage = "Exporting JSON...";
 
-            // Build the complete data object matching the QR code format
             var jsonData = new Dictionary<string, object?>
-            {
-                ["team_id"] = TeamId,
-                ["team_number"] = SelectedTeam.TeamNumber,
-                ["match_id"] = MatchId,
-                ["match_number"] = SelectedMatch.MatchNumber,
-                ["alliance"] = "unknown",
-                ["scout_name"] = ScoutName
-            };
+ {
+              ["team_id"] = TeamId,
+   ["team_number"] = SelectedTeam.TeamNumber,
+       ["match_id"] = MatchId,
+         ["match_number"] = SelectedMatch.MatchNumber,
+     ["alliance"] = "unknown",
+    ["scout_name"] = ScoutName
+  };
 
-            // Add all field values with proper conversion (handle JsonElement)
-            foreach (var kvp in fieldValues)
-            {
-                jsonData[kvp.Key] = ConvertValueForSerialization(kvp.Value);
+      foreach (var kvp in fieldValues)
+      {
+        jsonData[kvp.Key] = ConvertValueForSerialization(kvp.Value);
             }
 
-            // Calculate points if configured
             if (GameConfig != null)
-            {
-                jsonData["auto_period_timer_enabled"] = false;
-                
-                // Calculate auto points
-                double autoPoints = 0;
-                if (GameConfig.AutoPeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.AutoPeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                autoPoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                autoPoints += element.Points;
-                            }
-                        }
-                    }
-                }
-                jsonData["auto_points_points"] = (int)autoPoints;
-
-                // Calculate teleop points
-                double teleopPoints = 0;
-                if (GameConfig.TeleopPeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.TeleopPeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                teleopPoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                teleopPoints += element.Points;
-                            }
-                        }
-                    }
-                }
-                jsonData["teleop_points_points"] = (int)teleopPoints;
-
-                // Calculate endgame points
-                double endgamePoints = 0;
-                if (GameConfig.EndgamePeriod?.ScoringElements != null)
-                {
-                    foreach (var element in GameConfig.EndgamePeriod.ScoringElements)
-                    {
-                        if (fieldValues.TryGetValue(element.Id, out var value))
-                        {
-                            if (element.Type == "counter" || element.Type == "number")
-                            {
-                                var count = SafeConvertToInt(value);
-                                endgamePoints += count * element.Points;
-                            }
-                            else if (element.Type == "boolean" && SafeConvertToBool(value))
-                            {
-                                endgamePoints += element.Points;
-                            }
-                            else if (element.Type == "multiple_choice" && element.Options != null)
-                            {
-                                var valueStr = SafeConvertToString(value);
-                                var selectedOption = element.Options.FirstOrDefault(o => o.Name == valueStr);
-                                if (selectedOption != null)
-                                {
-                                    endgamePoints += selectedOption.Points;
-                                }
-                            }
-                        }
-                    }
-                }
-                jsonData["endgame_points_points"] = (int)endgamePoints;
-
-                // Total points
-                jsonData["total_points_points"] = (int)(autoPoints + teleopPoints + endgamePoints);
+     {
+       jsonData["auto_period_timer_enabled"] = false;
+                jsonData["auto_points_points"] = AutoPoints;
+ jsonData["teleop_points_points"] = TeleopPoints;
+              jsonData["endgame_points_points"] = EndgamePoints;
+            jsonData["total_points_points"] = TotalPoints;
             }
 
-            // Add metadata
-            jsonData["generated_at"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+  jsonData["generated_at"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             jsonData["offline_generated"] = true;
 
             // Serialize to JSON with formatting
-            var options = new JsonSerializerOptions
+      var options = new JsonSerializerOptions
             {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-            };
-            var json = JsonSerializer.Serialize(jsonData, options);
+    WriteIndented = true,
+  PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+};
+  var json = JsonSerializer.Serialize(jsonData, options);
 
-            // Create filename
             var filename = $"scout_team{SelectedTeam.TeamNumber}_match{SelectedMatch.MatchNumber}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
-
-            // Save to file
             var result = await SaveJsonToFileAsync(json, filename);
 
-            if (result)
-            {
-                StatusMessage = $"✓ Exported to {filename}";
-                System.Diagnostics.Debug.WriteLine($"✓ JSON exported successfully to {filename}");
-                
-                // Clear message after 3 seconds
-                await Task.Delay(3000);
-                if (StatusMessage.StartsWith("✓ Exported"))
+   if (result)
+       {
+        StatusMessage = $"✓ Exported to {filename}";
+             await Task.Delay(3000);
+      if (StatusMessage.StartsWith("✓ Exported"))
                 {
-                    StatusMessage = string.Empty;
-                }
-            }
-            else
-            {
-                StatusMessage = "✗ Failed to save JSON file";
-                System.Diagnostics.Debug.WriteLine("✗ Failed to save JSON file");
-            }
+              StatusMessage = string.Empty;
+          }
+    }
+else
+      {
+         StatusMessage = "✗ Failed to save JSON file";
+       }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"✗ Error exporting JSON: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"✗ JSON export failed: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+        StatusMessage = $"✗ Error exporting JSON: {ex.Message}";
         }
     }
 
@@ -1378,39 +1242,20 @@ public partial class ScoutingViewModel : ObservableObject
     {
         try
         {
-            // Get the app's documents directory
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var scoutingFolder = Path.Combine(documentsPath, "ObsidianScout", "Exports");
-            
-            // Create directory if it doesn't exist
-            if (!Directory.Exists(scoutingFolder))
-            {
-                Directory.CreateDirectory(scoutingFolder);
-            }
+       var scoutingFolder = Path.Combine(documentsPath, "ObsidianScout", "Exports");
+  
+   if (!Directory.Exists(scoutingFolder))
+       {
+        Directory.CreateDirectory(scoutingFolder);
+  }
 
-            var filePath = Path.Combine(scoutingFolder, filename);
-
-            // Write JSON to file
-            await File.WriteAllTextAsync(filePath, json);
-
-            System.Diagnostics.Debug.WriteLine($"✓ JSON saved to: {filePath}");
-            
-            // Try to show a notification or toast (platform-specific)
-            try
-            {
-                await Shell.Current.DisplayAlertAsync("Export Successful", 
-                    $"JSON file saved to:\n{filePath}", 
-                    "OK");
-            }
-            catch
-            {
-                // Ignore if toast fails
-            }
-
+     var filePath = Path.Combine(scoutingFolder, filename);
+     await File.WriteAllTextAsync(filePath, json);
             return true;
         }
-        catch (Exception ex)
-        {
+      catch (Exception ex)
+     {
             System.Diagnostics.Debug.WriteLine($"Failed to save JSON file: {ex.Message}");
             return false;
         }
@@ -1421,25 +1266,19 @@ public partial class ScoutingViewModel : ObservableObject
     {
         LoadGameConfigAsync();
         await LoadTeamsAsync();
-    }
-
-    [RelayCommand]
-    private async Task RefreshTeamsAsync()
-    {
-        await LoadTeamsAsync();
-    }
+  }
 
     [RelayCommand]
     private void ResetForm()
     {
-        SelectedTeam = null;
+    SelectedTeam = null;
         SelectedMatch = null;
         TeamId = 0;
         MatchId = 0;
         ScoutName = string.Empty;
         InitializeFieldValues();
         OnPropertyChanged("FieldValuesChanged");
-        StatusMessage = string.Empty;
+  StatusMessage = string.Empty;
         IsQRCodeVisible = false;
         QrCodeImage = null;
     }

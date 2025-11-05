@@ -290,6 +290,9 @@ public partial class ScoutingPage : ContentPage
 
         // Match Info Section
         mainLayout.Add(CreateMatchInfoSection());
+        
+        // Points Summary Card - NEW!
+        mainLayout.Add(CreatePointsSummaryCard());
 
         // Auto Period
         if (_viewModel.AutoElements?.Count > 0)
@@ -459,7 +462,7 @@ public partial class ScoutingPage : ContentPage
             CornerRadius = 5,
             Padding = 0
         };
-        refreshTeamsBtn.SetBinding(Button.CommandProperty, nameof(ScoutingViewModel.RefreshTeamsCommand));
+        refreshTeamsBtn.SetBinding(Button.CommandProperty, nameof(ScoutingViewModel.RefreshCommand));
         teamHeaderGrid.Add(refreshTeamsBtn, 1, 0);
 
         teamLayout.Add(teamHeaderGrid);
@@ -572,6 +575,161 @@ public partial class ScoutingPage : ContentPage
         border.Content = mainLayout;
         return border;
     }
+    
+    private View CreatePointsSummaryCard()
+    {
+        var border = new Border
+        {
+            BackgroundColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+            ? Color.FromArgb("#1A237E")  // Dark blue for dark mode
+           : Color.FromArgb("#E3F2FD"),  // Light blue for light mode
+            StrokeThickness = 0,
+  Padding = new Thickness(15),
+        Margin = new Thickness(0, 0, 0, 15)
+        };
+        border.StrokeShape = new RoundRectangle { CornerRadius = 10 };
+
+        var mainLayout = new VerticalStackLayout { Spacing = 10 };
+
+        // Title
+  var titleLabel = new Label
+        {
+      Text = "🎯 Points Summary",
+      FontSize = 16,
+   FontAttributes = FontAttributes.Bold,
+            TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+   ? Color.FromArgb("#90CAF9") 
+       : Color.FromArgb("#1976D2"),
+        Margin = new Thickness(0, 0, 0, 5)
+   };
+        mainLayout.Add(titleLabel);
+
+        // Points Grid
+        var pointsGrid = new Grid
+        {
+      ColumnDefinitions =
+{
+          new ColumnDefinition { Width = GridLength.Star },
+ new ColumnDefinition { Width = GridLength.Star },
+  new ColumnDefinition { Width = GridLength.Star },
+        new ColumnDefinition { Width = GridLength.Star }
+    },
+      ColumnSpacing = 10
+   };
+
+     // Auto Points Column
+        var autoStack = new VerticalStackLayout { Spacing = 5 };
+     var autoLabel = new Label
+        {
+     Text = "Auto",
+  FontSize = 12,
+      FontAttributes = FontAttributes.Bold,
+        HorizontalOptions = LayoutOptions.Center,
+      TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+          ? Color.FromArgb("#64B5F6") 
+ : Color.FromArgb("#1976D2")
+        };
+  autoStack.Add(autoLabel);
+        
+   var autoPoints = new Label
+      {
+            FontSize = 24,
+     FontAttributes = FontAttributes.Bold,
+            HorizontalOptions = LayoutOptions.Center,
+        TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+        ? Color.FromArgb("#90CAF9") 
+             : Color.FromArgb("#0D47A1")
+        };
+     autoPoints.SetBinding(Label.TextProperty, nameof(ScoutingViewModel.AutoPoints));
+        autoStack.Add(autoPoints);
+        pointsGrid.Add(autoStack, 0, 0);
+
+        // Teleop Points Column
+        var teleopStack = new VerticalStackLayout { Spacing = 5 };
+   var teleopLabel = new Label
+        {
+      Text = "Teleop",
+            FontSize = 12,
+         FontAttributes = FontAttributes.Bold,
+        HorizontalOptions = LayoutOptions.Center,
+         TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+          ? Color.FromArgb("#81C784") 
+        : Color.FromArgb("#388E3C")
+      };
+        teleopStack.Add(teleopLabel);
+        
+    var teleopPoints = new Label
+  {
+FontSize = 24,
+            FontAttributes = FontAttributes.Bold,
+            HorizontalOptions = LayoutOptions.Center,
+      TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+      ? Color.FromArgb("#A5D6A7") 
+         : Color.FromArgb("#1B5E20")
+        };
+        teleopPoints.SetBinding(Label.TextProperty, nameof(ScoutingViewModel.TeleopPoints));
+      teleopStack.Add(teleopPoints);
+    pointsGrid.Add(teleopStack, 1, 0);
+
+        // Endgame Points Column
+    var endgameStack = new VerticalStackLayout { Spacing = 5 };
+        var endgameLabel = new Label
+      {
+            Text = "Endgame",
+    FontSize = 12,
+         FontAttributes = FontAttributes.Bold,
+      HorizontalOptions = LayoutOptions.Center,
+    TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+         ? Color.FromArgb("#FFB74D") 
+                : Color.FromArgb("#F57C00")
+        };
+  endgameStack.Add(endgameLabel);
+        
+        var endgamePoints = new Label
+        {
+            FontSize = 24,
+            FontAttributes = FontAttributes.Bold,
+    HorizontalOptions = LayoutOptions.Center,
+        TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+   ? Color.FromArgb("#FFCC80") 
+        : Color.FromArgb("#E65100")
+      };
+      endgamePoints.SetBinding(Label.TextProperty, nameof(ScoutingViewModel.EndgamePoints));
+        endgameStack.Add(endgamePoints);
+        pointsGrid.Add(endgameStack, 2, 0);
+
+  // Total Points Column
+        var totalStack = new VerticalStackLayout { Spacing = 5 };
+    var totalLabel = new Label
+     {
+        Text = "TOTAL",
+         FontSize = 12,
+   FontAttributes = FontAttributes.Bold,
+       HorizontalOptions = LayoutOptions.Center,
+         TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+     ? Color.FromArgb("#EF5350") 
+         : Color.FromArgb("#D32F2F")
+     };
+        totalStack.Add(totalLabel);
+        
+      var totalPoints = new Label
+        {
+            FontSize = 28,
+            FontAttributes = FontAttributes.Bold,
+    HorizontalOptions = LayoutOptions.Center,
+ TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+    ? Color.FromArgb("#E57373") 
+ : Color.FromArgb("#B71C1C")
+        };
+        totalPoints.SetBinding(Label.TextProperty, nameof(ScoutingViewModel.TotalPoints));
+        totalStack.Add(totalPoints);
+  pointsGrid.Add(totalStack, 3, 0);
+
+        mainLayout.Add(pointsGrid);
+
+    border.Content = mainLayout;
+        return border;
+ }
 
     private View CreatePeriodSection(IEnumerable<ScoringElement> elements)
     {

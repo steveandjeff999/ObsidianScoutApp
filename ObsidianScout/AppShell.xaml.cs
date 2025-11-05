@@ -67,6 +67,13 @@ namespace ObsidianScout
             Routing.RegisterRoute("GraphsPage", typeof(GraphsPage));
             Routing.RegisterRoute("SettingsPage", typeof(SettingsPage));
             Routing.RegisterRoute("UserPage", typeof(UserPage));
+    
+            // NEW: Register Chat route for deep linking from notifications
+            Routing.RegisterRoute("Chat", typeof(ChatPage));
+            Routing.RegisterRoute("ChatPage", typeof(ChatPage));
+
+            // NEW: Register MatchPredictionPage for deep linking from match notifications
+            Routing.RegisterRoute("MatchPredictionPage", typeof(MatchPredictionPage));
 
             CheckAuthStatus();
 

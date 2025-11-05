@@ -100,29 +100,32 @@
                                     <Label Text="{Binding Name}"
                                            Style="{StaticResource SubheaderLabel}"
                                            FontSize="18"
-                                           LineBreakMode="TailTruncation"
-                                           MaxLines="1" />
+                                           LineBreakMode="WordWrap"
+                                           MaxLines="2" />
                                     <Label Text="{Binding Code}"
                                            Style="{StaticResource BodyLabel}"
                                            FontSize="14"
-                                           Opacity="0.8" />
+                                           Opacity="0.8"
+                                           LineBreakMode="NoWrap" />
                                     <HorizontalStackLayout Spacing="8">
-                                        <Label FontSize="12"
-                                               VerticalOptions="Center" />
+                                        <Label Text="📍" FontSize="12"
+                                             VerticalOptions="Center" />
                                         <Label Text="{Binding Location}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="12"
-                                               VerticalOptions="Center"
-                                               LineBreakMode="TailTruncation" />
+     Style="{StaticResource CaptionLabel}"
+        FontSize="12"
+  VerticalOptions="Center"
+ LineBreakMode="TailTruncation"
+       MaxLines="1" />
                                     </HorizontalStackLayout>
-                                    <HorizontalStackLayout Spacing="8">
-                                        <Label FontSize="12"
-                                               VerticalOptions="Center" />
-                                        <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               FontSize="12"
-                                               VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
+ <HorizontalStackLayout Spacing="8">
+        <Label Text="📅" FontSize="12"
+           VerticalOptions="Center" />
+        <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}"
+            Style="{StaticResource CaptionLabel}"
+      FontSize="12"
+   VerticalOptions="Center"
+               LineBreakMode="NoWrap" />
+    </HorizontalStackLayout>
                                 </VerticalStackLayout>
 
                                 <!-- Team Count Badge -->

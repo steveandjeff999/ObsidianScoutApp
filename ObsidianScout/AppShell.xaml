@@ -100,6 +100,13 @@
         <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
     </FlyoutItem>
 
+    <!-- Matches Page -->
+    <FlyoutItem Title="Matches"
+ IsVisible="{Binding IsLoggedIn}"
+             Route="MatchesPage">
+        <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
+    </FlyoutItem>
+
     <!-- Analytics Pages -->
     <FlyoutItem Title="Graphs"
       IsVisible="{Binding IsLoggedIn}"

@@ -21,6 +21,7 @@ public interface IApiService
     Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0);
     Task<byte[]?> GetGraphsImageAsync(GraphImageRequest request);
     Task<ScheduledNotificationsResponse> GetScheduledNotificationsAsync(int limit =200, int offset =0);
+    Task<PastNotificationsResponse> GetPastNotificationsAsync(int limit =200, int offset =0);
     Task<ChatMessagesResponse> GetChatMessagesAsync(string type = "dm", string? user = null, string? group = null, int? allianceId = null, int limit =50, int offset =0);
     Task<ChatSendResponse> SendChatAsync(ChatSendRequest request);
     Task<ChatMembersResponse> GetChatMembersAsync(string scope = "team");
@@ -30,9 +31,15 @@ public interface IApiService
     Task<ChatReactResponse> ReactToChatMessageAsync(ChatReactRequest request);
     Task<ChatGroupsResponse> GetChatGroupsAsync(int? teamNumber = null);
     Task<ChatCreateGroupResponse> CreateChatGroupAsync(ChatCreateGroupRequest request);
-
+    
     // Group member management
     Task<ChatGroupMembersResponse> GetChatGroupMembersAsync(string group);
     Task<ChatGroupMembersResponse> AddChatGroupMembersAsync(string group, GroupMembersRequest request);
     Task<ChatGroupMembersResponse> RemoveChatGroupMembersAsync(string group, GroupMembersRequest request);
+    
+    // Chat state for unread tracking
+    Task<ChatStateResponse> GetChatStateAsync();
+    
+    // Mark messages as read
+    Task<ApiResponse<bool>> MarkChatMessagesAsReadAsync(string conversationId, string lastReadMessageId);
 }
