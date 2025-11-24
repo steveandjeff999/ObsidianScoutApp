@@ -117,6 +117,58 @@
  </VerticalStackLayout>
  </Border>
 
+ <!-- Configuration Management Card (Admin Only) -->
+ <Border Style="{StaticResource GlassCard}" IsVisible="{Binding HasManagementAccess}">
+ <VerticalStackLayout Spacing="12">
+ <Label Text="Configuration Management"
+ Style="{StaticResource SubheaderLabel}"
+ FontSize="18" />
+ 
+ <BoxView HeightRequest="1"
+ Color="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+ Margin="0,4" />
+ 
+ <Label Text="Access configuration editors to manage game settings and pit scouting forms"
+ Style="{StaticResource CaptionLabel}"
+ FontSize="12"
+ LineBreakMode="WordWrap"
+ Margin="0,0,0,8" />
+ 
+ <!-- Configuration Buttons -->
+ <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+ <!-- Row 1: Game Config and Management -->
+ <HorizontalStackLayout Grid.Row="0" Spacing="12">
+ <Button Text="Game Config Editor"
+ Command="{Binding NavigateToGameConfigCommand}"
+ Style="{StaticResource PrimaryGlassButton}"
+ HorizontalOptions="FillAndExpand"
+ HeightRequest="50" />
+ 
+ <Button Text="Management"
+ Command="{Binding NavigateToManagementCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ HorizontalOptions="FillAndExpand"
+ HeightRequest="50" />
+ </HorizontalStackLayout>
+ 
+ <!-- Row 2: Pit Scouting Config -->
+ <Button Grid.Row="1"
+ Text="Pit Config Editor"
+ Command="{Binding NavigateToPitScoutingCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ HorizontalOptions="FillAndExpand"
+ HeightRequest="50" />
+ </Grid>
+ 
+ <Label Text="⚠️ Admin access required"
+ Style="{StaticResource CaptionLabel}"
+ FontSize="11"
+ TextColor="{StaticResource Warning}"
+ HorizontalTextAlignment="Center"
+ Margin="0,4,0,0" />
+ </VerticalStackLayout>
+ </Border>
+
  <!-- Test Notifications Card (separate so it's clearly visible) -->
  <Border Style="{StaticResource GlassCard}">
  <VerticalStackLayout Spacing="8" Padding="12" HorizontalOptions="Center">

@@ -23,7 +23,7 @@ public partial class LoginViewModel : ObservableObject
     private string protocol = "https";
 
     [ObservableProperty]
-    private string serverAddress = string.Empty;
+    private string serverAddress = "obsidianscout.com";
 
     [ObservableProperty]
     private string serverPort = string.Empty;
@@ -48,9 +48,24 @@ public partial class LoginViewModel : ObservableObject
 
     private async void LoadServerConfiguration()
     {
-        Protocol = await _settingsService.GetProtocolAsync();
-        ServerAddress = await _settingsService.GetServerAddressAsync();
-        ServerPort = await _settingsService.GetServerPortAsync();
+        try
+        {
+            var loadedProtocol = await _settingsService.GetProtocolAsync();
+            var loadedAddress = await _settingsService.GetServerAddressAsync();
+            var loadedPort = await _settingsService.GetServerPortAsync();
+
+            // Use saved values if present; otherwise keep sane defaults (https, obsidianscout.com)
+            Protocol = string.IsNullOrWhiteSpace(loadedProtocol) ? "https" : loadedProtocol;
+            ServerAddress = string.IsNullOrWhiteSpace(loadedAddress) ? "obsidianscout.com" : loadedAddress;
+            ServerPort = string.IsNullOrWhiteSpace(loadedPort) ? string.Empty : loadedPort;
+        }
+        catch
+        {
+            // Ignore and keep defaults
+            Protocol = "https";
+            ServerAddress = "obsidianscout.com";
+            ServerPort = string.Empty;
+        }
     }
 
     [RelayCommand]
@@ -111,7 +126,8 @@ public partial class LoginViewModel : ObservableObject
             }
             else
             {
-                ErrorMessage = result.Error ?? "Login failed";
+                // Instruct user to verify server configuration when login fails
+                ErrorMessage = "login failed verify server configuration";
             }
         }
         catch (Exception ex)

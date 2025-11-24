@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
+             xmlns:models="clr-namespace:ObsidianScout.Models"
+     x:Class="ObsidianScout.Views.PitConfigEditorPage"
+  x:DataType="vm:PitConfigEditorViewModel"
+             Title="Pit Config Editor"
+Style="{StaticResource LiquidGlassPage}">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16">
+
+  <!-- Header -->
+    <Grid Grid.Row="0" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+       <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+     </Grid.ColumnDefinitions>
+
+      <Label Grid.Column="0"
+        Text="Pit Scouting Configuration"
+   FontSize="24"
+             FontAttributes="Bold"
+     VerticalOptions="Center" />
+
+     <Button Grid.Column="1"
+              Text="Raw JSON"
+      Clicked="OnShowRawClicked"
+          Style="{StaticResource SecondaryGlassButton}"
+     Margin="8,0"
+       Padding="10,6"
+ FontSize="13"
+         HorizontalOptions="End">
+   <Button.MinimumWidthRequest>
+         <OnPlatform x:TypeArguments="x:Double">
+  <On Platform="WinUI" Value="140" />
+   <On Platform="Default" Value="100" />
+             </OnPlatform>
+           </Button.MinimumWidthRequest>
+            </Button>
+
+     <Button Grid.Column="2"
+  Text="Form Editor"
+        Clicked="OnShowFormClicked"
+    Style="{StaticResource SecondaryGlassButton}"
+    Margin="8,0"
+     Padding="10,6"
+       FontSize="13"
+        HorizontalOptions="End">
+        <Button.MinimumWidthRequest>
+       <OnPlatform x:TypeArguments="x:Double">
+       <On Platform="WinUI" Value="140" />
+             <On Platform="Default" Value="100" />
+          </OnPlatform>
+    </Button.MinimumWidthRequest>
+            </Button>
+</Grid>
+
+<!-- Status -->
+ <Border Grid.Row="1"
+  Style="{StaticResource Badge}"
+         HorizontalOptions="Center"
+       Padding="8,6"
+                Margin="0,12,0,0"
+   IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}">
+ <Label Text="{Binding StatusMessage}" FontSize="12" TextColor="White" />
+     </Border>
+
+   <!-- Content area -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+
+            <!-- Raw JSON Editor -->
+   <Border IsVisible="{Binding IsRawVisible}"
+        Style="{StaticResource GlassCard}"
+           Padding="8">
+         <Editor Text="{Binding JsonText}"
+          FontFamily="Consolas"
+        FontSize="12"
+            AutoSize="TextChanges"
+            VerticalOptions="FillAndExpand"
+      HorizontalOptions="FillAndExpand" />
+      </Border>
+
+    <!-- Form Editor -->
+            <ScrollView IsVisible="{Binding IsFormVisible}">
+ <VerticalStackLayout Spacing="12">
+
+         <!-- General Settings -->
+             <Border Style="{StaticResource GlassCard}">
+       <VerticalStackLayout Spacing="8">
+      <Label Text="General Settings" FontSize="18" FontAttributes="Bold" />
+            <Entry Placeholder="Title" Text="{Binding CurrentConfig.PitScouting.Title}" Style="{StaticResource GlassEntry}" />
+       <Editor Placeholder="Description" Text="{Binding CurrentConfig.PitScouting.Description}" Style="{StaticResource GlassEditor}" />
+         </VerticalStackLayout>
+    </Border>
+
+              <!-- Sections header -->
+            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+         <Label Text="Sections" Style="{StaticResource SubheaderLabel}" />
+            <Button Text="+ Add Section" Command="{Binding AddSectionCommand}" Style="{StaticResource PrimaryGlassButton}" />
+          </HorizontalStackLayout>
+
+      <!-- Sections list -->
+          <CollectionView ItemsSource="{Binding Sections}" SelectionMode="None">
+             <CollectionView.ItemTemplate>
+ <DataTemplate x:DataType="models:PitSection">
+    <Border Style="{StaticResource GlassCard}" Padding="12" Margin="0,8">
+     <VerticalStackLayout Spacing="8">
+
+      <!-- Section header -->
+         <Grid ColumnSpacing="8">
+        <Grid.ColumnDefinitions>
+           <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+<ColumnDefinition Width="Auto" />
+         <ColumnDefinition Width="Auto" />
+       <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+
+    <Entry Grid.Column="0" Text="{Binding Name}" Placeholder="Section Name" Style="{StaticResource GlassEntry}" />
+   <Button Grid.Column="1" Text="▲" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MoveSectionUpCommand}" WidthRequest="40" FontSize="16" />
+            <Button Grid.Column="2" Text="▼" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MoveSectionDownCommand}" WidthRequest="40" FontSize="16" />
+<Button Grid.Column="3" Text="+ Element" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddElementToSectionCommand}" Style="{StaticResource SecondaryGlassButton}" />
+ <Button Grid.Column="4" Text="Delete" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteSectionCommand}" BackgroundColor="{StaticResource Danger}" WidthRequest="80" FontSize="14" Padding="8,6" />
+          </Grid>
+
+      <!-- Elements list -->
+       <CollectionView ItemsSource="{Binding Elements}" SelectionMode="None" Margin="8,6,0,0">
+         <CollectionView.ItemTemplate>
+        <DataTemplate x:DataType="models:PitElement">
+   <Border Style="{StaticResource CompactGlassCard}" Padding="10" Margin="0,4">
+     <VerticalStackLayout Spacing="8">
+
+            <Grid ColumnSpacing="8">
+    <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+    <ColumnDefinition Width="Auto" />
+ <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+       <ColumnDefinition Width="Auto" />
+     <ColumnDefinition Width="Auto" />
+               </Grid.ColumnDefinitions>
+
+                  <Entry Grid.Column="0" Text="{Binding Name}" Placeholder="Field Name" />
+<Picker Grid.Column="1" ItemsSource="{Binding AvailableTypes}" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}" WidthRequest="140" />
+
+        <StackLayout Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalOptions="Center">
+  <CheckBox IsChecked="{Binding Required}" />
+    <Label Text="Required" FontSize="12" VerticalOptions="Center" />
+        </StackLayout>
+
+    <Button Grid.Column="3" Text="▲" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MoveElementUpCommand}" WidthRequest="35" FontSize="14" />
+   <Button Grid.Column="4" Text="▼" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MoveElementDownCommand}" WidthRequest="35" FontSize="14" />
+        <Button Grid.Column="5" Text="Delete" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteElementCommand}" BackgroundColor="{StaticResource Danger}" WidthRequest="80" FontSize="13" Padding="6,4" />
+     </Grid>
+
+       <VerticalStackLayout Spacing="6" Margin="0,8,0,0" IsVisible="{Binding Type, Converter={StaticResource TypeIsSelectConverter}}">
+            <Button Text="+ Add Option" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddOptionToElementCommand}" Style="{StaticResource SecondaryGlassButton}" />
+
+       <CollectionView ItemsSource="{Binding Options}">
+       <CollectionView.ItemTemplate>
+     <DataTemplate x:DataType="models:PitOption">
+      <Grid ColumnSpacing="8">
+      <Grid.ColumnDefinitions>
+       <ColumnDefinition Width="*" />
+    <ColumnDefinition Width="*" />
+         <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+     <Entry Grid.Column="0" Text="{Binding Label}" Placeholder="Label" />
+ <Entry Grid.Column="1" Text="{Binding Value}" Placeholder="Value" />
+     <Button Grid.Column="2" Text="✕" CommandParameter="{Binding .}" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteOptionFromElementCommand}" WidthRequest="35" FontSize="16" BackgroundColor="{StaticResource Danger}" TextColor="White" />
+        </Grid>
+     </DataTemplate>
+ </CollectionView.ItemTemplate>
+         </CollectionView>
+     </VerticalStackLayout>
+
+       </VerticalStackLayout>
+  </Border>
+               </DataTemplate>
+            </CollectionView.ItemTemplate>
+      </CollectionView>
+
+     </VerticalStackLayout>
+</Border>
+  </DataTemplate>
+   </CollectionView.ItemTemplate>
+    </CollectionView>
+
+        </VerticalStackLayout>
+          </ScrollView>
+
+  </Grid>
+
+        <!-- Footer actions -->
+        <Grid Grid.Row="3" ColumnSpacing="12" Margin="0,16,0,0">
+      <Grid.ColumnDefinitions>
+             <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+     <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+          <Button Grid.Column="0" Text="Revert" Command="{Binding RevertCommand}" Style="{StaticResource SecondaryGlassButton}" />
+            <Button Grid.Column="1" Text="Save" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryGlassButton}" />
+          <Button Grid.Column="2" Text="Close" Clicked="OnCloseClicked" Style="{StaticResource SecondaryGlassButton}" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

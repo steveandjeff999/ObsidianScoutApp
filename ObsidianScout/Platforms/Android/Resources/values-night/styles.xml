@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Dark Theme -->
+    <style name="MainTheme" parent="Maui.SplashTheme">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+     <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        
+    <!-- Secondary brand color -->
+     <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+    
+        <!-- Surface and Background -->
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+     <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        
+     <!-- Error color -->
+  <item name="colorError">@color/colorError</item>
+ <item name="colorOnError">@color/colorOnError</item>
+ 
+        <!-- Status bar & Navigation bar -->
+     <item name="android:statusBarColor">@color/colorBackground</item>
+        <item name="android:navigationBarColor">@color/colorSurface</item>
+<item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+      <!-- Material Design 3 Shape Theming -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
+  <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.Corner.Large</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Material3.Corner.ExtraLarge</item>
+        
+   <!-- Elevation overlay for dark theme -->
+        <item name="elevationOverlayEnabled">true</item>
+        <item name="elevationOverlayColor">@color/colorPrimary</item>
+        
+     <!-- Text appearance -->
+        <item name="android:textViewStyle">@style/Widget.Material3.TextView.Dark</item>
+        <item name="android:editTextStyle">@style/Widget.Material3.EditText.Dark</item>
+ 
+        <!-- Modern transitions -->
+        <item name="android:windowAnimationStyle">@style/WindowAnimation</item>
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowEnterTransition">@android:transition/slide_right</item>
+   <item name="android:windowExitTransition">@android:transition/slide_left</item>
+    </style>
+    
+    <!-- Dark Theme Widgets -->
+    <style name="Widget.Material3.TextView.Dark" parent="android:Widget.TextView">
+   <item name="android:textColor">@color/colorOnSurface</item>
+      <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+    
+<style name="Widget.Material3.EditText.Dark" parent="android:Widget.EditText">
+   <item name="android:textColor">@color/colorOnSurface</item>
+    <item name="android:textColorHint">?android:attr/textColorTertiary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:minHeight">56dp</item>
+      <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">16dp</item>
+  <item name="android:paddingBottom">16dp</item>
+ <item name="android:background">@drawable/edittext_background_dark</item>
+ </style>
+    
+</resources>

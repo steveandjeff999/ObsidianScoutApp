@@ -20,7 +20,10 @@ namespace ObsidianScout
 
       InitializeComponent();
 
-            MainPage = new AppShell(services.GetRequiredService<ISettingsService>());
+       MainPage = new AppShell(
+ services.GetRequiredService<ISettingsService>(),
+   services.GetRequiredService<IApiService>()
+          );
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

@@ -168,12 +168,29 @@ if (result.Success && result.Matches != null)
     [RelayCommand]
     private async Task MatchSelectedAsync(Match match)
     {
-        if (match == null)
-   return;
+ if (match == null)
+ return;
 
-        // Navigate to scouting page with match pre-selected
-      await Shell.Current.GoToAsync("//ScoutingPage");
-    }
+ // Navigate to scouting page with match pre-selected
+ try
+ {
+ // Use relative route instead of absolute global route to avoid Shell routing issue
+ await Shell.Current.GoToAsync("ScoutingPage");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Navigation to ScoutingPage failed: {ex.Message}");
+ // Fallback: attempt simple relative navigation
+ try
+ {
+ await Shell.Current.GoToAsync("ScoutingPage");
+ }
+ catch
+ {
+ // swallow - nothing more we can do here
+ }
+ }
+ }
 
     [RelayCommand]
  private async Task GoBackAsync()

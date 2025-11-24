@@ -1,0 +1,31 @@
+using ObsidianScout.ViewModels;
+using Microsoft.Maui.Controls;
+
+namespace ObsidianScout.Views;
+
+public partial class ManagementPage : ContentPage
+{
+ private readonly ManagementViewModel _vm;
+
+ public ManagementPage(ManagementViewModel vm)
+ {
+ InitializeComponent();
+ BindingContext = _vm = vm;
+ }
+
+ private async void OnEditGameConfigClicked(object sender, EventArgs e)
+ {
+ try
+ {
+ await Shell.Current.GoToAsync("GameConfigEditorPage");
+ }
+ catch
+ {
+ // fallback: push page manually
+ var services = Application.Current?.Handler?.MauiContext?.Services;
+ var editorVm = services?.GetService<ObsidianScout.ViewModels.GameConfigEditorViewModel>() ?? new ObsidianScout.ViewModels.GameConfigEditorViewModel(services?.GetService<ObsidianScout.Services.IApiService>()!, services?.GetService<ObsidianScout.Services.ISettingsService>()!);
+ var page = new GameConfigEditorPage(editorVm);
+ await Shell.Current.Navigation.PushAsync(page);
+ }
+ }
+}

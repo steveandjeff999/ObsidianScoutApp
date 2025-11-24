@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ x:Class="ObsidianScout.Views.RegisterPage"
+ x:DataType="viewmodels:RegisterViewModel"
+ Title="Create Account">
+
+ <ScrollView>
+ <VerticalStackLayout Padding="20" Spacing="16">
+ <Label Text="Create Account" FontSize="22" HorizontalTextAlignment="Center" />
+
+ <Entry Placeholder="Username" Text="{Binding Username}" />
+ <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+ <Entry Placeholder="Confirm Password (optional)" IsPassword="True" Text="{Binding ConfirmPassword}" />
+ <Entry Placeholder="Team Number" Keyboard="Numeric" Text="{Binding TeamNumber}" />
+ <Entry Placeholder="Email (optional)" Keyboard="Email" Text="{Binding Email}" />
+
+ <Button Text="Create Account" Command="{Binding RegisterCommand}" />
+
+ <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+ </VerticalStackLayout>
+ </ScrollView>
+
+</ContentPage>

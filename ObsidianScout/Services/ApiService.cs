@@ -220,21 +220,116 @@ public partial class ApiService : IApiService
     {
         try
         {
-            await AddAuthHeaderAsync();
-            var baseUrl = await GetBaseUrlAsync();
-            var response = await _httpClient.GetAsync($"{baseUrl}/auth/verify");
+     await AddAuthHeaderAsync();
+   var baseUrl = await GetBaseUrlAsync();
+         var response = await _httpClient.GetAsync($"{baseUrl}/auth/verify");
 
             if (response.IsSuccessStatusCode)
-            {
+      {
                 var result = await response.Content.ReadFromJsonAsync<ApiResponse<User>>(_jsonOptions);
-                return result ?? new ApiResponse<User> { Success = false };
-            }
+       return result ?? new ApiResponse<User> { Success = false };
+          }
 
-            return new ApiResponse<User> { Success = false };
-        }
+   return new ApiResponse<User> { Success = false };
+  }
         catch
         {
-            return new ApiResponse<User> { Success = false };
+     return new ApiResponse<User> { Success = false };
+        }
+    }
+
+    public async Task<UserProfileResponse> GetUserProfileAsync()
+    {
+        try
+        {
+         await AddAuthHeaderAsync();
+       var baseUrl = await GetBaseUrlAsync();
+        var response = await _httpClient.GetAsync($"{baseUrl}/profiles/me");
+
+         if (response.IsSuccessStatusCode)
+ {
+             var result = await response.Content.ReadFromJsonAsync<UserProfileResponse>(_jsonOptions);
+       return result ?? new UserProfileResponse { Success = false, Error = "Invalid response" };
+            }
+
+var errorContent = await response.Content.ReadAsStringAsync();
+            return new UserProfileResponse 
+        { 
+      Success = false, 
+           Error = $"Request failed with status {response.StatusCode}: {errorContent}" 
+            };
+        }
+        catch (Exception ex)
+        {
+        System.Diagnostics.Debug.WriteLine($"[API] Get profile failed: {ex.Message}");
+  return new UserProfileResponse
+       {
+                Success = false,
+      Error = $"Connection error: {ex.Message}"
+            };
+        }
+    }
+
+ public async Task<byte[]?> GetProfilePictureAsync()
+    {
+        try
+  {
+      System.Diagnostics.Debug.WriteLine("[API] GetProfilePictureAsync called");
+  await AddAuthHeaderAsync();
+         var baseUrl = await GetBaseUrlAsync();
+     var url = $"{baseUrl}/profiles/me/picture";
+        
+   System.Diagnostics.Debug.WriteLine($"[API] Profile picture URL: {url}");
+       
+       // Check if auth header is set
+          var authHeader = _httpClient.DefaultRequestHeaders.Authorization?.ToString();
+       if (!string.IsNullOrEmpty(authHeader) && authHeader.Length > 20)
+   {
+    System.Diagnostics.Debug.WriteLine($"[API] Auth header: {authHeader.Substring(0, 20)}...");
+      }
+       else
+  {
+   System.Diagnostics.Debug.WriteLine($"[API] ? WARNING: No auth header or invalid auth header");
+       }
+   
+            var response = await _httpClient.GetAsync(url);
+   
+       System.Diagnostics.Debug.WriteLine($"[API] Response status: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response content type: {response.Content.Headers.ContentType?.MediaType ?? "null"}");
+     System.Diagnostics.Debug.WriteLine($"[API] Response content length: {response.Content.Headers.ContentLength?.ToString() ?? "null"}");
+
+            if (response.IsSuccessStatusCode)
+       {
+   var bytes = await response.Content.ReadAsByteArrayAsync();
+  System.Diagnostics.Debug.WriteLine($"[API] ? Received {bytes.Length} bytes for profile picture");
+
+      // Log first few bytes to verify image data
+    if (bytes.Length >= 4)
+      {
+  System.Diagnostics.Debug.WriteLine($"[API] First 4 bytes: {bytes[0]:X2} {bytes[1]:X2} {bytes[2]:X2} {bytes[3]:X2}");
+    }
+ 
+  return bytes;
+   }
+     else
+ {
+     var errorContent = await response.Content.ReadAsStringAsync();
+    System.Diagnostics.Debug.WriteLine($"[API] ? Profile picture request failed");
+       System.Diagnostics.Debug.WriteLine($"[API] Error content: {errorContent}");
+   }
+
+      return null;
+        }
+  catch (Exception ex)
+      {
+     System.Diagnostics.Debug.WriteLine($"[API] ? Error fetching profile picture");
+       System.Diagnostics.Debug.WriteLine($"[API] Exception type: {ex.GetType().Name}");
+    System.Diagnostics.Debug.WriteLine($"[API] Exception message: {ex.Message}");
+  if (ex.InnerException != null)
+    {
+        System.Diagnostics.Debug.WriteLine($"[API] Inner exception: {ex.InnerException.Message}");
+        }
+ return null;
         }
     }
 
@@ -784,15 +879,16 @@ public partial class ApiService : IApiService
                 };
             }
 
+            var errorContent = await response.Content.ReadAsStringAsync();
             return new GameConfigResponse 
             { 
                 Success = false, 
                 Error = $"Request failed with status {response.StatusCode}" 
             };
         }
- catch (TaskCanceledException tcEx)
+        catch (TaskCanceledException tcEx)
         {
-          System.Diagnostics.Debug.WriteLine($"[API] Game config request timed out: {tcEx.Message}");
+            System.Diagnostics.Debug.WriteLine($"[API] Game config request timed out: {tcEx.Message}");
             
   // Try to load from cache on timeout
     var cachedConfig3 = await _cache_service.GetCachedGameConfigAsync();
@@ -825,7 +921,7 @@ public partial class ApiService : IApiService
        return new GameConfigResponse 
    { 
        Success = true, 
-             Config = cachedConfig4,
+     Config = cachedConfig4,
     Error = $"?? Using cached data ({ex.Message})"
      };
     }
@@ -1813,4 +1909,555 @@ public partial class ApiService : IApiService
          return new ApiResponse<bool> { Success = false, Error = ex.Message };
    }
     }
+
+    public async Task<ApiResponse<bool>> SaveGameConfigAsync(GameConfig config)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new ApiResponse<bool> { Success = false, Error = "Offline - cannot save config" };
+        }
+
+        try
+ {
+    await AddAuthHeaderAsync();
+    var baseUrl = await GetBaseUrlAsync();
+     var endpoint = $"{baseUrl}/config/game";
+    
+     System.Diagnostics.Debug.WriteLine("=== API: SAVE GAME CONFIG ===");
+System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
+ 
+       var response = await _httpClient.PostAsJsonAsync(endpoint, config, _jsonOptions);
+  var content = await response.Content.ReadAsStringAsync();
+
+       System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+   System.Diagnostics.Debug.WriteLine($"Response: {content}");
+
+    if (response.IsSuccessStatusCode)
+{
+     return new ApiResponse<bool> { Success = true };
+      }
+
+      // Try to parse error body
+      try
+            {
+         var parsed = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<bool>>(content, _jsonOptions);
+       if (parsed != null)
+  return parsed;
+      }
+      catch { }
+
+       return new ApiResponse<bool> { Success = false, Error = $"HTTP {(int)response.StatusCode}: {content}" };
+}
+        catch (Exception ex)
+        {
+ System.Diagnostics.Debug.WriteLine($"[API] Save game config failed: {ex.Message}");
+       return new ApiResponse<bool> { Success = false, Error = ex.Message };
+    }
+    }
+
+    public async Task<PitConfigResponse> GetPitConfigAsync()
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            var cachedConfig = await _cache_service.GetCachedPitConfigAsync();
+   if (cachedConfig != null)
+ {
+                System.Diagnostics.Debug.WriteLine("[API] Offline-mode - returning cached pit config immediately");
+     return new PitConfigResponse { Success = true, Config = cachedConfig, Error = "Using cached data (offline mode)" };
+    }
+        return new PitConfigResponse { Success = false, Error = "Offline - no cached pit config available" };
+        }
+        
+        try
+        {
+   await AddAuthHeaderAsync();
+     var baseUrl = await GetBaseUrlAsync();
+       var response = await _httpClient.GetAsync($"{baseUrl}/config/pit");
+
+          if (response.IsSuccessStatusCode)
+            {
+// Get raw JSON for debugging
+         var rawJson = await response.Content.ReadAsStringAsync();
+      System.Diagnostics.Debug.WriteLine("=== RAW PIT CONFIG JSON ===");
+         System.Diagnostics.Debug.WriteLine(rawJson.Length > 2000 ? rawJson.Substring(0, 2000) + "... (truncated)" : rawJson);
+    System.Diagnostics.Debug.WriteLine("=== END RAW JSON ===");
+          
+                var result = await response.Content.ReadFromJsonAsync<PitConfigResponse>(_jsonOptions);
+    
+        // Cache the pit config
+    if (result != null && result.Success && result.Config != null)
+         {
+           await _cache_service.CachePitConfigAsync(result.Config);
+      }
+       
+      return result ?? new PitConfigResponse { Success = false, Error = "Invalid response" };
+            }
+
+       // Try to load from cache on failure
+var cachedConfig2 = await _cache_service.GetCachedPitConfigAsync();
+            if (cachedConfig2 != null)
+     {
+       System.Diagnostics.Debug.WriteLine($"[API] Using cached pit config (server returned {response.StatusCode})");
+            return new PitConfigResponse 
+          { 
+            Success = true, 
+          Config = cachedConfig2,
+     Error = $"?? Using cached data (server error: {response.StatusCode})"
+          };
+            }
+
+    return new PitConfigResponse 
+        { 
+                Success = false, 
+        Error = $"Request failed with status {response.StatusCode}" 
+            };
+        }
+        catch (Exception ex)
+    {
+    System.Diagnostics.Debug.WriteLine($"[API] Pit config request failed: {ex.Message}");
+
+         // Try to load from cache on exception
+            var cachedConfig3 = await _cache_service.GetCachedPitConfigAsync();
+          if (cachedConfig3 != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[API] Using cached pit config after error (offline mode)");
+                return new PitConfigResponse 
+                { 
+    Success = true, 
+          Config = cachedConfig3,
+          Error = $"?? Using cached data ({ex.Message})"
+          };
+            }
+ 
+    return new PitConfigResponse
+          {
+   Success = false,
+      Error = $"Connection error: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<PitScoutingSubmitResponse> SubmitPitScoutingDataAsync(PitScoutingSubmission submission)
+    {
+    // If offline, return quickly indicating offline so UI can queue/handle
+  if (!_connectivity_service.IsConnected)
+    {
+            return new PitScoutingSubmitResponse
+     {
+ Success = false,
+         Error = "Offline - submission queued locally",
+     ErrorCode = "OFFLINE"
+         };
+      }
+        
+  var startTime = DateTime.Now;
+ 
+try
+        {
+  await AddAuthHeaderAsync();
+   var baseUrl = await GetBaseUrlAsync();
+   var endpoint = $"{baseUrl}/pit-scouting/submit";
+  
+            System.Diagnostics.Debug.WriteLine("=== API: SUBMIT PIT SCOUTING DATA ===");
+            System.Diagnostics.Debug.WriteLine($"Timestamp: {startTime:yyyy-MM-dd HH:mm:ss.fff}");
+   System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
+            System.Diagnostics.Debug.WriteLine($"Team ID: {submission.TeamId}");
+          System.Diagnostics.Debug.WriteLine($"Data fields: {submission.Data.Count}");
+            System.Diagnostics.Debug.WriteLine($"Images: {submission.Images?.Count ?? 0}");
+     
+    var response = await _httpClient.PostAsJsonAsync(endpoint, submission, _jsonOptions);
+        
+   var elapsed = (DateTime.Now - startTime).TotalMilliseconds;
+            System.Diagnostics.Debug.WriteLine($"Response received in {elapsed:F0}ms");
+            System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Success: {response.IsSuccessStatusCode}");
+
+            // Log response headers
+ System.Diagnostics.Debug.WriteLine("Response Headers:");
+         foreach (var header in response.Headers)
+         {
+    System.Diagnostics.Debug.WriteLine($"  {header.Key}: {string.Join(", ", header.Value)}");
+       }
+
+ if (response.IsSuccessStatusCode)
+            {
+      var responseContent = await response.Content.ReadAsStringAsync();
+             System.Diagnostics.Debug.WriteLine($"Response Body: {responseContent}");
+        
+           try
+       {
+        var result = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(responseContent, _jsonOptions);
+                
+    if (result != null)
+    {
+        System.Diagnostics.Debug.WriteLine($"Parsed Success: {result.Success}");
+     System.Diagnostics.Debug.WriteLine($"Parsed Pit Scouting ID: {result.PitScoutingId}");
+        return result;
+    }
+        else
+    {
+      return new PitScoutingSubmitResponse { Success = false, Error = "Invalid response - null result" };
+   }
+          }
+         catch (JsonException jsonEx)
+ {
+         System.Diagnostics.Debug.WriteLine($"ERROR: JSON deserialization failed: {jsonEx.Message}");
+         return new PitScoutingSubmitResponse 
+    { 
+      Success = false, 
+           Error = $"Invalid JSON response: {jsonEx.Message}",
+                ErrorCode = "JSON_PARSE_ERROR"
+   };
+    }
+      }
+       else
+         {
+var errorContent = await response.Content.ReadAsStringAsync();
+         System.Diagnostics.Debug.WriteLine($"Error Response Body: {errorContent}");
+   
+ // Try to parse error response
+      try
+      {
+        if (!string.IsNullOrWhiteSpace(errorContent))
+      {
+       var errorResponse = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(errorContent, _jsonOptions);
+    if (errorResponse != null)
+      {
+        return errorResponse;
+       }
+           }
+   }
+  catch { }
+          
+        return new PitScoutingSubmitResponse 
+     { 
+       Success = false, 
+       Error = $"HTTP {(int)response.StatusCode}: {errorContent}",
+    ErrorCode = $"HTTP_{(int)response.StatusCode}"
+     };
+        }
+        }
+        catch (Exception ex)
+        {
+      System.Diagnostics.Debug.WriteLine($"=== PIT SCOUTING EXCEPTION ===");
+       System.Diagnostics.Debug.WriteLine($"Type: {ex.GetType().Name}");
+       System.Diagnostics.Debug.WriteLine($"Message: {ex.Message}");
+     
+   return new PitScoutingSubmitResponse
+   {
+      Success = false,
+  Error = $"Error: {ex.Message}",
+          ErrorCode = "GENERAL_ERROR"
+ };
+        }
+finally
+   {
+    var totalElapsed = (DateTime.Now - startTime).TotalMilliseconds;
+ System.Diagnostics.Debug.WriteLine($"=== END PIT SCOUTING API CALL ({totalElapsed:F0}ms) ===\n");
+      }
+    }
+
+    public async Task<PitScoutingListResponse> GetPitScoutingDataAsync(int? teamNumber = null)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+       return new PitScoutingListResponse { Success = false, Error = "Offline - no cached pit scouting data available" };
+      }
+        
+        try
+   {
+        await AddAuthHeaderAsync();
+      var baseUrl = await GetBaseUrlAsync();
+      var url = $"{baseUrl}/pit-scouting/all";
+  
+            if (teamNumber.HasValue)
+        url += $"?team_number={teamNumber.Value}";
+
+            System.Diagnostics.Debug.WriteLine($"=== API: FETCH PIT SCOUTING DATA ===");
+  System.Diagnostics.Debug.WriteLine($"URL: {url}");
+ 
+            var response = await _httpClient.GetAsync(url);
+   
+            System.Diagnostics.Debug.WriteLine($"Response Status: {(int)response.StatusCode} {response.StatusCode}");
+
+            if (response.IsSuccessStatusCode)
+  {
+             var result = await response.Content.ReadFromJsonAsync<PitScoutingListResponse>(_jsonOptions);
+       
+    System.Diagnostics.Debug.WriteLine($"Success: Fetched {result?.Entries.Count ?? 0} pit scouting entries");
+    return result ?? new PitScoutingListResponse { Success = false, Error = "Invalid response" };
+     }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Error Content: {errorContent}");
+
+        return new PitScoutingListResponse 
+    { 
+       Success = false, 
+     Error = $"Request failed with status {response.StatusCode}" 
+       };
+        }
+        catch (Exception ex)
+        {
+    System.Diagnostics.Debug.WriteLine($"[API] Pit scouting data request failed: {ex.Message}");
+            return new PitScoutingListResponse
+     {
+       Success = false,
+                Error = $"Connection error: {ex.Message}"
+        };
+        }
+    }
+
+    public async Task<PitScoutingEntry?> GetPitScoutingEntryAsync(int entryId)
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+      return null;
+        }
+     
+   try
+   {
+     await AddAuthHeaderAsync();
+  var baseUrl = await GetBaseUrlAsync();
+    var url = $"{baseUrl}/pit-scouting/{entryId}";
+
+            System.Diagnostics.Debug.WriteLine($"=== API: FETCH PIT SCOUTING ENTRY ===");
+            System.Diagnostics.Debug.WriteLine($"URL: {url}");
+         
+            var response = await _httpClient.GetAsync(url);
+     
+  System.Diagnostics.Debug.WriteLine($"Response Status: {(int)response.StatusCode} {response.StatusCode}");
+
+     if (response.IsSuccessStatusCode)
+{
+     var result = await response.Content.ReadFromJsonAsync<PitScoutingEntry>(_jsonOptions);
+                return result;
+            }
+
+        return null;
+  }
+        catch (Exception ex)
+        {
+     System.Diagnostics.Debug.WriteLine($"[API] Pit scouting entry request failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<PitScoutingSubmitResponse> UpdatePitScoutingDataAsync(int entryId, PitScoutingSubmission submission)
+    {
+        if (!_connectivity_service.IsConnected)
+        {
+        return new PitScoutingSubmitResponse
+            {
+                Success = false,
+        Error = "Offline - cannot update entry",
+  ErrorCode = "OFFLINE"
+            };
+        }
+        
+        try
+        {
+        await AddAuthHeaderAsync();
+    var baseUrl = await GetBaseUrlAsync();
+   var endpoint = $"{baseUrl}/pit-scouting/{entryId}";
+  
+     System.Diagnostics.Debug.WriteLine("=== API: UPDATE PIT SCOUTING DATA ===");
+   System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
+       System.Diagnostics.Debug.WriteLine($"Entry ID: {entryId}");
+         System.Diagnostics.Debug.WriteLine($"Team ID: {submission.TeamId}");
+        
+ var response = await _httpClient.PutAsJsonAsync(endpoint, submission, _jsonOptions);
+     
+        System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+
+            if (response.IsSuccessStatusCode)
+      {
+    var responseContent = await response.Content.ReadAsStringAsync();
+    var result = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(responseContent, _jsonOptions);
+          return result ?? new PitScoutingSubmitResponse { Success = true, Message = "Updated successfully" };
+            }
+            else
+     {
+      var errorContent = await response.Content.ReadAsStringAsync();
+   return new PitScoutingSubmitResponse 
+     { 
+      Success = false, 
+         Error = $"HTTP {(int)response.StatusCode}: {errorContent}"
+  };
+            }
+        }
+        catch (Exception ex)
+        {
+System.Diagnostics.Debug.WriteLine($"Update pit scouting failed: {ex.Message}");
+     return new PitScoutingSubmitResponse
+   {
+   Success = false,
+     Error = $"Error: {ex.Message}",
+          ErrorCode = "GENERAL_ERROR"
+        };
+        }
+    }
+
+    public async Task<ApiResponse<bool>> DeletePitScoutingEntryAsync(int entryId)
+    {
+        if (!_connectivity_service.IsConnected)
+        {
+            return new ApiResponse<bool> { Success = false, Error = "Offline - cannot delete entry" };
+   }
+        
+        try
+        {
+     await AddAuthHeaderAsync();
+    var baseUrl = await GetBaseUrlAsync();
+       var endpoint = $"{baseUrl}/pit-scouting/{entryId}";
+  
+       System.Diagnostics.Debug.WriteLine($"=== API: DELETE PIT SCOUTING ENTRY ===");
+     System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
+ 
+      var response = await _httpClient.DeleteAsync(endpoint);
+     
+    System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+
+      if (response.IsSuccessStatusCode)
+   {
+return new ApiResponse<bool> { Success = true };
+  }
+   else
+     {
+       var errorContent = await response.Content.ReadAsStringAsync();
+        return new ApiResponse<bool> 
+  { 
+        Success = false, 
+    Error = $"HTTP {(int)response.StatusCode}: {errorContent}"
+      };
+      }
+        }
+   catch (Exception ex)
+        {
+   System.Diagnostics.Debug.WriteLine($"Delete pit scouting failed: {ex.Message}");
+      return new ApiResponse<bool>
+            {
+        Success = false,
+ Error = $"Error: {ex.Message}"
+  };
+    }
+    }
+
+    public async Task<ApiResponse<bool>> SavePitConfigAsync(PitConfig config)
+    {
+        if (!_connectivity_service.IsConnected)
+        {
+         return new ApiResponse<bool> { Success = false, Error = "Offline - cannot save pit config" };
+        }
+
+        try
+ {
+    await AddAuthHeaderAsync();
+    var baseUrl = await GetBaseUrlAsync();
+     var endpoint = $"{baseUrl}/config/pit";
+    
+     System.Diagnostics.Debug.WriteLine("=== API: SAVE PIT CONFIG ===");
+System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
+ 
+       var response = await _httpClient.PostAsJsonAsync(endpoint, config, _jsonOptions);
+  var content = await response.Content.ReadAsStringAsync();
+
+       System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+   System.Diagnostics.Debug.WriteLine($"Response: {content}");
+
+    if (response.IsSuccessStatusCode)
+{
+     return new ApiResponse<bool> { Success = true };
+      }
+
+      // Try to parse error body
+      try
+            {
+         var parsed = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<bool>>(content, _jsonOptions);
+       if (parsed != null)
+  return parsed;
+      }
+      catch { }
+
+       return new ApiResponse<bool> { Success = false, Error = $"HTTP {(int)response.StatusCode}: {content}" };
+}
+        catch (Exception ex)
+        {
+ System.Diagnostics.Debug.WriteLine($"[API] Save pit config failed: {ex.Message}");
+       return new ApiResponse<bool> { Success = false, Error = ex.Message };
+    }
+    }
+
+    // Custom register method
+ public async Task<LoginResponse> RegisterAsync(string username, string password, string? confirmPassword, int teamNumber, string? email)
+ {
+ try
+ {
+ var baseUrl = await GetBaseUrlAsync();
+ var payload = new Dictionary<string, object?>
+ {
+ ["username"] = username,
+ ["password"] = password,
+ ["team_number"] = teamNumber
+ };
+
+ if (!string.IsNullOrEmpty(confirmPassword)) payload["confirm_password"] = confirmPassword;
+ if (!string.IsNullOrEmpty(email)) payload["email"] = email;
+
+ var endpoint = $"{baseUrl}/auth/register";
+ var response = await _httpClient.PostAsJsonAsync(endpoint, payload, _jsonOptions);
+
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ try
+ {
+ var result = System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content, _jsonOptions);
+ if (result != null && result.Success)
+ {
+ // Persist token and user data similar to login
+ if (!string.IsNullOrEmpty(result.Token))
+ {
+ await _settings_service.SetTokenAsync(result.Token);
+ await _settings_service.SetTokenExpirationAsync(result.ExpiresAt);
+ }
+
+ if (result.User != null && !string.IsNullOrEmpty(result.User.Username))
+ {
+ await _settings_service.SetUsernameAsync(result.User.Username);
+ }
+
+ if (result.User?.Roles != null && result.User.Roles.Count >0)
+ {
+ await _settings_service.SetUserRolesAsync(result.User.Roles);
+ }
+
+ return result;
+ }
+
+ return result ?? new LoginResponse { Success = false, Error = "Invalid response" };
+ }
+ catch (System.Text.Json.JsonException jex)
+ {
+ return new LoginResponse { Success = false, Error = $"JSON parse error: {jex.Message}" };
+ }
+ }
+ else
+ {
+ // Try to parse error body as LoginResponse to surface structured error codes
+ try
+ {
+ var err = System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content, _jsonOptions);
+ if (err != null) return err;
+ }
+ catch { }
+
+ return new LoginResponse { Success = false, Error = $"HTTP {(int)response.StatusCode}: {content}" };
+ }
+ }
+ catch (Exception ex)
+ {
+ return new LoginResponse { Success = false, Error = ex.Message };
+ }
+ }
 }

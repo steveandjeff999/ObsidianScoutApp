@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Dark Theme Colors -->
+    
+    <!-- Primary Colors -->
+  <color name="colorPrimary">#818CF8</color>
+  <color name="colorPrimaryDark">#6366F1</color>
+    <color name="colorPrimaryVariant">#A5B4FC</color>
+    <color name="colorAccent">#A78BFA</color>
+    
+    <!-- Secondary Colors -->
+    <color name="colorSecondary">#A78BFA</color>
+    <color name="colorSecondaryDark">#8B5CF6</color>
+    <color name="colorSecondaryVariant">#C4B5FD</color>
+    
+    <!-- Surface & Background - Professional Grays -->
+    <color name="colorSurface">#2D2D30</color>
+    <color name="colorBackground">#1E1E1E</color>
+    <color name="colorSurfaceVariant">#3E3E42</color>
+    
+    <!-- Text Colors -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorOnBackground">#E4E4E7</color>
+ <color name="colorOnSurface">#E4E4E7</color>
+    
+    <!-- Status Bar & Navigation Bar -->
+    <color name="colorPrimaryContainer">#3730A3</color>
+    <color name="colorSecondaryContainer">#6D28D9</color>
+ 
+    <!-- Error Colors -->
+    <color name="colorError">#F87171</color>
+    <color name="colorOnError">#FFFFFF</color>
+    
+    <!-- Dividers & Borders -->
+    <color name="colorOutline">#3F3F46</color>
+    <color name="colorOutlineVariant">#27272A</color>
+</resources>

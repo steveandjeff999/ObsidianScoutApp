@@ -1,6 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#512BD4</color>
-    <color name="colorPrimaryDark">#2B0B98</color>
-    <color name="colorAccent">#2B0B98</color>
+    <!-- Material Design 3 Colors - Modern Indigo Theme -->
+    
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#6366F1</color>
+    <color name="colorPrimaryDark">#4F46E5</color>
+    <color name="colorPrimaryVariant">#818CF8</color>
+    <color name="colorAccent">#8B5CF6</color>
+    
+    <!-- Secondary Colors -->
+    <color name="colorSecondary">#8B5CF6</color>
+    <color name="colorSecondaryDark">#7C3AED</color>
+    <color name="colorSecondaryVariant">#A78BFA</color>
+    
+    <!-- Surface & Background -->
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorBackground">#F8FAFC</color>
+    <color name="colorSurfaceVariant">#F1F5F9</color>
+    
+    <!-- Text Colors -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorOnBackground">#0F172A</color>
+    <color name="colorOnSurface">#0F172A</color>
+    
+    <!-- Status Bar & Navigation Bar -->
+    <color name="colorPrimaryContainer">#EEF2FF</color>
+    <color name="colorSecondaryContainer">#F5F3FF</color>
+    
+    <!-- Error Colors -->
+    <color name="colorError">#EF4444</color>
+    <color name="colorOnError">#FFFFFF</color>
+    
+    <!-- Dividers & Borders -->
+    <color name="colorOutline">#E2E8F0</color>
+    <color name="colorOutlineVariant">#CBD5E1</color>
+    
+    <!-- Legacy compatibility -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00FFFFFF</color>
 </resources>

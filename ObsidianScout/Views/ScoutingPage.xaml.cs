@@ -3,6 +3,7 @@ using ObsidianScout.ViewModels;
 using ObsidianScout.Converters;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Devices;
 using System.Text.Json;
 
 namespace ObsidianScout.Views;
@@ -966,10 +967,15 @@ FontSize = 24,
             if (element.Default != null)
             {
                 var defaultName = ConvertToString(element.Default);
-                defaultIndex = element.Options.FindIndex(o => o.Name == defaultName);
-                if (defaultIndex < 0) defaultIndex = 0;
-            }
-            picker.SelectedIndex = defaultIndex;
+                // Use LINQ to find index since ObservableCollection doesn't have FindIndex
+                  var matchingOption = element.Options.Select((opt, idx) => new { opt, idx })
+                   .FirstOrDefault(x => x.opt.Name == defaultName);
+    if (matchingOption != null)
+            {
+             defaultIndex = matchingOption.idx;
+  }
+          }
+        picker.SelectedIndex = defaultIndex;
 
             // Set initial value
             if (defaultIndex >= 0 && defaultIndex < element.Options.Count)
@@ -1331,16 +1337,42 @@ FontSize = 24,
                 ? Color.FromArgb("#404040") 
                 : Color.FromArgb("#E0E0E0"),
             Padding = new Thickness(15),
-            HorizontalOptions = LayoutOptions.Center
+            // Fill available width of the card so we can compute available space for the QR
+            HorizontalOptions = LayoutOptions.Fill
         };
         qrImageBorder.StrokeShape = new RoundRectangle { CornerRadius = 15 };
 
+        // Create image without fixed size; we'll size it when the border is measured
         var qrCodeImage = new Image
         {
-            HeightRequest = 300,
-            WidthRequest = 300,
             Aspect = Aspect.AspectFit,
             HorizontalOptions = LayoutOptions.Center
+        };
+        
+        // When the border is laid out, compute available width (subtract padding) and set the QR size
+        qrImageBorder.SizeChanged += (s, e) =>
+        {
+            try
+            {
+                if (qrImageBorder.Width <=0) return;
+
+                var paddingHoriz = qrImageBorder.Padding.Left + qrImageBorder.Padding.Right;
+                var available = qrImageBorder.Width - paddingHoriz;
+
+                // Also constrain by screen width with some outer margins
+                var screenWidthDp = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+                var maxAllowed = Math.Min(300, Math.Max(80, screenWidthDp -80));
+
+                var target = Math.Max(80, Math.Min(maxAllowed, available));
+
+                // Apply the computed square size
+                qrCodeImage.WidthRequest = target;
+                qrCodeImage.HeightRequest = target;
+            }
+            catch
+            {
+                // ignore sizing errors
+            }
         };
         qrCodeImage.SetBinding(Image.SourceProperty, nameof(ScoutingViewModel.QrCodeImage));
         

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Theme -->
+    <style name="MainTheme" parent="Maui.SplashTheme">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+     
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
+   <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        
+        <!-- Surface and Background -->
+        <item name="android:colorBackground">@color/colorBackground</item>
+  <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        
+      <!-- Error color -->
+  <item name="colorError">@color/colorError</item>
+        <item name="colorOnError">@color/colorOnError</item>
+        
+      <!-- Status bar & Navigation bar -->
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+        <item name="android:navigationBarColor">@color/colorSurface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- Material Design 3 Shape Theming - Rounded corners -->
+     <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
+     <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.Corner.Large</item>
+     <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Material3.Corner.ExtraLarge</item>
+    
+<!-- Elevation overlay for dark theme -->
+        <item name="elevationOverlayEnabled">true</item>
+        <item name="elevationOverlayColor">@color/colorPrimary</item>
+  
+        <!-- Text appearance -->
+ <item name="android:textViewStyle">@style/Widget.Material3.TextView</item>
+        <item name="android:editTextStyle">@style/Widget.Material3.EditText</item>
+        
+   <!-- Modern transitions -->
+  <item name="android:windowAnimationStyle">@style/WindowAnimation</item>
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowEnterTransition">@android:transition/slide_right</item>
+        <item name="android:windowExitTransition">@android:transition/slide_left</item>
+
+        <!-- Spinner (Picker) style to increase dropdown item font size -->
+        <item name="android:spinnerStyle">@style/Widget.Material3.Spinner</item>
+    </style>
+    
+    <!-- Material Design 3 Shape Appearances -->
+    <style name="ShapeAppearance.Material3.Corner.None" parent="">
+        <item name="cornerFamily">rounded</item>
+   <item name="cornerSize">0dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Material3.Corner.ExtraSmall" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Material3.Corner.Small" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Material3.Corner.Medium" parent="">
+        <item name="cornerFamily">rounded</item>
+     <item name="cornerSize">12dp</item>
+  </style>
+    
+    <style name="ShapeAppearance.Material3.Corner.Large" parent="">
+   <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Material3.Corner.ExtraLarge" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <!-- Material Design 3 Widgets -->
+    <style name="Widget.Material3.TextView" parent="android:Widget.TextView">
+        <item name="android:textColor">@color/colorOnSurface</item>
+    <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+    
+    <style name="Widget.Material3.EditText" parent="android:Widget.EditText">
+     <item name="android:textColor">@color/colorOnSurface</item>
+        <item name="android:textColorHint">?android:attr/textColorTertiary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+   <item name="android:minHeight">56dp</item>
+ <item name="android:paddingStart">16dp</item>
+   <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">16dp</item>
+  <item name="android:paddingBottom">16dp</item>
+        <item name="android:background">@drawable/edittext_background</item>
+    </style>
+
+    <!-- Spinner style for larger text in dropdowns -->
+    <style name="Widget.Material3.Spinner" parent="android:Widget.Spinner">
+        <item name="android:textSize">20sp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:popupBackground">@color/colorSurface</item>
+    </style>
+
+    <!-- Window Animation -->
+    <style name="WindowAnimation" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@android:anim/slide_in_left</item>
+        <item name="android:activityOpenExitAnimation">@android:anim/slide_out_right</item>
+        <item name="android:activityCloseEnterAnimation">@android:anim/slide_in_left</item>
+        <item name="android:activityCloseExitAnimation">@android:anim/slide_out_right</item>
+    </style>
+    
+    <!-- Button styles -->
+    <style name="Widget.Material3.Button" parent="android:Widget.Button">
+  <item name="android:background">@drawable/button_background</item>
+      <item name="android:textColor">@color/colorOnPrimary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:minHeight">48dp</item>
+  <item name="android:minWidth">88dp</item>
+      <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:elevation">2dp</item>
+     <item name="android:stateListAnimator">@null</item>
+    </style>
+    
+</resources>

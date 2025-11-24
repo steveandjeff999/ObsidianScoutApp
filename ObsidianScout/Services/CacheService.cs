@@ -18,6 +18,10 @@ public interface ICacheService
  Task<GameConfig?> GetCachedGameConfigAsync();
  Task CacheGameConfigAsync(GameConfig config);
  
+ // Pit Config
+ Task<PitConfig?> GetCachedPitConfigAsync();
+ Task CachePitConfigAsync(PitConfig config);
+ 
  // Events
  Task<List<Event>?> GetCachedEventsAsync();
  Task CacheEventsAsync(List<Event> events);
@@ -52,6 +56,7 @@ public interface ICacheService
 public class CacheService : ICacheService
 {
  private const string CACHE_KEY_GAME_CONFIG = "cache_game_config";
+ private const string CACHE_KEY_PIT_CONFIG = "cache_pit_config";
  private const string CACHE_KEY_EVENTS = "cache_events";
  private const string CACHE_KEY_TEAMS = "cache_teams";
  private const string CACHE_KEY_MATCHES = "cache_matches";
@@ -258,6 +263,51 @@ public class CacheService : ICacheService
  catch (Exception ex)
  {
  System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache game config: {ex.Message}");
+ }
+ }
+
+ #endregion
+
+ #region Pit Config
+
+ public async Task<PitConfig?> GetCachedPitConfigAsync()
+ {
+ try
+ {
+ var json = await GetStringFromCacheAsync(CACHE_KEY_PIT_CONFIG);
+ if (!string.IsNullOrEmpty(json))
+ {
+ var config = JsonSerializer.Deserialize<PitConfig>(json, _jsonOptions);
+ 
+ var timestamp = await GetCacheTimestampAsync(CACHE_KEY_PIT_CONFIG);
+ if (timestamp.HasValue)
+ {
+ var age = DateTime.UtcNow - timestamp.Value;
+ System.Diagnostics.Debug.WriteLine($"[Cache] Pit config loaded from cache (age: {age.TotalHours:F1}h)");
+ }
+ 
+ return config;
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load pit config: {ex.Message}");
+ }
+ return null;
+ }
+
+ public async Task CachePitConfigAsync(PitConfig config)
+ {
+ try
+ {
+ var json = JsonSerializer.Serialize(config, _jsonOptions);
+ await SaveStringToCacheAsync(CACHE_KEY_PIT_CONFIG, json);
+ await SetCacheTimestampAsync(CACHE_KEY_PIT_CONFIG);
+ System.Diagnostics.Debug.WriteLine("[Cache] Pit config cached successfully");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache pit config: {ex.Message}");
  }
  }
 
@@ -594,6 +644,7 @@ public class CacheService : ICacheService
  var cacheKeys = new[]
  {
  CACHE_KEY_GAME_CONFIG,
+ CACHE_KEY_PIT_CONFIG,
  CACHE_KEY_EVENTS,
  CACHE_KEY_TEAMS,
  CACHE_KEY_MATCHES,

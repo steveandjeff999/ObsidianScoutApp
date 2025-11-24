@@ -105,10 +105,28 @@
     <Color x:Key="Error">#EF4444</Color>
     <Color x:Key="Info">#3B82F6</Color>
 
-    <!-- Glassmorphism Overlay Colors -->
-    <Color x:Key="GlassOverlayLight">#F5FFFFFF</Color>
-    <Color x:Key="GlassOverlayDark">#E62D2D30</Color><!-- Updated for gray -->
+    <!-- Glassmorphism Overlay Colors (made more translucent for stronger translucency) -->
+    <Color x:Key="GlassOverlayLight">#66FFFFFF</Color> <!--40% white -->
+    <Color x:Key="GlassOverlayDark">#661E293B</Color> <!--40% of dark gray-blue -->
     <Color x:Key="GlassOverlay">#F5FFFFFF</Color>
+
+    <!-- Deep grey-blue background for pages -->
+    <Color x:Key="DeepGreyBlueLight">#EAF4FB</Color> <!-- subtle light for light theme -->
+    <Color x:Key="DeepGreyBlueDark">#0F172A</Color> <!-- deep grey-blue for dark theme -->
+
+    <!-- Intermediate translucent stops for smoother gradients -->
+    <Color x:Key="LiquidStopLight1">#55EAF4FB</Color>
+    <Color x:Key="LiquidStopLight2">#33EAF4FB</Color>
+    <Color x:Key="LiquidStopLight3">#11EAF4FB</Color>
+
+    <Color x:Key="LiquidStopDark1">#4D1E293B</Color>
+    <Color x:Key="LiquidStopDark2">#331E293B</Color>
+    <Color x:Key="LiquidStopDark3">#191E293B</Color>
+
+    <!-- Primary button translucent stops -->
+    <Color x:Key="PrimaryBtnStop1">#806366F1</Color>
+    <Color x:Key="PrimaryBtnStop2">#4D6366F1</Color>
+    <Color x:Key="PrimaryBtnStop3">#1A6366F1</Color>
 
     <!-- ========================================
          ALLIANCE COLORS (FRC Red/Blue)
@@ -139,5 +157,8 @@
     <Color x:Key="White">#FFFFFF</Color>
     <Color x:Key="Black">#000000</Color>
     <Color x:Key="Transparent">#00FFFFFF</Color>
+
+    <!-- Danger alias for Delete buttons -->
+    <Color x:Key="Danger">#EF4444</Color>
 
 </ResourceDictionary>

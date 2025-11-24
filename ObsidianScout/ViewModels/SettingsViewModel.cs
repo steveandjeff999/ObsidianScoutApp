@@ -1,8 +1,9 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObsidianScout.Services;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
+using System.Linq;
 
 namespace ObsidianScout.ViewModels;
 
@@ -33,6 +34,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int notificationDelaySeconds = 60;
 
+    [ObservableProperty]
+    private bool hasManagementAccess;
+
     // Explicit property for OfflineMode so we can persist immediately without relying on source-gen timing
     private bool _isOfflineMode;
     public bool IsOfflineMode
@@ -59,6 +63,27 @@ public partial class SettingsViewModel : ObservableObject
         LoadThemePreference();
         _ = UpdateCacheStatusAsync();
         _ = LoadOfflineModeAsync();
+        _ = CheckManagementAccessAsync();
+    }
+
+    private async Task CheckManagementAccessAsync()
+    {
+        try
+        {
+            var roles = await _settingsService.GetUserRolesAsync();
+            HasManagementAccess = roles.Any(r =>
+       r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+        r.Equals("superadmin", StringComparison.OrdinalIgnoreCase) ||
+      r.Equals("management", StringComparison.OrdinalIgnoreCase) ||
+         r.Equals("manager", StringComparison.OrdinalIgnoreCase));
+
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] HasManagementAccess: {HasManagementAccess}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to check management access: {ex.Message}");
+            HasManagementAccess = false;
+        }
     }
 
     private async void LoadThemePreference()
@@ -357,6 +382,48 @@ public partial class SettingsViewModel : ObservableObject
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Delayed Push Test Error", ex.Message, "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task NavigateToGameConfigAsync()
+    {
+        try
+        {
+            await Shell.Current.GoToAsync("GameConfigEditorPage");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Navigation to GameConfigEditorPage failed: {ex}");
+            await Shell.Current.DisplayAlert("Navigation Error", "Could not open Game Config Editor", "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task NavigateToManagementAsync()
+    {
+        try
+        {
+            await Shell.Current.GoToAsync("ManagementPage");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Navigation to ManagementPage failed: {ex}");
+            await Shell.Current.DisplayAlert("Navigation Error", "Could not open Management page", "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task NavigateToPitScoutingAsync()
+    {
+        try
+        {
+            await Shell.Current.GoToAsync("PitConfigEditorPage");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Navigation to PitConfigEditorPage failed: {ex}");
+            await Shell.Current.DisplayAlert("Navigation Error", "Could not open Pit Config Editor", "OK");
         }
     }
 }

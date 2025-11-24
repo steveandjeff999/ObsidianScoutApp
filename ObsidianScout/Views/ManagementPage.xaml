@@ -1,0 +1,13 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ x:Class="ObsidianScout.Views.ManagementPage"
+ Title="Management">
+
+ <ScrollView>
+ <VerticalStackLayout Padding="20" Spacing="20">
+ <Label Text="Management" FontSize="24" FontAttributes="Bold" />
+ <Label Text="Administrative actions for your scouting team" />
+ <Button Text="Edit Game Configuration" Clicked="OnEditGameConfigClicked" />
+ </VerticalStackLayout>
+ </ScrollView>
+</ContentPage>

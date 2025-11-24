@@ -34,6 +34,10 @@
             <converters:TeamDisplayConverter x:Key="TeamDisplayConverter" />
             <converters:TeamNumberNameConverter x:Key="TeamNumberNameConverter" />
             <converters:DataViewToColorConverter x:Key="DataViewToColorConverter" />
+            <converters:StringEqualsConverter x:Key="StringEqualsConverter" />
+            <converters:StringNotEqualsConverter x:Key="StringNotEqualsConverter" />
+            <converters:NotBooleanOrMultipleChoiceConverter x:Key="NotBooleanOrMultipleChoiceConverter" />
+            <converters:TypeIsSelectConverter x:Key="TypeIsSelectConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

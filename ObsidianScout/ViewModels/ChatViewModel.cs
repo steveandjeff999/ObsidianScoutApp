@@ -13,7 +13,7 @@ namespace ObsidianScout.ViewModels;
 
 public partial class ChatViewModel : ObservableObject
 {
-    private readonly IApiService _apiService;
+  private readonly IApiService _apiService;
     private readonly ICacheService _cacheService;
     private readonly ISettingsService _settingsService;
 
@@ -25,18 +25,18 @@ public partial class ChatViewModel : ObservableObject
     private DateTime? _lastMessageTimestamp;
     public DateTime? LastMessageTimestamp
     {
-        get => _lastMessageTimestamp;
+   get => _lastMessageTimestamp;
         set => SetProperty(ref _lastMessageTimestamp, value);
     }
 
     private readonly ObservableCollection<ChatMember> _members = new();
-    public ObservableCollection<ChatMember> Members => _members;
+public ObservableCollection<ChatMember> Members => _members;
 
     private readonly ObservableCollection<ChatGroup> _groups = new();
     public ObservableCollection<ChatGroup> Groups => _groups;
 
     private string _statusMessage = string.Empty;
-    public string StatusMessage
+public string StatusMessage
     {
         get => _statusMessage;
         set => SetProperty(ref _statusMessage, value);
@@ -45,66 +45,85 @@ public partial class ChatViewModel : ObservableObject
     private bool _isLoading;
     public bool IsLoading
     {
-        get => _isLoading;
+      get => _isLoading;
         set => SetProperty(ref _isLoading, value);
+    }
+    
+    private bool _isLoadingMore;
+    public bool IsLoadingMore
+  {
+        get => _isLoadingMore;
+  set => SetProperty(ref _isLoadingMore, value);
     }
 
     private bool _isSending;
     public bool IsSending
     {
-        get => _isSending;
+     get => _isSending;
         set
-        {
+     {
             if (SetProperty(ref _isSending, value))
-            {
-                OnPropertyChanged(nameof(IsSendEnabled));
-            }
+ {
+             OnPropertyChanged(nameof(IsSendEnabled));
+     }
         }
     }
 
-    private string _chatType = "dm";
+    // Pagination state
+    private const int PageSize = 20;
+    private int _currentOffset = 0;
+    private bool _hasMoreMessages = true;
+    
+    public bool HasMoreMessages
+    {
+      get => _hasMoreMessages;
+        set => SetProperty(ref _hasMoreMessages, value);
+    }
+
+  private string _chatType = "dm";
     public string ChatType
     {
-        get => _chatType;
-        set
+    get => _chatType;
+   set
         {
-            if (SetProperty(ref _chatType, value))
-            {
-                OnPropertyChanged(nameof(CanSend));
-                OnPropertyChanged(nameof(IsSendEnabled));
-                OnPropertyChanged(nameof(IsAllianceChat));
+    if (SetProperty(ref _chatType, value))
+    {
+        OnPropertyChanged(nameof(CanSend));
+     OnPropertyChanged(nameof(IsSendEnabled));
+        OnPropertyChanged(nameof(IsAllianceChat));
 
-                // When switching to group chat, clear direct recipient
-                if (_chatType == "group")
-                {
-                    SelectedMember = null;
-                    // Do not force ChatGroup here; SelectedGroup will set ChatGroup when selected
-                }
-                else
-                {
-                    ChatGroup = null;
-                }
+       // When switching to group chat, clear direct recipient
+         if (_chatType == "group")
+      {
+            SelectedMember = null;
+            // Do not force ChatGroup here; SelectedGroup will set ChatGroup when selected
+     }
+     else
+     {
+                ChatGroup = null;
+  }
 
-                // reload messages for new chat type
-                try { _ = LoadMessagesAsync(); } catch { }
+     // Reset pagination and reload messages for new chat type
+        ResetPagination();
+       try { _ = LoadMessagesAsync(); } catch { }
 
-                // start/stop polling appropriately
-                if (_chatType == "dm")
-                {
-                    if (SelectedMember != null) StartPollingMessages(); else StopPollingMessages();
-                }
-                else if (_chatType == "group")
-                {
+        // start/stop polling appropriately
+      if (_chatType == "dm")
+  {
+        if (SelectedMember != null) StartPollingMessages(); else StopPollingMessages();
+           }
+        else if (_chatType == "group")
+           {
                     // only poll for group chats when a group is selected
-                    if (!string.IsNullOrEmpty(ChatGroup)) StartPollingMessages(); else StopPollingMessages();
-                }
-                else
-                {
-                    // other chat types (e.g., alliance) - poll by default
-                    StartPollingMessages();
-                }
-            }
+          if (!string.IsNullOrEmpty(ChatGroup)) StartPollingMessages(); else StopPollingMessages();
+     }
+        else
+          {
+        // other chat types (e.g., alliance) - poll by default
+      StartPollingMessages();
+         }
         }
+     }
     }
 
     // Helper property for UI to toggle alliance vs direct chat
@@ -162,26 +181,27 @@ public partial class ChatViewModel : ObservableObject
     {
         get => _selectedMember;
         set
-        {
-            if (SetProperty(ref _selectedMember, value))
-            {
-                // Keep ChatUser in sync for backwards compatibility where code reads ChatUser string
-                ChatUser = value?.Id.ToString();
-                OnPropertyChanged(nameof(CanSend));
-                OnPropertyChanged(nameof(IsSendEnabled));
+   {
+         if (SetProperty(ref _selectedMember, value))
+    {
+      // Keep ChatUser in sync for backwards compatibility where code reads ChatUser string
+ChatUser = value?.Id.ToString();
+          OnPropertyChanged(nameof(CanSend));
+        OnPropertyChanged(nameof(IsSendEnabled));
 
-                // reload messages immediately
+       // Reset pagination and reload messages immediately
+      ResetPagination();
                 try { _ = LoadMessagesAsync(); } catch { }
 
-                // start polling for new messages
-                if (value != null)
-                {
-                    StartPollingMessages();
-                }
-                else
-                {
-                    StopPollingMessages();
-                }
+ // start polling for new messages
+       if (value != null)
+ {
+          StartPollingMessages();
+    }
+        else
+          {
+          StopPollingMessages();
+   }
             }
         }
     }
@@ -189,16 +209,17 @@ public partial class ChatViewModel : ObservableObject
     private ChatGroup? _selectedGroup;
     public ChatGroup? SelectedGroup
     {
-        get => _selectedGroup;
+  get => _selectedGroup;
         set
         {
             if (SetProperty(ref _selectedGroup, value))
             {
-                // Keep string ChatGroup in sync for API calls - use group name per API docs
-                ChatGroup = value?.Name ?? value?.Title;
-                // reload messages for selected group
-                try { _ = LoadMessagesAsync(); } catch { }
-            }
+      // Keep string ChatGroup in sync for API calls - use group name per API docs
+   ChatGroup = value?.Name ?? value?.Title;
+    // Reset pagination and reload messages for selected group
+       ResetPagination();
+     try { _ = LoadMessagesAsync(); } catch { }
+        }
         }
     }
 
@@ -318,145 +339,159 @@ public partial class ChatViewModel : ObservableObject
     private async Task PollMessagesAsync()
     {
         try
-        {
-            // only poll if a recipient is selected OR we're in a group chat with a selected group
+ {
+   // only poll if a recipient is selected OR we're in a group chat with a selected group
             if (_chatType == "dm" && SelectedMember == null) return;
-            if (_chatType == "group" && string.IsNullOrEmpty(ChatGroup)) return;
+       if (_chatType == "group" && string.IsNullOrEmpty(ChatGroup)) return;
 
-            ChatMessagesResponse? resp = null;
+    ChatMessagesResponse? resp = null;
 
-            if (_chatType == "group")
-            {
-                // Prepare group name variants like LoadMessagesAsync_Internal
-                var groupVariants = new List<string?>();
+     if (_chatType == "group")
+          {
+    // Prepare group name variants like LoadMessagesAsync_Internal
+      var groupVariants = new List<string?>();
                 groupVariants.Add(ChatGroup);
-                if (!string.IsNullOrEmpty(ChatGroup))
-                {
-                    var sanitized = ChatGroup.Replace('/', '_').Replace(' ', '_');
-                    if (!groupVariants.Contains(sanitized)) groupVariants.Add(sanitized);
+          if (!string.IsNullOrEmpty(ChatGroup))
+   {
+             var sanitized = ChatGroup.Replace('/', '_').Replace(' ', '_');
+          if (!groupVariants.Contains(sanitized)) groupVariants.Add(sanitized);
 
-                    var lower = ChatGroup.ToLowerInvariant();
-                    if (!groupVariants.Contains(lower)) groupVariants.Add(lower);
+       var lower = ChatGroup.ToLowerInvariant();
+              if (!groupVariants.Contains(lower)) groupVariants.Add(lower);
 
-                    var urlEncoded = Uri.EscapeDataString(ChatGroup);
-                    if (!groupVariants.Contains(urlEncoded)) groupVariants.Add(urlEncoded);
+   var urlEncoded = Uri.EscapeDataString(ChatGroup);
+          if (!groupVariants.Contains(urlEncoded)) groupVariants.Add(urlEncoded);
 
-                    var sanitizedLower = sanitized.ToLowerInvariant();
-                    if (!groupVariants.Contains(sanitizedLower)) groupVariants.Add(sanitizedLower);
-                }
+               var sanitizedLower = sanitized.ToLowerInvariant();
+         if (!groupVariants.Contains(sanitizedLower)) groupVariants.Add(sanitizedLower);
+           }
 
-                var tryTypes = new[] { string.Empty, "group", "team", "alliance" };
-                foreach (var t in tryTypes)
-                {
-                    foreach (var g in groupVariants)
-                    {
-                        try
-                        {
-                            var typeArg = string.IsNullOrEmpty(t) ? string.Empty : t;
-                            // For group fetches do not pass a user parameter
-                            var tryResp = await _apiService.GetChatMessagesAsync(typeArg, null, g);
-                            if (tryResp != null && tryResp.Success && tryResp.Messages != null && tryResp.Messages.Count >0)
-                            {
-                                resp = tryResp;
-                                // Persist the working group variant so future polls use it
-                                if (g != null && g != ChatGroup)
-                                {
-                                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => ChatGroup = g);
-                                }
-                                break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"PollMessages attempt failed for type='{t}' group='{g}': {ex.Message}");
-                        }
-                    }
-                    if (resp != null) break;
-                }
+    var tryTypes = new[] { string.Empty, "group", "team", "alliance" };
+          foreach (var t in tryTypes)
+        {
+              foreach (var g in groupVariants)
+    {
+    try
+           {
+          var typeArg = string.IsNullOrEmpty(t) ? string.Empty : t;
+       // For group fetches do not pass a user parameter
+   // Poll only gets most recent messages (limit 20, offset 0)
+    var tryResp = await _apiService.GetChatMessagesAsync(typeArg, null, g, limit: PageSize, offset: 0);
+     if (tryResp != null && tryResp.Success && tryResp.Messages != null && tryResp.Messages.Count >0)
+     {
+     resp = tryResp;
+ // Persist the working group variant so future polls use it
+         if (g != null && g != ChatGroup)
+       {
+      Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => ChatGroup = g);
+}
+  break;
+       }
+   }
+   catch (Exception ex)
+          {
+      System.Diagnostics.Debug.WriteLine($"PollMessages attempt failed for type='{t}' group='{g}': {ex.Message}");
+   }
+       }
+              if (resp != null) break;
+     }
             }
-            else
-            {
-                // For direct messages ensure we pass the other user's id and no group
-                resp = await _apiService.GetChatMessagesAsync("dm", SelectedMember?.Id.ToString(), null);
-            }
+else
+      {
+            // For direct messages ensure we pass the other user's id and no group
+    // Poll only gets most recent messages
+         resp = await _apiService.GetChatMessagesAsync("dm", SelectedMember?.Id.ToString(), null, limit: PageSize, offset: 0);
+   }
 
             if (resp != null && resp.Success && resp.Messages != null)
+        {
+     // messages returned newest-first per API; we want to display oldest-first
+    var sorted = resp.Messages.OrderBy(m => m.Timestamp).ToList();
+  // detect new messages by timestamp
+var newest = sorted.LastOrDefault();
+
+        if (newest != null && (LastMessageTimestamp == null || newest.Timestamp > LastMessageTimestamp))
+{
+   // update UI on main thread for new/changed messages
+          Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
+       {
+                     // Only update the most recent messages, preserve older loaded ones
+              var currentUser = await GetCurrentUsernameAsync();
+       
+         // Remove and re-add recent messages that are within the polled window
+                 var recentMessages = _messages.Where(m => m.Timestamp > LastMessageTimestamp).ToList();
+ foreach (var rm in recentMessages)
+    {
+          _messages.Remove(rm);
+                   }
+                
+          // Add all polled messages
+ foreach (var m in sorted)
+                 {
+             if (!_messages.Any(existing => existing.Id == m.Id))
+        {
+       EnsureMessageReactionsInitialized(m);
+m.IsFromCurrentUser = AreSameUser(m.Sender, currentUser);
+        _messages.Add(m);
+             }
+                }
+   LastMessageTimestamp = newest.Timestamp;
+          });
+     }
+         else
+          {
+         // No new messages; still refresh reactions (and edited flag) for existing messages
+   // Build a lookup of server-side messages by Id for quick access
+     var serverById = sorted.ToDictionary(m => m.Id);
+
+         Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
             {
-                // messages returned newest-first per API; we want to display oldest-first
-                var sorted = resp.Messages.OrderBy(m => m.Timestamp).ToList();
-                // detect new messages by timestamp
-                var newest = sorted.LastOrDefault();
+    var toRemove = new List<ChatMessage>();
+               var currentUser = await GetCurrentUsernameAsync();
 
-                if (newest != null && (LastMessageTimestamp == null || newest.Timestamp > LastMessageTimestamp))
-                {
-                    // update UI on main thread for new/changed messages
-                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        _messages.Clear();
-                        var currentUser = await GetCurrentUsernameAsync();
-                        foreach (var m in sorted)
-                        {
-                            EnsureMessageReactionsInitialized(m);
-                            m.IsFromCurrentUser = AreSameUser(m.Sender, currentUser);
-                            _messages.Add(m);
-                        }
-                        LastMessageTimestamp = newest.Timestamp;
-                    });
-                }
-                else
-                {
-                    // No new messages; still refresh reactions (and edited flag) for existing messages
-                    // Build a lookup of server-side messages by Id for quick access
-                    var serverById = sorted.ToDictionary(m => m.Id);
+         // Update or mark for removal (only for messages in the polled window)
+    foreach (var local in _messages.Where(m => LastMessageTimestamp == null || m.Timestamp >= LastMessageTimestamp.Value.AddMinutes(-5)).ToList())
+             {
+             if (!serverById.TryGetValue(local.Id, out var serverMsg))
+  {
+       // message no longer on server -> was deleted
+         toRemove.Add(local);
+              continue;
+}
 
-                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        var toRemove = new List<ChatMessage>();
-                        var currentUser = await GetCurrentUsernameAsync();
+   // Sync text/content if changed
+   if (!string.Equals(local.Text, serverMsg.Text, System.StringComparison.Ordinal))
+              {
+     local.Text = serverMsg.Text;
+   }
 
-                        // Update or mark for removal
-                        foreach (var local in _messages.ToList())
-                        {
-                            if (!serverById.TryGetValue(local.Id, out var serverMsg))
-                            {
-                                // message no longer on server -> was deleted
-                                toRemove.Add(local);
-                                continue;
-                            }
+            // Sync edited metadata
+            local.Edited = serverMsg.Edited;
+    local.EditedTimestamp = serverMsg.EditedTimestamp;
 
-                            // Sync text/content if changed
-                            if (!string.Equals(local.Text, serverMsg.Text, System.StringComparison.Ordinal))
-                            {
-                                local.Text = serverMsg.Text;
-                            }
+ // Sync reactions
+     if (serverMsg.Reactions == null)
+         serverMsg.Reactions = new ObservableCollection<ReactionSummary>();
 
-                            // Sync edited metadata
-                            local.Edited = serverMsg.Edited;
-                            local.EditedTimestamp = serverMsg.EditedTimestamp;
+             // Simple replace to trigger UI update
+local.Reactions = new ObservableCollection<ReactionSummary>(serverMsg.Reactions.Select(r => new ReactionSummary { Emoji = r.Emoji, Count = r.Count }));
 
-                            // Sync reactions
-                            if (serverMsg.Reactions == null)
-                                serverMsg.Reactions = new ObservableCollection<ReactionSummary>();
+       // Refresh ownership flag in case username became available/changed
+    local.IsFromCurrentUser = AreSameUser(local.Sender, currentUser);
+           }
 
-                            // Simple replace to trigger UI update
-                            local.Reactions = new ObservableCollection<ReactionSummary>(serverMsg.Reactions.Select(r => new ReactionSummary { Emoji = r.Emoji, Count = r.Count }));
-
-                            // Refresh ownership flag in case username became available/changed
-                            local.IsFromCurrentUser = AreSameUser(local.Sender, currentUser);
-                        }
-
-                        // Remove deleted messages from local collection
-                        foreach (var rem in toRemove)
-                        {
-                            if (_messages.Contains(rem)) _messages.Remove(rem);
-                        }
-                    });
-                }
+            // Remove deleted messages from local collection
+      foreach (var rem in toRemove)
+             {
+             if (_messages.Contains(rem)) _messages.Remove(rem);
             }
+               });
+        }
+        }
         }
         catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"PollMessagesAsync failed: {ex.Message}");
+      {
+System.Diagnostics.Debug.WriteLine($"PollMessagesAsync failed: {ex.Message}");
         }
     }
 
@@ -466,89 +501,173 @@ public partial class ChatViewModel : ObservableObject
         StopPollingMessages();
     }
 
+    private void ResetPagination()
+    {
+        _currentOffset = 0;
+        HasMoreMessages = true;
+    }
+
     // Ensure LoadMessagesAsync sets LastMessageTimestamp
-    private async Task LoadMessagesAsync_Internal()
+    private async Task LoadMessagesAsync_Internal(bool append = false)
     {
         ChatMessagesResponse? resp = null;
+      int limit = PageSize;
+        int offset = append ? _currentOffset : 0;
 
         try
-        {
-            if (ChatType == "dm")
+    {
+         if (ChatType == "dm")
             {
-                // Direct messages: require a selected member
-                if (SelectedMember == null)
+        // Direct messages: require a selected member
+         if (SelectedMember == null)
                 {
-                    // clear messages and exit
-                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => Messages.Clear());
-                    LastMessageTimestamp = null;
-                    return;
-                }
+        // clear messages and exit
+  if (!append)
+         {
+          Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => Messages.Clear());
+  LastMessageTimestamp = null;
+        ResetPagination();
+          }
+             return;
+      }
 
-                resp = await _apiService.GetChatMessagesAsync("dm", SelectedMember.Id.ToString(), null);
-            }
+          resp = await _apiService.GetChatMessagesAsync("dm", SelectedMember.Id.ToString(), null, limit: limit, offset: offset);
+        }
             else if (ChatType == "group")
             {
-                // Group messages: require selected group
-                if (string.IsNullOrEmpty(ChatGroup))
+     // Group messages: require selected group
+if (string.IsNullOrEmpty(ChatGroup))
                 {
-                    Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => Messages.Clear());
-                    LastMessageTimestamp = null;
-                    return;
+   if (!append)
+  {
+ Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => Messages.Clear());
+    LastMessageTimestamp = null;
+        ResetPagination();
+  }
+     return;
                 }
 
-                // Ask server for messages using group parameter; let ApiService omit 'type' so server can infer
-                resp = await _apiService.GetChatMessagesAsync(type: string.Empty, user: null, group: ChatGroup);
-            }
+             // Ask server for messages using group parameter; let ApiService omit 'type' so server can infer
+      resp = await _apiService.GetChatMessagesAsync(type: string.Empty, user: null, group: ChatGroup, limit: limit, offset: offset);
+    }
             else
-            {
-                // fallback to requesting by type only
-                resp = await _apiService.GetChatMessagesAsync(ChatType, ChatUser, ChatGroup);
+      {
+// fallback to requesting by type only
+      resp = await _apiService.GetChatMessagesAsync(ChatType, ChatUser, ChatGroup, limit: limit, offset: offset);
             }
         }
         catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"LoadMessagesAsync_Internal failed: {ex.Message}");
-        }
+    {
+      System.Diagnostics.Debug.WriteLine($"LoadMessagesAsync_Internal failed: {ex.Message}");
+      }
 
-        // Populate UI on main thread
-        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
-        {
-            Messages.Clear();
-            if (resp != null && resp.Success && resp.Messages != null)
-            {
-                var sorted = resp.Messages.OrderBy(m => m.Timestamp).ToList();
-                var currentUser = await GetCurrentUsernameAsync();
-                foreach (var m in sorted)
-                {
-                    EnsureMessageReactionsInitialized(m);
-                    m.IsFromCurrentUser = AreSameUser(m.Sender, currentUser);
-                    Messages.Add(m);
-                }
-                LastMessageTimestamp = sorted.LastOrDefault()?.Timestamp;
+  // Populate UI on main thread
+     Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(async () =>
+  {
+   if (!append)
+  {
+                Messages.Clear();
             }
+            
+       if (resp != null && resp.Success && resp.Messages != null)
+     {
+        // Check if we got fewer messages than requested - means no more to load
+            HasMoreMessages = resp.Messages.Count >= limit;
+    
+    var sorted = resp.Messages.OrderBy(m => m.Timestamp).ToList();
+  var currentUser = await GetCurrentUsernameAsync();
+     
+          if (append)
+         {
+   // Insert older messages at the beginning
+  for (int i = sorted.Count - 1; i >= 0; i--)
+      {
+     var m = sorted[i];
+        if (!Messages.Any(existing => existing.Id == m.Id))
+        {
+     EnsureMessageReactionsInitialized(m);
+   m.IsFromCurrentUser = AreSameUser(m.Sender, currentUser);
+  Messages.Insert(0, m);
+         }
+         }
+     }
+       else
+    {
+// Initial load - add all messages
+   foreach (var m in sorted)
+      {
+             EnsureMessageReactionsInitialized(m);
+            m.IsFromCurrentUser = AreSameUser(m.Sender, currentUser);
+  Messages.Add(m);
+        }
+            LastMessageTimestamp = sorted.LastOrDefault()?.Timestamp;
+    }
+
+       // Update offset for next load
+        if (append)
+    {
+              _currentOffset += resp.Messages.Count;
+            }
+      else
+  {
+           _currentOffset = resp.Messages.Count;
+    }
+            }
+       else
+            {
+       // No messages returned
+    HasMoreMessages = false;
+      }
         });
 
         // If username may have been unavailable earlier, attempt a refresh to ensure flags are correct
-        await RefreshOwnershipFlagsAsync();
+if (!append)
+        {
+   await RefreshOwnershipFlagsAsync();
+  }
     }
 
     [RelayCommand]
     private async Task LoadMessagesAsync()
-    {
-        try
+ {
+   try
         {
-            IsLoading = true;
+       IsLoading = true;
             StatusMessage = "Loading messages...";
-            await LoadMessagesAsync_Internal();
-            StatusMessage = "";
-        }
+     ResetPagination();
+ await LoadMessagesAsync_Internal(append: false);
+        StatusMessage = "";
+    }
         catch (System.Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
+     {
+ StatusMessage = $"Error: {ex.Message}";
         }
         finally
         {
-            IsLoading = false;
+    IsLoading = false;
+        }
+    }
+    
+    [RelayCommand]
+    private async Task LoadMoreMessagesAsync()
+    {
+      if (IsLoadingMore || !HasMoreMessages) return;
+        
+      try
+        {
+ IsLoadingMore = true;
+          StatusMessage = "Loading older messages...";
+    await LoadMessagesAsync_Internal(append: true);
+        }
+catch (System.Exception ex)
+{
+            System.Diagnostics.Debug.WriteLine($"LoadMoreMessagesAsync error: {ex.Message}");
+        }
+        finally
+{
+        IsLoadingMore = false;
+            await Task.Delay(500);
+    StatusMessage = "";
         }
     }
 
@@ -558,7 +677,6 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             StatusMessage = "Loading members...";
-            System.Diagnostics.Debug.WriteLine("Chat: Fetching members for current user's scouting teams...");
 
             // Determine team numbers the current user is associated with
             var teamNumbers = new HashSet<int>();
@@ -573,7 +691,6 @@ public partial class ChatViewModel : ObservableObject
                 if (primaryTeam.HasValue)
                 {
                     teamNumbers.Add(primaryTeam.Value);
-                    System.Diagnostics.Debug.WriteLine($"Chat: Primary team from settings: {primaryTeam.Value}");
                 }
             }
             catch (System.Exception ex)
@@ -1005,10 +1122,11 @@ public partial class ChatViewModel : ObservableObject
 
     // Public wrappers for code-behind usage
     public Task LoadMessagesAsyncPublic() => LoadMessagesAsync();
+    public Task LoadMoreMessagesAsyncPublic() => LoadMoreMessagesAsync();
     public Task LoadMembersAsyncPublic() => LoadMembersAsync();
-    public Task SendMessageAsyncPublic() => SendMessageAsync();
+public Task SendMessageAsyncPublic() => SendMessageAsync();
     public Task DeleteMessageAsyncPublic(ChatMessage message) => DeleteMessageAsync(message);
-    public Task LoadGroupsAsyncPublic() => LoadGroupsAsync();
+  public Task LoadGroupsAsyncPublic() => LoadGroupsAsync();
     public Task<ChatCreateGroupResponse> CreateGroupAsyncPublic(string title, List<string>? membersUsernames = null) => CreateGroupAsync(title, membersUsernames);
 
     // Expose current username for view code that may need it

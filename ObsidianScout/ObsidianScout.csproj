@@ -42,8 +42,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<!-- App Icon: use vector SVG named 'appicon.svg' so AndroidManifest @mipmap/appicon matches generated resource -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#000000" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
@@ -61,53 +61,68 @@
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<AndroidResource Include="Platforms\Android\Resources\xml\network_security_config.xml" />
 	</ItemGroup>
+
 	<ItemGroup>
-	  <None Remove="Resources\icons\%24placeholder%24.scale-100.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.scale-125.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.scale-150.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.scale-200.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.scale-400.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-lightunplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-unplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-lightunplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-unplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-lightunplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-unplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-lightunplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-unplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-lightunplated.png" />
-	  <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-unplated.png" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable-night\card_background_dark.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable-night\edittext_background_dark.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable\button_background.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable\card_background.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable\dialog_background.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable\edittext_background.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\drawable\ripple_effect.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\mipmap-anydpi-v26\appicon.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\values-night\colors.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\values-night\styles.xml" />
+	 <AndroidResource Remove="Platforms\Android\Resources\values\styles.xml" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Content Include="Resources\icons\$placeholder$.scale-100.png" />
-	  <Content Include="Resources\icons\$placeholder$.scale-125.png" />
-	  <Content Include="Resources\icons\$placeholder$.scale-150.png" />
-	  <Content Include="Resources\icons\$placeholder$.scale-200.png" />
-	  <Content Include="Resources\icons\$placeholder$.scale-400.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-16.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-lightunplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-unplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-24.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-lightunplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-unplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-256.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-lightunplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-unplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-32.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-lightunplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-unplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-48.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-lightunplated.png" />
-	  <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-unplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.scale-100.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.scale-125.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.scale-150.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.scale-200.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.scale-400.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-16.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-lightunplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-16_altform-unplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-24.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-lightunplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-24_altform-unplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-256.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-lightunplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-256_altform-unplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-32.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-lightunplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-unplated.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-48.png" />
+	 <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-lightunplated.png" />
+	</ItemGroup>
+	<ItemGroup>
+	 <Content Include="Resources\icons\$placeholder$.scale-100.png" />
+	 <Content Include="Resources\icons\$placeholder$.scale-125.png" />
+	 <Content Include="Resources\icons\$placeholder$.scale-150.png" />
+	 <Content Include="Resources\icons\$placeholder$.scale-200.png" />
+	 <Content Include="Resources\icons\$placeholder$.scale-400.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-16.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-lightunplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-16_altform-unplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-24.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-lightunplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-24_altform-unplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-256.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-lightunplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-256_altform-unplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-32.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-lightunplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-unplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-48.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-lightunplated.png" />
+	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-unplated.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<!-- CommunityToolkit.Maui provides the CommunityToolkit.Maui namespace and UseMauiCommunityToolkit() extension -->
+		<PackageReference Include="CommunityToolkit.Maui" Version="8.4.0" />
 		<PackageReference Include="Microcharts.Maui" Version="1.0.1" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-rc.1.25451.107" />
@@ -118,57 +133,78 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="Resources\Styles\IconFonts.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\ChatPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\DataPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\DataViewPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\EventsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\GraphsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\LoginPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\MatchesPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\MatchPredictionPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\NotificationsViewerPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\ScoutingPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\SettingsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\TeamDetailsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\TeamsPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\UserPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+	 <MauiXaml Update="Resources\Styles\IconFonts.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\ChatPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\DataPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\DataViewPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\EventsPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\GameConfigEditorPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\GraphsPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\LoginPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\ManagementPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\MatchesPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\MatchPredictionPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\NotificationsViewerPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\PitConfigEditorPage_FIXED.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\PitScoutingEditPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\PitScoutingPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\RegisterPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\ScoutingLandingPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\ScoutingPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\SettingsPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\TeamDetailsPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\TeamsPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\UserPage.xaml">
+	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Package.appxmanifest">
-	    <SubType>Designer</SubType>
-	  </None>
+	 <None Update="Package.appxmanifest">
+	 <SubType>Designer</SubType>
+	 </None>
 	</ItemGroup>
 
 </Project>

@@ -1,166 +1,180 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell
-    x:Class="ObsidianScout.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:ObsidianScout"
-    xmlns:views="clr-namespace:ObsidianScout.Views"
-    Title="ObsidianScout"
-    FlyoutBehavior="Flyout"
-    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
-    FlyoutHeaderBehavior="CollapseOnScroll">
+ x:Class="ObsidianScout.AppShell"
+ xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:local="clr-namespace:ObsidianScout"
+ xmlns:views="clr-namespace:ObsidianScout.Views"
+ Title="ObsidianScout"
+ FlyoutBehavior="Flyout"
+ FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
+ FlyoutHeaderBehavior="CollapseOnScroll">
 
-    <!-- Shell Styles and Item Template -->
-    <Shell.Resources>
-        <ResourceDictionary>
-      
-     <!-- Custom DataTemplate for Flyout Items -->
-     <DataTemplate x:Key="FlyoutItemTemplate">
-      <Grid HeightRequest="50" 
-                      Padding="16,0">
-          <Grid.ColumnDefinitions>
-     <ColumnDefinition Width="Auto" />
-         <ColumnDefinition Width="*" />
-   </Grid.ColumnDefinitions>
-      
-    <!-- Icon placeholder (optional - can add icons later) -->
-             <BoxView Grid.Column="0"
-        WidthRequest="24"
-         HeightRequest="24"
-          BackgroundColor="Transparent"
-        Margin="0,0,16,0"
-           VerticalOptions="Center" />
+ <Shell.Resources>
+ <ResourceDictionary>
+ <!-- Modern flyout item template: icon + label -->
+ <DataTemplate x:Key="FlyoutItemTemplate">
+ <Grid HeightRequest="54" Padding="16,8">
+ <!-- Single centered text column for a clean icon-free flyout -->
+ <Label
+ Text="{Binding Title}"
+ VerticalOptions="Center"
+ HorizontalOptions="Start"
+ FontSize="16"
+ FontFamily="OpenSansRegular"
+ TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Grid>
+ </DataTemplate>
 
-                    <!-- Menu Item Text -->
-   <Label Grid.Column="1"
-       Text="{Binding Title}"
-  FontSize="16"
-         FontFamily="OpenSansRegular"
-  VerticalOptions="Center"
-       TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-   </Grid>
-            </DataTemplate>
-     
-    <!-- FlyoutItem Style -->
-            <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
-      <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
-        </Style>
-  
-        </ResourceDictionary>
-    </Shell.Resources>
+ <!-- Apply the template to FlyoutItems -->
+ <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
+ <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
+ <!-- Ensure consistent flyout item background -->
+ <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+ </Style>
 
-    <!-- Custom Flyout Header -->
-    <Shell.FlyoutHeader>
-    <Grid HeightRequest="200" 
-      BackgroundColor="{StaticResource Primary}"
-      Padding="20">
-     <VerticalStackLayout VerticalOptions="End" Spacing="8">
-              <Label Text="ObsidianScout"
-                  FontSize="28"
-              FontAttributes="Bold"
-     TextColor="White" />
-     <Label Text="FRC Scouting System"
-  FontSize="14"
-   TextColor="White"
-        Opacity="0.9" />
-            </VerticalStackLayout>
-        </Grid>
-    </Shell.FlyoutHeader>
+ <!-- Small section header used inside flyout content when needed -->
+ <Style x:Key="FlyoutSectionHeader" TargetType="Label">
+ <Setter Property="FontAttributes" Value="Bold" />
+ <Setter Property="FontSize" Value="12" />
+ <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
+ <Setter Property="Margin" Value="12,8,12,4" />
+ </Style>
+ </ResourceDictionary>
+ </Shell.Resources>
 
-    <!-- Login Page (Always visible) -->
- <FlyoutItem Title="Login" 
- IsVisible="{Binding IsLoggedOut}"
-     Route="LoginPage"
-     FlyoutItemIsVisible="{Binding IsLoggedOut}">
-    <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
-    </FlyoutItem>
+ <!-- Flyout Header: avatar, username, team, offline toggle -->
+ <Shell.FlyoutHeader>
+ <Grid Padding="0" Background="{AppThemeBinding Light={StaticResource FlyoutHeaderBrushLight}, Dark={StaticResource FlyoutHeaderBrushDark}}">
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto" />
+ <RowDefinition Height="Auto" />
+ </Grid.RowDefinitions>
 
-    <!-- Authenticated Pages (Hidden when logged out) -->
-    <FlyoutItem Title="Home"
-     IsVisible="{Binding IsLoggedIn}"
-    Route="MainPage">
-   <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
-    </FlyoutItem>
+ <HorizontalStackLayout Spacing="12" VerticalOptions="Center" Padding="16">
+ <!-- Avatar circle with proper layering -->
+ <Grid WidthRequest="64" HeightRequest="64" HorizontalOptions="Start" VerticalOptions="Center">
+ <!-- Background circle -->
+ <Ellipse Fill="{AppThemeBinding Light=White, Dark={StaticResource DarkSurfaceElevated}}" 
+ WidthRequest="64" 
+ HeightRequest="64"
+ Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#505050}"
+ StrokeThickness="1" />
+ 
+ <!-- Profile picture with circular clip -->
+ <Image Source="{Binding ProfilePictureSource}"
+ Aspect="AspectFill"
+ IsVisible="{Binding HasProfilePicture}"
+ WidthRequest="64"
+ HeightRequest="64"
+ HorizontalOptions="Center"
+ VerticalOptions="Center">
+ <Image.Clip>
+ <EllipseGeometry Center="32,32" RadiusX="32" RadiusY="32" />
+ </Image.Clip>
+ </Image>
+ 
+ <!-- Fallback initials label -->
+ <Label Text="{Binding UserInitials}"
+ HorizontalTextAlignment="Center"
+ VerticalTextAlignment="Center"
+ FontSize="24"
+ FontAttributes="Bold"
+ TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+ IsVisible="{Binding HasProfilePicture, Converter={StaticResource InvertedBoolConverter}}"
+ HorizontalOptions="Center"
+ VerticalOptions="Center" />
+ </Grid>
 
-    <FlyoutItem Title="Scouting"
-    IsVisible="{Binding IsLoggedIn}"
-      Route="ScoutingPage">
-    <ShellContent ContentTemplate="{DataTemplate views:ScoutingPage}" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Teams"
-   IsVisible="{Binding IsLoggedIn}"
-      Route="TeamsPage">
-   <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Events"
-           IsVisible="{Binding IsLoggedIn}"
-                Route="EventsPage">
-        <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
-    </FlyoutItem>
-
-    <!-- Matches Page -->
-    <FlyoutItem Title="Matches"
- IsVisible="{Binding IsLoggedIn}"
-             Route="MatchesPage">
-        <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
-    </FlyoutItem>
-
-    <!-- Analytics Pages -->
-    <FlyoutItem Title="Graphs"
-      IsVisible="{Binding IsLoggedIn}"
-      Route="GraphsPage">
-        <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Match Prediction"
-    IsVisible="{Binding IsLoggedIn}"
-       Route="MatchPredictionPage">
-        <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Server Data"
-    IsVisible="{Binding IsLoggedIn}"
-       Route="DataPage">
-        <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
-    </FlyoutItem>
-
-    <!-- Chat -->
-    <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
-        <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
-    </FlyoutItem>
-
-    <!-- Settings Page: move Route to ShellContent so Shell resolves route correctly -->
-    <FlyoutItem Title="Settings"
-        IsVisible="{Binding IsLoggedIn}">
-        <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
-    </FlyoutItem>
-
-    <!-- Logout Footer -->
-    <Shell.FlyoutFooter>
-        <Grid Padding="12"
-        IsVisible="{Binding IsLoggedIn}"
- BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
- <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
- <!-- Put tap on the Username label specifically for better hit testing -->
- <Label Text="{Binding CurrentUsername}" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+ <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+ <Label Text="{Binding CurrentUsername}" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
  <Label.GestureRecognizers>
  <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
  </Label.GestureRecognizers>
  </Label>
+ <Label Text="{Binding CurrentTeamInfo}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" />
+
+ <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="0,6,0,0">
+ <Label Text="Offline Mode" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" VerticalOptions="Center" />
+ <Switch IsToggled="{Binding IsOfflineMode, Mode=TwoWay}" Toggled="OnOfflineModeToggled" HorizontalOptions="Start" VerticalOptions="Center" />
+ </HorizontalStackLayout>
+ </VerticalStackLayout>
+ </HorizontalStackLayout>
+ </Grid>
+ </Shell.FlyoutHeader>
+
+ <!-- Primary application pages (use vector icons from IconFonts resource dictionary) -->
+ <FlyoutItem Title="Home" IsVisible="{Binding IsLoggedIn}" Route="MainPage">
+ <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Scouting" IsVisible="{Binding IsLoggedIn}" Route="ScoutingLandingPage">
+ <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Pit Scouting" IsVisible="{Binding IsLoggedIn}" Route="PitScoutingPage">
+ <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Teams" IsVisible="{Binding IsLoggedIn}" Route="TeamsPage">
+ <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Events" IsVisible="{Binding IsLoggedIn}" Route="EventsPage">
+ <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Matches" IsVisible="{Binding IsLoggedIn}" Route="MatchesPage">
+ <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Graphs" IsVisible="{Binding IsLoggedIn}" Route="GraphsPage">
+ <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Match Prediction" IsVisible="{Binding IsLoggedIn}" Route="MatchPredictionPage">
+ <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Server Data" IsVisible="{Binding IsLoggedIn}" Route="DataPage">
+ <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Management" IsVisible="{Binding HasManagementAccess}" Route="ManagementPage">
+ <ShellContent ContentTemplate="{DataTemplate views:ManagementPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
+ <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
+ </FlyoutItem>
+
+ <!-- Settings and Login -->
+ <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
+ <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Login" IsVisible="{Binding IsLoggedOut}" Route="LoginPage">
+ <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+ </FlyoutItem>
+
+ <!-- Flyout Footer: Settings + Logout compact row -->
+ <Shell.FlyoutFooter>
+ <Grid Padding="12" BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
+ <Grid.ColumnDefinitions>
+ <ColumnDefinition Width="*" />
+ <ColumnDefinition Width="Auto" />
+ </Grid.ColumnDefinitions>
+
+ <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+ <Label Text="{Binding CurrentUsername}" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
  <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
  </VerticalStackLayout>
 
- <!-- Logout button only (offline toggle moved to Settings) -->
  <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
- <Button Text="Logout"
- Style="{StaticResource OutlineGlassButton}"
- Clicked="OnLogoutClicked" HorizontalOptions="End" />
+ <Button Text="Settings" Clicked="OnFooterSettingsClicked" Style="{StaticResource OutlineGlassButton}" />
+ <Button Text="Logout" Clicked="OnLogoutClicked" Style="{StaticResource OutlineGlassButton}" />
  </HorizontalStackLayout>
  </Grid>
-    </Grid>
-    </Shell.FlyoutFooter>
+ </Shell.FlyoutFooter>
 
 </Shell>

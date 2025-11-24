@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace ObsidianScout.Models;
 
@@ -137,7 +138,14 @@ public class SafeIntJsonConverter : JsonConverter<int>
     var stringValue = reader.GetString();
            if (int.TryParse(stringValue, out int result))
            return result;
-           System.Diagnostics.Debug.WriteLine($"[SafeIntConverter] Could not parse '{stringValue}' as int, defaulting to 0");
+ // Try to extract first integer from formats like "3-1" or "QF3-1"
+ if (!string.IsNullOrWhiteSpace(stringValue))
+ {
+ var m = Regex.Match(stringValue, @"\d+");
+ if (m.Success && int.TryParse(m.Value, out result))
+ return result;
+ }
+ System.Diagnostics.Debug.WriteLine($"[SafeIntConverter] Could not parse '{stringValue}' as int, defaulting to 0");
       return 0;
       case JsonTokenType.Null:
         return 0;
@@ -176,7 +184,11 @@ public class SafeNullableIntJsonConverter : JsonConverter<int?>
 return null;
           if (int.TryParse(stringValue, out int result))
       return result;
-       System.Diagnostics.Debug.WriteLine($"[SafeNullableIntConverter] Could not parse '{stringValue}' as int, returning null");
+ // Try to extract first integer from strings like "3-1"
+ var m = Regex.Match(stringValue ?? string.Empty, @"\d+");
+ if (m.Success && int.TryParse(m.Value, out result))
+ return result;
+ System.Diagnostics.Debug.WriteLine($"[SafeNullableIntConverter] Could not parse '{stringValue}' as int, returning null");
  return null;
             case JsonTokenType.Null:
       return null;

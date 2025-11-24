@@ -7,8 +7,14 @@ namespace ObsidianScout.Services;
 public interface IApiService
 {
     Task<LoginResponse> LoginAsync(string username, string password, int teamNumber);
+    Task<LoginResponse> RegisterAsync(string username, string password, string? confirmPassword, int teamNumber, string? email);
     Task<TokenResponse> RefreshTokenAsync();
     Task<ApiResponse<User>> VerifyTokenAsync();
+    
+    // User Profile
+    Task<UserProfileResponse> GetUserProfileAsync();
+    Task<byte[]?> GetProfilePictureAsync();
+    
     Task<TeamsResponse> GetTeamsAsync(int? eventId = null, int limit =100, int offset =0);
     Task<EventsResponse> GetEventsAsync();
     Task<MatchesResponse> GetMatchesAsync(int eventId, string? matchType = null, int? teamNumber = null);
@@ -42,4 +48,14 @@ public interface IApiService
     
     // Mark messages as read
     Task<ApiResponse<bool>> MarkChatMessagesAsReadAsync(string conversationId, string lastReadMessageId);
+    Task<ApiResponse<bool>> SaveGameConfigAsync(GameConfig config);
+    
+    // Pit Scouting
+    Task<PitConfigResponse> GetPitConfigAsync();
+    Task<PitScoutingSubmitResponse> SubmitPitScoutingDataAsync(PitScoutingSubmission submission);
+    Task<PitScoutingListResponse> GetPitScoutingDataAsync(int? teamNumber = null);
+    Task<PitScoutingEntry?> GetPitScoutingEntryAsync(int entryId);
+    Task<PitScoutingSubmitResponse> UpdatePitScoutingDataAsync(int entryId, PitScoutingSubmission submission);
+    Task<ApiResponse<bool>> DeletePitScoutingEntryAsync(int entryId);
+    Task<ApiResponse<bool>> SavePitConfigAsync(PitConfig config);
 }

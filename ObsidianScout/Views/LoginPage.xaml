@@ -1,293 +1,284 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
-             x:Class="ObsidianScout.Views.LoginPage"
-             x:DataType="viewmodels:LoginViewModel"
-             Shell.NavBarIsVisible="False">
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ x:Class="ObsidianScout.Views.LoginPage"
+ x:DataType="viewmodels:LoginViewModel"
+ Shell.NavBarIsVisible="False"
+ Background="{AppThemeBinding Light={StaticResource PageBackgroundBrushLight}, Dark={StaticResource PageBackgroundBrushDark}}">
 
-    <Grid RowDefinitions="*">
-        <!-- Animated Gradient Background -->
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="{StaticResource Primary}" Offset="0.0" />
-                <GradientStop Color="{StaticResource Secondary}" Offset="0.5" />
-                <GradientStop Color="{StaticResource Tertiary}" Offset="1.0" />
-            </LinearGradientBrush>
-        </Grid.Background>
+ <Grid RowDefinitions="*">
+ <!-- Page background now uses app theme brush for consistent grey background -->
 
-        <ScrollView>
-            <VerticalStackLayout Padding="20,30" Spacing="24" VerticalOptions="Center">
-                
-                <!-- Logo Section -->
-                <VerticalStackLayout Spacing="12" Margin="0,0,0,20">
-                    <Label Text="ObsidianScout"
-                           FontSize="36"
-                           FontFamily="OpenSansSemibold"
-                           FontAttributes="Bold"
-                           HorizontalTextAlignment="Center"
-                           TextColor="White"
-                           LineBreakMode="NoWrap" />
+ <ScrollView>
+ <VerticalStackLayout Padding="20,30" Spacing="24" VerticalOptions="Center">
+ 
+ <!-- Logo Section -->
+ <VerticalStackLayout Spacing="12" Margin="0,0,0,20">
+ <Label Text="ObsidianScout"
+ Style="{StaticResource DisplayLabel}"
+ HorizontalTextAlignment="Center"
+ LineBreakMode="NoWrap" />
 
-                    <Label Text="FRC Mobile Scouting Platform"
-                           FontSize="16"
-                           HorizontalTextAlignment="Center"
-                           TextColor="White"
-                           Opacity="0.9"
-                           LineBreakMode="WordWrap"
-                           MaxLines="2" />
-                </VerticalStackLayout>
+ <Label Text="FRC Mobile Scouting Platform"
+ Style="{StaticResource BodyLabel}"
+ FontSize="16"
+ HorizontalTextAlignment="Center"
+ Opacity="0.85"
+ LineBreakMode="WordWrap"
+ MaxLines="2" />
+ </VerticalStackLayout>
 
-                <!-- Login Form Card -->
-                <Border Style="{StaticResource ElevatedGlassCard}"
-                        BackgroundColor="#F0FFFFFF"
-                        Margin="0,10,0,0"
-                        MaximumWidthRequest="500">
-                    
-                    <VerticalStackLayout Spacing="18">
-                        
-                        <Label Text="Welcome Back"
-                               Style="{StaticResource SubheaderLabel}"
-                               HorizontalTextAlignment="Center"
-                               FontSize="20"
-                               Margin="0,0,0,8"
-                               LineBreakMode="NoWrap" />
+ <!-- Login Form Card -->
+ <Border Style="{StaticResource ElevatedGlassCard}"
+ Margin="0,10,0,0"
+ MaximumWidthRequest="500">
+ 
+ <VerticalStackLayout Spacing="18">
+ 
+ <Label Text="Welcome Back"
+ Style="{StaticResource SubheaderLabel}"
+ HorizontalTextAlignment="Center"
+ FontSize="20"
+ Margin="0,0,0,8"
+ LineBreakMode="NoWrap" />
 
-                        <!-- Username -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Username"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Entry Placeholder="Enter username"
-                                       Text="{Binding Username}"
-                                       Style="{StaticResource GlassEntry}"
-                                       BackgroundColor="Transparent"
-                                       IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-                                       MaxLength="100" />
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Username -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Username"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry x:Name="UsernameEntry" Placeholder="Enter username"
+ Text="{Binding Username}"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+ MaxLength="100"
+ ReturnType="Next" />
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Password -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Password"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Entry Placeholder="Enter password"
-                                       Text="{Binding Password}"
-                                       IsPassword="True"
-                                       Style="{StaticResource GlassEntry}"
-                                       BackgroundColor="Transparent"
-                                       IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-                                       MaxLength="100" />
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Password -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Password"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry x:Name="PasswordEntry" Placeholder="Enter password"
+ Text="{Binding Password}"
+ IsPassword="True"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+ MaxLength="100"
+ ReturnType="Next" />
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Team Number -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Team Number"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Entry Placeholder="Enter team number"
-                                       Text="{Binding TeamNumber}"
-                                       Keyboard="Numeric"
-                                       Style="{StaticResource GlassEntry}"
-                                       BackgroundColor="Transparent"
-                                       IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
-                                       MaxLength="10" />
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Team Number -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Team Number"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry x:Name="TeamNumberEntry" Placeholder="Enter team number"
+ Text="{Binding TeamNumber}"
+ Keyboard="Numeric"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+ MaxLength="10"
+ ReturnType="Go" />
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Login Button -->
-                        <Button Text="Login"
-                                Style="{StaticResource GlassButton}"
-                                Command="{Binding LoginCommand}"
-                                HeightRequest="56"
-                                FontSize="18"
-                                Margin="0,8,0,0"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+ <!-- Login Button -->
+ <Button x:Name="LoginButton" Text="Login"
+ Style="{StaticResource GlassButton}"
+ Command="{Binding LoginCommand}"
+ HeightRequest="56"
+ FontSize="18"
+ Margin="0,8,0,0"
+ IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
 
-                        <!-- Loading Indicator -->
-                        <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                         IsVisible="{Binding IsLoading}"
-                                         HeightRequest="40" />
+ <!-- Offer in-app account creation if server supports it -->
+ <Button Text="Create Account" Style="{StaticResource OutlineGlassButton}" Clicked="OnCreateAccountClicked" />
 
-                        <!-- Error Message -->
-                        <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}"
-                                Style="{StaticResource ErrorBadge}"
-                                Padding="12,8">
-                            <Label Text="{Binding ErrorMessage}"
-                                   TextColor="White"
-                                   FontSize="14"
-                                   HorizontalTextAlignment="Center"
-                                   LineBreakMode="WordWrap"
-                                   MaxLines="3" />
-                        </Border>
-                        
-                    </VerticalStackLayout>
-                </Border>
+ <!-- Loading Indicator -->
+ <ActivityIndicator IsRunning="{Binding IsLoading}"
+ IsVisible="{Binding IsLoading}"
+ HeightRequest="40" />
 
-                <!-- Server Configuration Toggle -->
-                <Button Text="Server Configuration"
-                        Style="{StaticResource OutlineGlassButton}"
-                        Command="{Binding ToggleServerConfigCommand}"
-                        BackgroundColor="#30FFFFFF"
-                        TextColor="White"
-                        BorderColor="White"
-                        BorderWidth="1"
-                        HeightRequest="50"
-                        MaximumWidthRequest="500" />
+ <!-- Error Message -->
+ <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}"
+ Style="{StaticResource ErrorBadge}"
+ Padding="12,8">
+ <Label Text="{Binding ErrorMessage}"
+ TextColor="White"
+ FontSize="14"
+ HorizontalTextAlignment="Center"
+ LineBreakMode="WordWrap"
+ MaxLines="3" />
+ </Border>
+ 
+ </VerticalStackLayout>
+ </Border>
 
-                <!-- Server Configuration Card -->
-                <Border IsVisible="{Binding ShowServerConfig}"
-                        Style="{StaticResource ElevatedGlassCard}"
-                        BackgroundColor="#F0FFFFFF"
-                        MaximumWidthRequest="500">
-                    
-                    <VerticalStackLayout Spacing="18">
-                        
-                        <Label Text="Server Settings"
-                               Style="{StaticResource SubheaderLabel}"
-                               HorizontalTextAlignment="Center"
-                               FontSize="20"
-                               LineBreakMode="NoWrap" />
+ <!-- Server Configuration Toggle -->
+ <Button Text="Server Configuration"
+ Style="{StaticResource OutlineGlassButton}"
+ Command="{Binding ToggleServerConfigCommand}"
+ HeightRequest="50"
+ MaximumWidthRequest="500" />
 
-                        <!-- Protocol Selection -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Protocol"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Picker SelectedItem="{Binding Protocol}"
-                                        Title="Select Protocol"
-                                        Style="{StaticResource GlassPicker}"
-                                        BackgroundColor="Transparent">
-                                    <Picker.Items>
-                                        <x:String>http</x:String>
-                                        <x:String>https</x:String>
-                                    </Picker.Items>
-                                </Picker>
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Server Configuration Card -->
+ <Border IsVisible="{Binding ShowServerConfig}"
+ Style="{StaticResource ElevatedGlassCard}"
+ MaximumWidthRequest="500">
+ 
+ <VerticalStackLayout Spacing="18">
+ 
+ <Label Text="Server Settings"
+ Style="{StaticResource SubheaderLabel}"
+ HorizontalTextAlignment="Center"
+ FontSize="20"
+ LineBreakMode="NoWrap" />
 
-                        <!-- Server Address -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Server Address"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Entry Placeholder="192.168.1.100 or example.com"
-                                       Text="{Binding ServerAddress}"
-                                       Keyboard="Url"
-                                       Style="{StaticResource GlassEntry}"
-                                       BackgroundColor="Transparent"
-                                       MaxLength="200" />
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Protocol Selection -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Protocol"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Picker SelectedItem="{Binding Protocol}"
+ Title="Select Protocol"
+ Style="{StaticResource GlassPicker}"
+ BackgroundColor="Transparent">
+ <Picker.Items>
+ <x:String>http</x:String>
+ <x:String>https</x:String>
+ </Picker.Items>
+ </Picker>
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Port -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="Port"
-                                   FontSize="14"
-                                   FontFamily="OpenSansSemibold"
-                                   TextColor="{StaticResource TextSecondary}"
-                                   LineBreakMode="NoWrap" />
-                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                    StrokeThickness="0">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <Entry Placeholder="8080"
-                                       Text="{Binding ServerPort}"
-                                       Keyboard="Numeric"
-                                       Style="{StaticResource GlassEntry}"
-                                       BackgroundColor="Transparent"
-                                       MaxLength="5" />
-                            </Border>
-                        </VerticalStackLayout>
+ <!-- Server Address -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Server Address"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry Placeholder="192.168.1.100 or example.com"
+ Text="{Binding ServerAddress}"
+ Keyboard="Url"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ MaxLength="200" />
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Preview URL -->
-                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
-                                Padding="16"
-                                StrokeThickness="0">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-                            <Label LineBreakMode="WordWrap" MaxLines="3">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="🌐 " FontSize="16" />
-                                        <Span Text="{Binding Protocol}" FontSize="14" TextColor="{StaticResource TextSecondary}" />
-                                        <Span Text="://" FontSize="14" TextColor="{StaticResource TextSecondary}" />
-                                        <Span Text="{Binding ServerAddress}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
-                                        <Span Text=":" FontSize="14" TextColor="{StaticResource TextSecondary}" />
-                                        <Span Text="{Binding ServerPort}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                        </Border>
+ <!-- Port -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Port"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry Placeholder="8080"
+ Text="{Binding ServerPort}"
+ Keyboard="Numeric"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ MaxLength="5" />
+ </Border>
+ </VerticalStackLayout>
 
-                        <!-- Action Buttons -->
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
-                            <Button Text="Test"
-                                    Style="{StaticResource SecondaryGlassButton}"
-                                    Command="{Binding TestConnectionCommand}"
-                                    Grid.Column="0"
-                                    HeightRequest="50" />
+ <!-- Preview URL -->
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ Padding="16"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Label LineBreakMode="WordWrap" MaxLines="3">
+ <Label.FormattedText>
+ <FormattedString>
+ <Span Text="🌐 " FontSize="16" />
+ <Span Text="{Binding Protocol}" FontSize="14" TextColor="{StaticResource TextSecondary}" />
+ <Span Text="://" FontSize="14" TextColor="{StaticResource TextSecondary}" />
+ <Span Text="{Binding ServerAddress}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+ <Span Text=":" FontSize="14" TextColor="{StaticResource TextSecondary}" />
+ <Span Text="{Binding ServerPort}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+ </FormattedString>
+ </Label.FormattedText>
+ </Label>
+ </Border>
 
-                            <Button Text="Save"
-                                    Style="{StaticResource GlassButton}"
-                                    Command="{Binding SaveServerConfigCommand}"
-                                    Grid.Column="1"
-                                    HeightRequest="50" />
-                        </Grid>
-                        
-                    </VerticalStackLayout>
-                </Border>
+ <!-- Action Buttons -->
+ <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
+ <Button Text="Test"
+ Style="{StaticResource SecondaryGlassButton}"
+ Command="{Binding TestConnectionCommand}"
+ Grid.Column="0"
+ HeightRequest="50" />
 
-                <!-- Version Info -->
-                <Label Text="Version 1.0.0"
-                       FontSize="12"
-                       TextColor="White"
-                       Opacity="0.7"
-                       HorizontalTextAlignment="Center"
-                       Margin="0,20,0,20"
-                       LineBreakMode="NoWrap" />
+ <Button Text="Save"
+ Style="{StaticResource GlassButton}"
+ Command="{Binding SaveServerConfigCommand}"
+ Grid.Column="1"
+ HeightRequest="50" />
+ </Grid>
+ 
+ </VerticalStackLayout>
+ </Border>
 
-            </VerticalStackLayout>
-      </ScrollView>
-    </Grid>
+ <!-- Version Info -->
+ <Label Text="Version1.0.0"
+ FontSize="12"
+ Style="{StaticResource CaptionLabel}"
+ Opacity="0.7"
+ HorizontalTextAlignment="Center"
+ Margin="0,20,0,20"
+ LineBreakMode="NoWrap" />
+
+ </VerticalStackLayout>
+ </ScrollView>
+ </Grid>
 
 </ContentPage>

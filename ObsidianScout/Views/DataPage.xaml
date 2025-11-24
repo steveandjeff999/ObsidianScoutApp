@@ -1,371 +1,478 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:ObsidianScout.Models"
-      x:Class="ObsidianScout.Views.DataPage"
+    xmlns:models="clr-namespace:ObsidianScout.Models"
+  x:Class="ObsidianScout.Views.DataPage"
          Title="Server Data">
 
-    <Grid RowDefinitions="Auto,*" Padding="20" RowSpacing="20">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="16" RowSpacing="16">
 
-  <!-- HEADER SECTION -->
-     <Border Grid.Row="0" Style="{StaticResource CompactGlassCard}">
-            <VerticalStackLayout Spacing="8">
-   <HorizontalStackLayout Spacing="12">
-       <Border BackgroundColor="{StaticResource Primary}"
-       WidthRequest="40"
-        HeightRequest="40"
-     VerticalOptions="Center">
-         <Border.StrokeShape>
-          <RoundRectangle CornerRadius="10" />
-    </Border.StrokeShape>
-  <Label Text="SD"
-      FontSize="16"
-           FontFamily="OpenSansSemibold"
-  FontAttributes="Bold"
-               TextColor="White"
-      HorizontalOptions="Center"
-            VerticalOptions="Center" />
-      </Border>
-            <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-   <Label Text="Server Data" 
-              Style="{StaticResource HeaderLabel}" 
-     FontSize="24" />
-            <Label Text="Load and inspect events, teams, matches and scouting data" 
-     Style="{StaticResource CaptionLabel}" 
-              FontSize="13"
-   Opacity="0.8" />
-              </VerticalStackLayout>
-       </HorizontalStackLayout>
-          </VerticalStackLayout>
+        <!-- AUTH ERROR BANNER -->
+    <Border Grid.Row="0" 
+         IsVisible="{Binding HasAuthError}"
+                BackgroundColor="#DC3545"
+      Padding="16"
+       Margin="0,0,0,8">
+            <Border.StrokeShape>
+     <RoundRectangle CornerRadius="12" />
+       </Border.StrokeShape>
+     <Grid ColumnDefinitions=",Auto" ColumnSpacing="12">
+     <VerticalStackLayout Grid.Column="0" Spacing="4">
+    <Label Text="⚠️ Authentication Error" 
+             TextColor="White"
+FontFamily="OpenSansSemibold"
+    FontSize="16" />
+       <Label Text="{Binding AuthErrorMessage}" 
+        TextColor="White"
+        FontSize="13"
+                 Opacity="0.9" />
+         </VerticalStackLayout>
+    <Button Grid.Column="1"
+       Text="✕"
+      Command="{Binding ClearAuthErrorCommand}"
+   BackgroundColor="Transparent"
+            TextColor="White"
+       FontSize="20"
+    Padding="8"
+   VerticalOptions="Start" />
+     </Grid>
         </Border>
 
-        <!-- MAIN CONTENT -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="20">
-
-           <!-- CONTROLS CARD -->
-            <Border Style="{StaticResource ModernCard}">
-  <VerticalStackLayout Spacing="16">
+  <!-- HEADER SECTION -->
+     <Border Grid.Row="1" Style="{StaticResource CompactGlassCard}">
+   <VerticalStackLayout Spacing="12">
+   <HorizontalStackLayout Spacing="12">
+       <Border BackgroundColor="{StaticResource Primary}"
+       WidthRequest="48"
+  HeightRequest="48"
+  VerticalOptions="Center">
+         <Border.StrokeShape>
+      <RoundRectangle CornerRadius="12" />
+  </Border.StrokeShape>
+  <Label Text="📊"
+      FontSize="24"
+    HorizontalOptions="Center"
+VerticalOptions="Center" />
+      </Border>
+       <VerticalStackLayout Spacing="2" VerticalOptions="Center" HorizontalOptions="FillAndExpand">
+   <Label Text="Server Data" 
+      Style="{StaticResource HeaderLabel}" 
+   FontSize="20" />
+            <Label Text="{Binding StatusMessage}" 
+     Style="{StaticResource CaptionLabel}" 
+   FontSize="12"
+   Opacity="0.8" />
+            </VerticalStackLayout>
+           
+      <!-- Loading Spinner -->
+      <ActivityIndicator IsRunning="{Binding IsLoading}"
+ IsVisible="{Binding IsLoading}"
+        Color="{StaticResource Primary}"
+         WidthRequest="24"
+     HeightRequest="24"
+   VerticalOptions="Center" />
+     </HorizontalStackLayout>
+           
+             <!-- Quick Load Buttons -->
+          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8" RowSpacing="8">
+       <Border Grid.Column="0" 
+      Style="{StaticResource ModernCard}"
+     Padding="12,8">
+          <Border.GestureRecognizers>
+     <TapGestureRecognizer Command="{Binding LoadEventsCommand}" />
+            </Border.GestureRecognizers>
+         <VerticalStackLayout Spacing="4">
+      <Label Text="📅" FontSize="18" HorizontalOptions="Center" />
+              <Label Text="Events" 
+          FontSize="10" 
+HorizontalOptions="Center"
+      FontFamily="OpenSansSemibold" />
+ <ActivityIndicator IsRunning="{Binding IsLoadingEvents}"
+     HeightRequest="12"
+                WidthRequest="12"
+      Color="{StaticResource Primary}"
+     HorizontalOptions="Center" />
+       </VerticalStackLayout>
+          </Border>
+             
+          <Border Grid.Column="1" 
+           Style="{StaticResource ModernCard}"
+    Padding="12,8">
+       <Border.GestureRecognizers>
+    <TapGestureRecognizer Command="{Binding LoadTeamsCommand}" />
+          </Border.GestureRecognizers>
+            <VerticalStackLayout Spacing="4">
+        <Label Text="👥" FontSize="18" HorizontalOptions="Center" />
+          <Label Text="Teams" 
+             FontSize="10" 
+    HorizontalOptions="Center"
+         FontFamily="OpenSansSemibold" />
+           <ActivityIndicator IsRunning="{Binding IsLoadingTeams}"
+   HeightRequest="12"
+      WidthRequest="12"
+   Color="{StaticResource Primary}"
+       HorizontalOptions="Center" />
+     </VerticalStackLayout>
+         </Border>
         
- <!-- Search Bar -->
-            <VerticalStackLayout Spacing="8">
- <Label Text="Search" Style="{StaticResource AccentLabel}" FontSize="14" />
-  <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+        <Border Grid.Column="2" 
+    Style="{StaticResource ModernCard}"
+     Padding="12,8">
+         <Border.GestureRecognizers>
+     <TapGestureRecognizer Command="{Binding LoadMatchesCommand}" />
+    </Border.GestureRecognizers>
+      <VerticalStackLayout Spacing="4">
+          <Label Text="🎮" FontSize="18" HorizontalOptions="Center" />
+        <Label Text="Matches" 
+                   FontSize="10" 
+ HorizontalOptions="Center"
+            FontFamily="OpenSansSemibold" />
+          <ActivityIndicator IsRunning="{Binding IsLoadingMatches}"
+      HeightRequest="12"
+               WidthRequest="12"
+       Color="{StaticResource Primary}"
+     HorizontalOptions="Center" />
+         </VerticalStackLayout>
+    </Border>
+   
+    <Border Grid.Column="3" 
+        Style="{StaticResource ModernCard}"
+  Padding="12,8">
+         <Border.GestureRecognizers>
+     <TapGestureRecognizer Command="{Binding LoadScoutingCommand}" />
+    </Border.GestureRecognizers>
+ <VerticalStackLayout Spacing="4">
+        <Label Text="📝" FontSize="18" HorizontalOptions="Center" />
+          <Label Text="Scouting" 
+       FontSize="10" 
+    HorizontalOptions="Center"
+   FontFamily="OpenSansSemibold" />
+       <ActivityIndicator IsRunning="{Binding IsLoadingScouting}"
+  HeightRequest="12"
+     WidthRequest="12"
+    Color="{StaticResource Primary}"
+            HorizontalOptions="Center" />
+</VerticalStackLayout>
+            </Border>
+      </Grid>
+
+      <!-- Search and Filter -->
+ <VerticalStackLayout Spacing="8">
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
  StrokeThickness="0"
-               Padding="0">
-          <Border.StrokeShape>
-            <RoundRectangle CornerRadius="12" />
-         </Border.StrokeShape>
-          <Entry Placeholder="Search teams, events or matches" 
-          Style="{StaticResource ModernEntry}"
+  Padding="0">
+  <Border.StrokeShape>
+  <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+    <Entry Placeholder="🔍 Search..." 
+       Style="{StaticResource ModernEntry}"
          Text="{Binding Query}"
+           ClearButtonVisibility="WhileEditing"
 BackgroundColor="Transparent" />
       </Border>
-           </VerticalStackLayout>
 
-             <!-- Event Picker -->
-             <VerticalStackLayout Spacing="8">
-   <Label Text="Event Filter" Style="{StaticResource AccentLabel}" FontSize="14" />
-                <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+         <!-- Event Picker -->
+  <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
       StrokeThickness="0"
-           Padding="0">
+ Padding="0">
       <Border.StrokeShape>
-           <RoundRectangle CornerRadius="12" />
+  <RoundRectangle CornerRadius="12" />
        </Border.StrokeShape>
            <Picker ItemsSource="{Binding Events}" 
-             ItemDisplayBinding="{Binding Name}" 
-          SelectedItem="{Binding SelectedEvent}"
+  ItemDisplayBinding="{Binding Name}" 
+    SelectedItem="{Binding SelectedEvent}"
      Style="{StaticResource ModernPicker}"
           BackgroundColor="Transparent"
-        Title="Select Event" />
-            </Border>
+        Title="Filter by Event" />
+        </Border>
          </VerticalStackLayout>
-
-                <!-- Action Buttons -->
-       <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-       <Button Grid.Column="0"
-      Text="Load All"
-        Command="{Binding LoadAllCommand}"
-        Style="{StaticResource PrimaryButton}" />
-         <Button Grid.Column="1"
-    Text="Refresh"
-      Command="{Binding LoadAllCommand}"
-   Style="{StaticResource OutlineButton}" />
-               </Grid>
-
        </VerticalStackLayout>
         </Border>
 
-    <!-- DATA SECTIONS IN RESPONSIVE GRID -->
-          <Grid ColumnDefinitions="*,*" 
-     RowDefinitions="Auto,Auto"
-          ColumnSpacing="20" 
-           RowSpacing="20">
+        <!-- MAIN CONTENT WITH COLLECTIONVIEW FOR BETTER PERFORMANCE -->
+        <RefreshView Grid.Row="2" Command="{Binding LoadAllCommand}" IsRefreshing="{Binding IsLoading}">
+    <ScrollView>
+    <VerticalStackLayout Spacing="16">
 
-            <!-- EVENTS SECTION -->
-        <VerticalStackLayout Grid.Column="0" Grid.Row="0" Spacing="12">
-     <HorizontalStackLayout Spacing="12">
+    <!-- EVENTS SECTION -->
+        <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowEvents}">
+  <HorizontalStackLayout Spacing="12">
        <Border BackgroundColor="{StaticResource Primary}"
-    WidthRequest="32"
+  WidthRequest="32"
           HeightRequest="32"
-              VerticalOptions="Center">
+    VerticalOptions="Center">
       <Border.StrokeShape>
      <RoundRectangle CornerRadius="8" />
     </Border.StrokeShape>
-        <Label Text="E"
-   FontSize="18"
-   FontFamily="OpenSansSemibold"
-        TextColor="White"
-         HorizontalOptions="Center"
+        <Label Text="📅"
+   FontSize="16"
+      HorizontalOptions="Center"
       VerticalOptions="Center" />
  </Border>
-      <Label Text="Events" 
+      <Label Text="{Binding Events.Count, StringFormat='Events ({0})'}" 
     Style="{StaticResource SectionHeader}" 
- FontSize="18"
+ FontSize="16"
           VerticalOptions="Center"
     Margin="0" />
     </HorizontalStackLayout>
 
-   <StackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Events}">
-    <BindableLayout.ItemTemplate>
+       <!-- Use CollectionView for better performance -->
+   <CollectionView ItemsSource="{Binding Events}"
+SelectionMode="None"
+            MaximumHeightRequest="400">
+       <CollectionView.ItemTemplate>
    <DataTemplate x:DataType="models:Event">
-       <Border Style="{StaticResource ModernCard}" Padding="16">
-         <VerticalStackLayout Spacing="6">
-      <Label Text="{Binding Name}" 
-  Style="{StaticResource SubheaderLabel}" 
-         FontSize="16" />
+       <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
+     <VerticalStackLayout Spacing="6">
+    <Label Text="{Binding Name}" 
+Style="{StaticResource SubheaderLabel}" 
+         FontSize="15" />
       <HorizontalStackLayout Spacing="8">
-        <Label Text="Location:"
-       FontSize="11"
-     FontFamily="OpenSansSemibold"
- TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
-       VerticalOptions="Center" />
+        <Label Text="📍"
+          FontSize="12"
+    VerticalOptions="Center" />
            <Label Text="{Binding Location}" 
      Style="{StaticResource CaptionLabel}"
-          FontSize="13"
+          FontSize="12"
     VerticalOptions="Center" />
   </HorizontalStackLayout>
     <HorizontalStackLayout Spacing="8">
-     <Label Text="Date:"
-FontSize="11"
-     FontFamily="OpenSansSemibold"
-      TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+     <Label Text="📆"
+       FontSize="12"
          VerticalOptions="Center" />
-      <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}" 
+   <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}" 
       Style="{StaticResource CaptionLabel}"
-        FontSize="13"
-      VerticalOptions="Center" />
-       </HorizontalStackLayout>
+        FontSize="12"
+    VerticalOptions="Center" />
+    </HorizontalStackLayout>
    </VerticalStackLayout>
       </Border>
   </DataTemplate>
-    </BindableLayout.ItemTemplate>
-</StackLayout>
-           </VerticalStackLayout>
+              </CollectionView.ItemTemplate>
+          <CollectionView.EmptyView>
+         <Label Text="No events found" 
+       HorizontalOptions="Center"
+           Margin="0,20"
+         Opacity="0.6" />
+                </CollectionView.EmptyView>
+         </CollectionView>
+    </VerticalStackLayout>
 
            <!-- TEAMS SECTION -->
-  <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="12">
+  <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowTeams}">
          <HorizontalStackLayout Spacing="12">
     <Border BackgroundColor="{StaticResource Secondary}"
   WidthRequest="32"
       HeightRequest="32"
      VerticalOptions="Center">
       <Border.StrokeShape>
-       <RoundRectangle CornerRadius="8" />
-         </Border.StrokeShape>
-     <Label Text="T"
-      FontSize="18"
-    FontFamily="OpenSansSemibold"
- TextColor="White"
-   HorizontalOptions="Center"
+   <RoundRectangle CornerRadius="8" />
+      </Border.StrokeShape>
+  <Label Text="👥"
+      FontSize="16"
+      HorizontalOptions="Center"
       VerticalOptions="Center" />
         </Border>
-        <Label Text="Teams" 
+     <Label Text="{Binding Teams.Count, StringFormat='Teams ({0})'}" 
  Style="{StaticResource SectionHeader}" 
-        FontSize="18"
+     FontSize="16"
 VerticalOptions="Center"
-        Margin="0" />
+      Margin="0" />
  </HorizontalStackLayout>
 
-     <StackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Teams}">
-            <BindableLayout.ItemTemplate>
+     <CollectionView ItemsSource="{Binding Teams}"
+ SelectionMode="None"
+    MaximumHeightRequest="400">
+        <CollectionView.ItemTemplate>
          <DataTemplate x:DataType="models:Team">
-      <Border Style="{StaticResource ModernCard}" Padding="16">
+      <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
            <VerticalStackLayout Grid.Column="0" Spacing="6">
-         <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" 
-         Style="{StaticResource SubheaderLabel}" 
-       FontSize="16" />
+       <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" 
+      Style="{StaticResource SubheaderLabel}" 
+       FontSize="15" />
     <Label Text="{Binding TeamName}" 
       Style="{StaticResource BodyLabel}"
-  FontSize="14"
+  FontSize="13"
              LineBreakMode="TailTruncation"
          MaxLines="1" />
-  <HorizontalStackLayout Spacing="8">
-           <Label Text="Location:"
-  FontSize="10"
-       FontFamily="OpenSansSemibold"
-        TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+  <HorizontalStackLayout Spacing="6">
+   <Label Text="📍"
+   FontSize="11"
 VerticalOptions="Center" />
      <Label Text="{Binding Location}" 
    Style="{StaticResource CaptionLabel}"
-      FontSize="12"
+      FontSize="11"
  VerticalOptions="Center" />
       </HorizontalStackLayout>
         </VerticalStackLayout>
                 
     <Border Grid.Column="1"
     Style="{StaticResource Badge}"
-                   VerticalOptions="Center"
+    VerticalOptions="Center"
      IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}}">
           <Label Text="{Binding ScoutingDataCount, StringFormat='{0}'}"
-    TextColor="White"
-            FontSize="14"
+  TextColor="White"
+            FontSize="12"
           FontAttributes="Bold" />
       </Border>
     </Grid>
          </Border>
          </DataTemplate>
-        </BindableLayout.ItemTemplate>
-    </StackLayout>
+               </CollectionView.ItemTemplate>
+     <CollectionView.EmptyView>
+    <Label Text="No teams found" 
+      HorizontalOptions="Center"
+            Margin="0,20"
+   Opacity="0.6" />
+          </CollectionView.EmptyView>
+    </CollectionView>
    </VerticalStackLayout>
 
   <!-- MATCHES SECTION -->
-        <VerticalStackLayout Grid.Column="0" Grid.Row="1" Spacing="12">
-          <HorizontalStackLayout Spacing="12">
-     <Label Text="Matches" 
+        <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowMatches}">
+        <HorizontalStackLayout Spacing="12">
+      <Border BackgroundColor="{StaticResource Tertiary}"
+      WidthRequest="32"
+          HeightRequest="32"
+   VerticalOptions="Center">
+         <Border.StrokeShape>
+          <RoundRectangle CornerRadius="8" />
+ </Border.StrokeShape>
+ <Label Text="🎮"
+           FontSize="16"
+        HorizontalOptions="Center"
+                VerticalOptions="Center" />
+   </Border>
+  <Label Text="{Binding Matches.Count, StringFormat='Matches ({0})'}" 
  Style="{StaticResource SectionHeader}" 
-       FontSize="18"
+       FontSize="16"
                VerticalOptions="Center"
         Margin="0" />
        </HorizontalStackLayout>
 
-<StackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Matches}">
-      <BindableLayout.ItemTemplate>
-                <DataTemplate x:DataType="models:MatchCard">
-     <Border Style="{StaticResource ModernCard}" Padding="16">
+  <CollectionView ItemsSource="{Binding Matches}"
+                SelectionMode="None"
+              MaximumHeightRequest="400">
+ <CollectionView.ItemTemplate>
+           <DataTemplate x:DataType="models:MatchCard">
+     <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
        <VerticalStackLayout Spacing="6">
     <Label Text="{Binding EventName}" 
-               Style="{StaticResource SubheaderLabel}" 
-      FontSize="16" />
+           Style="{StaticResource SubheaderLabel}" 
+ FontSize="15" />
       <Label Text="{Binding Match.MatchNumber, StringFormat='Match #{0}'}" 
           Style="{StaticResource CaptionLabel}"
-         FontSize="13" />
+         FontSize="12" />
             <HorizontalStackLayout Spacing="8">
-            <Label Text="🔴" FontSize="12" VerticalOptions="Center" />
+        <Label Text="🔴" FontSize="11" VerticalOptions="Center" />
        <Label Text="{Binding Match.RedAlliance}" 
  Style="{StaticResource BodyLabel}"
-       FontSize="13"
+     FontSize="12"
         VerticalOptions="Center" />
-           </HorizontalStackLayout>
+     </HorizontalStackLayout>
+    <HorizontalStackLayout Spacing="8">
+     <Label Text="🔵" FontSize="11" VerticalOptions="Center" />
+       <Label Text="{Binding Match.BlueAlliance}" 
+        Style="{StaticResource BodyLabel}"
+              FontSize="12"
+     VerticalOptions="Center" />
+             </HorizontalStackLayout>
  </VerticalStackLayout>
         </Border>
-                  </DataTemplate>
-          </BindableLayout.ItemTemplate>
-     </StackLayout>
+            </DataTemplate>
+       </CollectionView.ItemTemplate>
+    <CollectionView.EmptyView>
+            <Label Text="No matches found" 
+           HorizontalOptions="Center"
+        Margin="0,20"
+           Opacity="0.6" />
+          </CollectionView.EmptyView>
+        </CollectionView>
            </VerticalStackLayout>
 
     <!-- SCOUTING SECTION -->
-     <VerticalStackLayout Grid.Column="1" Grid.Row="1" Spacing="12">
+     <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowScouting}">
            <HorizontalStackLayout Spacing="12">
-            <Label Text="Scouting" 
-          Style="{StaticResource SectionHeader}" 
-FontSize="18"
+     <Border BackgroundColor="#FF6B35"
+                WidthRequest="32"
+   HeightRequest="32"
+        VerticalOptions="Center">
+          <Border.StrokeShape>
+       <RoundRectangle CornerRadius="8" />
+    </Border.StrokeShape>
+        <Label Text="📝"
+     FontSize="16"
+   HorizontalOptions="Center"
+      VerticalOptions="Center" />
+      </Border>
+    <Label Text="{Binding Scouting.Count, StringFormat='Scouting ({0})'}" 
+      Style="{StaticResource SectionHeader}" 
+FontSize="16"
        VerticalOptions="Center"
      Margin="0" />
         </HorizontalStackLayout>
 
-              <StackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Scouting}">
-        <BindableLayout.ItemTemplate>
+        <CollectionView ItemsSource="{Binding Scouting}"
+                SelectionMode="None"
+  MaximumHeightRequest="400">
+             <CollectionView.ItemTemplate>
     <DataTemplate x:DataType="models:ScoutingEntry">
-          <Border Style="{StaticResource ModernCard}" Padding="16">
-<VerticalStackLayout Spacing="8">
-       <HorizontalStackLayout Spacing="12">
-                  <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" 
+     <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
+<VerticalStackLayout Spacing="6">
+     <HorizontalStackLayout Spacing="12">
+        <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" 
        Style="{StaticResource SubheaderLabel}" 
-        FontSize="16" />
+        FontSize="15" />
             <Label Text="{Binding MatchNumber, StringFormat='M{0}'}" 
-       Style="{StaticResource CaptionLabel}"
-        FontSize="12"
+    Style="{StaticResource CaptionLabel}"
+        FontSize="11"
       VerticalOptions="Center"
-            HorizontalOptions="EndAndExpand" />
+ HorizontalOptions="EndAndExpand" />
   </HorizontalStackLayout>
-       <Label Text="{Binding TeamName}" 
-           Style="{StaticResource BodyLabel}"
-        FontSize="14" />
-    <HorizontalStackLayout Spacing="8">
-             <Label Text="👤" FontSize="11" VerticalOptions="Center" />
-           <Label Text="{Binding ScoutName}" 
-           Style="{StaticResource CaptionLabel}"
-      FontSize="12"
+     <Label Text="{Binding TeamName}" 
+         Style="{StaticResource BodyLabel}"
+        FontSize="13" />
+    <HorizontalStackLayout Spacing="6">
+ <Label Text="👤" FontSize="10" VerticalOptions="Center" />
+     <Label Text="{Binding ScoutName}" 
+     Style="{StaticResource CaptionLabel}"
+      FontSize="11"
   VerticalOptions="Center" />
    </HorizontalStackLayout>
      <Label Text="{Binding Timestamp, StringFormat='{0:MMM dd, HH:mm}'}" 
           Style="{StaticResource CaptionLabel}"
-         FontSize="11"
-           Opacity="0.7" />
-        </VerticalStackLayout>
+    FontSize="10"
+      Opacity="0.7" />
+      </VerticalStackLayout>
   </Border>
          </DataTemplate>
-     </BindableLayout.ItemTemplate>
-               </StackLayout>
-           </VerticalStackLayout>
-
-      </Grid>
-
-      <!-- QUICK FILTER SECTION -->
-    <Border Style="{StaticResource CompactGlassCard}">
-         <VerticalStackLayout Spacing="12">
-    <Label Text="Quick Filters" 
-   Style="{StaticResource AccentLabel}" 
-       FontSize="14" />
- <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
-<Button Grid.Column="0"
-                 Text="Events"
-     Command="{Binding ShowSectionCommand}"
-  CommandParameter="events"
-           Style="{StaticResource GhostButton}"
-      FontSize="13"
-  Padding="12,8" />
-       <Button Grid.Column="1"
-       Text="Teams"
-      Command="{Binding ShowSectionCommand}"
-          CommandParameter="teams"
-                 Style="{StaticResource GhostButton}"
-         FontSize="13"
-       Padding="12,8" />
-      <Button Grid.Column="2"
-          Text="Matches"
-    Command="{Binding ShowSectionCommand}"
-        CommandParameter="matches"
-            Style="{StaticResource GhostButton}"
-            FontSize="13"
-          Padding="12,8" />
- <Button Grid.Column="3"
-       Text="Scouting"
-        Command="{Binding ShowSectionCommand}"
-  CommandParameter="scouting"
-  Style="{StaticResource GhostButton}"
-           FontSize="13"
-    Padding="12,8" />
-           </Grid>
-           </VerticalStackLayout>
-    </Border>
+    </CollectionView.ItemTemplate>
+     <CollectionView.EmptyView>
+    <Label Text="No scouting data found" 
+       HorizontalOptions="Center"
+       Margin="0,20"
+         Opacity="0.6" />
+           </CollectionView.EmptyView>
+           </CollectionView>
+      </VerticalStackLayout>
 
      <!-- Bottom Spacing -->
         <BoxView HeightRequest="20" BackgroundColor="Transparent" />
 
         </VerticalStackLayout>
-        </ScrollView>
+  </ScrollView>
+ </RefreshView>
 
      <!-- FAB Refresh Button -->
-     <Button Grid.Row="1"
+     <Button Grid.Row="3"
   Style="{StaticResource FAB}"
     Command="{Binding LoadAllCommand}"
  Text="↻"
+            FontSize="28"
      HorizontalOptions="End"
     VerticalOptions="End"
-        Margin="0,0,0,20" />
+      Margin="0,0,16,16" />
 
-    </Grid>
+  </Grid>
 </ContentPage>
