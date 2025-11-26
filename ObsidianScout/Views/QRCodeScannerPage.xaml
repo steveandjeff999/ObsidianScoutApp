@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+ x:Class="ObsidianScout.Views.QRCodeScannerPage"
+ x:DataType="viewmodels:QRCodeScannerViewModel"
+ Title="QR Code Scanner"
+ Background="{AppThemeBinding Light={StaticResource PageBackgroundBrushLight}, Dark={StaticResource PageBackgroundBrushDark}}">
+
+ <!-- Make the entire page vertically scrollable -->
+ <ScrollView>
+ <VerticalStackLayout Spacing="16" Padding="0,12">
+
+ <!-- Camera area: fixed minimum height but centered on screen -->
+ <Grid x:Name="CameraContainer"
+ MinimumHeightRequest="240"
+ HeightRequest="360"
+ BackgroundColor="Transparent"
+ HorizontalOptions="Center"
+ VerticalOptions="Start">
+
+ <!-- Native Preview will be added into the underlying platform view container at runtime -->
+
+ <!-- Overlays container (above preview) -->
+ <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="*" ZIndex="10">
+
+ <!-- Top: status message centered -->
+ <Border Grid.Row="0"
+ Style="{StaticResource ElevatedGlassCard}"
+ Margin="20,12,20,0"
+ Padding="12,8"
+ HorizontalOptions="Center"
+ VerticalOptions="Start">
+ <Label Text="{Binding StatusMessage}"
+ Style="{StaticResource BodyLabel}"
+ FontSize="14"
+ HorizontalTextAlignment="Center"
+ LineBreakMode="WordWrap"
+ MaxLines="2" />
+ </Border>
+
+ <!-- Middle: framing overlay (center) -->
+ <Grid Grid.Row="1">
+ <Border x:Name="FrameBorder"
+ Stroke="{StaticResource Primary}"
+ StrokeThickness="3"
+ HorizontalOptions="Center"
+ VerticalOptions="Center"
+ BackgroundColor="Transparent"
+ ZIndex="15">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="20" />
+ </Border.StrokeShape>
+ </Border>
+
+ </Grid>
+
+ <!-- Bottom overlay row intentionally left small; controls moved below preview -->
+ <BoxView Grid.Row="2" BackgroundColor="Transparent" HeightRequest="1" />
+
+ </Grid>
+
+ </Grid>
+
+ <!-- Camera selector moved OUTSIDE the preview and centered below it -->
+ <Border x:Name="CameraSelectorBorder"
+ Style="{StaticResource ElevatedGlassCard}"
+ Padding="10"
+ Margin="8,6"
+ HorizontalOptions="Center"
+ VerticalOptions="Start"
+ IsVisible="{OnPlatform Android=true, WinUI=true, iOS=false, MacCatalyst=false}"
+ >
+ <HorizontalStackLayout Spacing="8" VerticalOptions="Center" HorizontalOptions="FillAndExpand">
+ <Label Text="📷" FontSize="18" VerticalOptions="Center" />
+ <Picker x:Name="CameraPicker"
+ Title="Camera"
+ SelectedIndexChanged="OnCameraSelectionChanged"
+ HorizontalOptions="FillAndExpand"
+ FontSize="14" />
+ </HorizontalStackLayout>
+ </Border>
+
+ <!-- CAMERA CONTROLS: moved below the video preview to avoid overlap -->
+ <HorizontalStackLayout Spacing="12" HorizontalOptions="Center" Margin="20,4,20,0">
+ <Button Text="{Binding IsScanning, Converter={StaticResource BoolToScanButtonTextConverter}}"
+ Command="{Binding ToggleScanningCommand}"
+ Style="{StaticResource GlassButton}"
+ WidthRequest="160"
+ HeightRequest="48" />
+
+ <Button Text="{Binding IsFlashlightOn, Converter={StaticResource BoolToFlashlightButtonTextConverter}}"
+ Command="{Binding ToggleFlashlightCommand}"
+ Style="{StaticResource SecondaryGlassButton}"
+ WidthRequest="160"
+ HeightRequest="48" />
+ </HorizontalStackLayout>
+
+ <!-- Scanned Text Display (card) -->
+ <Border Style="{StaticResource ElevatedGlassCard}"
+ Margin="20"
+ Padding="16"
+ MaximumWidthRequest="720"
+ HorizontalOptions="CenterAndExpand">
+ <VerticalStackLayout Spacing="12">
+
+ <Label Text="Scanned Data"
+ Style="{StaticResource SubheaderLabel}"
+ FontSize="16" />
+
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0"
+ MinimumHeightRequest="100">
+ <Editor Text="{Binding ScannedText}"
+ Placeholder="Scanned QR code data will appear here..."
+ TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+ PlaceholderColor="{StaticResource TextSecondary}"
+ BackgroundColor="Transparent"
+ FontSize="14"
+ AutoSize="TextChanges"
+ MaximumHeightRequest="150"
+ Margin="8" />
+ </Border>
+
+ <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+ <Button Grid.Column="0"
+ Text="Copy"
+ Command="{Binding CopyToClipboardCommand}"
+ Style="{StaticResource GlassButton}"
+ HeightRequest="48"
+ HorizontalOptions="FillAndExpand" />
+
+ <Button Grid.Column="1"
+ Text="Upload"
+ HeightRequest="48"
+ Clicked="OnUploadScannedDataClicked"
+ Style="{StaticResource PrimaryButton}" 
+ HorizontalOptions="FillAndExpand" />
+ </Grid>
+
+ <!-- Clear button moved to its own row to keep two-column layout -->
+ <Button Margin="0,12,0,0"
+ Text="Clear"
+ Command="{Binding ClearTextCommand}"
+ Style="{StaticResource OutlineGlassButton}"
+ HeightRequest="44"
+ HorizontalOptions="FillAndExpand" />
+
+ </VerticalStackLayout>
+ </Border>
+
+ <!-- Add padding at bottom so controls are reachable when scrolled -->
+ <BoxView HeightRequest="24" Color="Transparent" />
+
+ </VerticalStackLayout>
+ </ScrollView>
+
+</ContentPage>

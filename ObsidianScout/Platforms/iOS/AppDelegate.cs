@@ -1,4 +1,5 @@
-﻿using Foundation;
+﻿#if IOS
+using Foundation;
 
 namespace ObsidianScout
 {
@@ -8,3 +9,4 @@ namespace ObsidianScout
         protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
     }
 }
+#endif

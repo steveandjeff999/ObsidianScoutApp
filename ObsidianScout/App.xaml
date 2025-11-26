@@ -38,6 +38,9 @@
             <converters:StringNotEqualsConverter x:Key="StringNotEqualsConverter" />
             <converters:NotBooleanOrMultipleChoiceConverter x:Key="NotBooleanOrMultipleChoiceConverter" />
             <converters:TypeIsSelectConverter x:Key="TypeIsSelectConverter" />
+            <converters:BoolToScanButtonTextConverter x:Key="BoolToScanButtonTextConverter" />
+            <converters:BoolToTorchButtonTextConverter x:Key="BoolToTorchButtonTextConverter" />
+            <converters:BoolToFlashlightButtonTextConverter x:Key="BoolToFlashlightButtonTextConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

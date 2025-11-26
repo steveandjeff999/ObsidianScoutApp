@@ -305,10 +305,49 @@ public class TypeIsSelectConverter : IValueConverter
    {
        return type == "select" || type == "multiselect";
         }
-     return false;
+ return false;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+  throw new NotImplementedException();
+    }
+}
+
+public class BoolToScanButtonTextConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is bool isScanning && isScanning ? "? Pause" : "? Scan";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+  }
+}
+
+public class BoolToTorchButtonTextConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is bool isTorchOn && isTorchOn ? "?? Torch Off" : "?? Torch On";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class BoolToFlashlightButtonTextConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is bool isFlashlightOn && isFlashlightOn ? "?? Flashlight Off" : "?? Flashlight On";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

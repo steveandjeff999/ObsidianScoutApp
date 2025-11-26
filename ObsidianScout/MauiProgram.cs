@@ -15,18 +15,18 @@ using Android.Content;
 
 namespace ObsidianScout
 {
- public static class MauiProgram
- {
- public static MauiApp CreateMauiApp()
- {
- var builder = MauiApp.CreateBuilder();
- builder
- .UseMauiApp<App>()
- .UseSkiaSharp()
- .UseMicrocharts()
- .UseMauiCommunityToolkit()
- .ConfigureFonts(fonts =>
- {
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+{
+        var builder = MauiApp.CreateBuilder();
+     builder
+        .UseMauiApp<App>()
+                .UseSkiaSharp()
+        .UseMicrocharts()
+        .UseMauiCommunityToolkit()
+        .ConfigureFonts(fonts =>
+       {
  fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
  fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 
@@ -130,6 +130,7 @@ namespace ObsidianScout
  builder.Services.AddTransient<GameConfigEditorViewModel>();
  builder.Services.AddTransient<PitConfigEditorViewModel>();
  builder.Services.AddTransient<RegisterViewModel>();
+ builder.Services.AddTransient<QRCodeScannerViewModel>();
 
  // Register Pages
  builder.Services.AddTransient<LoginPage>();
@@ -152,6 +153,7 @@ namespace ObsidianScout
  builder.Services.AddTransient<GameConfigEditorPage>();
  builder.Services.AddTransient<PitConfigEditorPage>();
  builder.Services.AddTransient<RegisterPage>();
+ builder.Services.AddTransient<QRCodeScannerPage>(); // Register QRCodeScannerPage
 
  var app = builder.Build();
 

@@ -112,6 +112,7 @@ namespace ObsidianScout
             Routing.RegisterRoute("ManagementPage", typeof(ManagementPage));
             Routing.RegisterRoute("GameConfigEditorPage", typeof(GameConfigEditorPage));
             Routing.RegisterRoute("PitConfigEditorPage", typeof(PitConfigEditorPage));
+            Routing.RegisterRoute("QRCodeScannerPage", typeof(QRCodeScannerPage));
     
             // NEW: Register Chat route for deep linking from notifications
             Routing.RegisterRoute("Chat", typeof(ChatPage));

@@ -116,6 +116,10 @@
  <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
  </FlyoutItem>
 
+ <FlyoutItem Title="QR Scanner" IsVisible="{Binding IsLoggedIn}" Route="QRCodeScannerPage">
+ <ShellContent ContentTemplate="{DataTemplate views:QRCodeScannerPage}" />
+ </FlyoutItem>
+
  <FlyoutItem Title="Teams" IsVisible="{Binding IsLoggedIn}" Route="TeamsPage">
  <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
  </FlyoutItem>

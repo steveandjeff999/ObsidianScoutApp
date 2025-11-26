@@ -46,6 +46,10 @@ public interface ICacheService
  Task<List<MetricDefinition>?> GetCachedAvailableMetricsAsync();
  Task CacheAvailableMetricsAsync(List<MetricDefinition> metrics);
  
+ // Profile picture (binary stored as base64 string)
+ Task<byte[]?> GetCachedProfilePictureAsync();
+ Task CacheProfilePictureAsync(byte[] pictureBytes);
+ 
  // Cache Management
  Task<DateTime?> GetCacheTimestampAsync(string key);
  Task ClearAllCacheAsync();
@@ -63,6 +67,7 @@ public class CacheService : ICacheService
  private const string CACHE_KEY_SCOUTING_DATA = "cache_scouting_data";
  private const string CACHE_KEY_AVAILABLE_METRICS = "cache_available_metrics";
  private const string CACHE_KEY_LAST_PRELOAD = "cache_last_preload";
+ private const string CACHE_KEY_PROFILE_PICTURE = "cache_profile_picture";
  
  private const string TIMESTAMP_SUFFIX = "_timestamp";
  
@@ -593,6 +598,57 @@ public class CacheService : ICacheService
 
  #endregion
 
+ #region Profile Picture
+
+ public async Task<byte[]?> GetCachedProfilePictureAsync()
+ {
+ try
+ {
+ var b64 = await GetStringFromCacheAsync(CACHE_KEY_PROFILE_PICTURE);
+ if (!string.IsNullOrEmpty(b64))
+ {
+ try
+ {
+ var bytes = Convert.FromBase64String(b64);
+ var timestamp = await GetCacheTimestampAsync(CACHE_KEY_PROFILE_PICTURE);
+ if (timestamp.HasValue)
+ {
+ var age = DateTime.UtcNow - timestamp.Value;
+ System.Diagnostics.Debug.WriteLine($"[Cache] Profile picture loaded from cache (age: {age.TotalHours:F1}h, bytes: {bytes.Length})");
+ }
+ return bytes;
+ }
+ catch (FormatException fex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Profile picture base64 decode failed: {fex.Message}");
+ }
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load profile picture: {ex.Message}");
+ }
+ return null;
+ }
+
+ public async Task CacheProfilePictureAsync(byte[] pictureBytes)
+ {
+ try
+ {
+ if (pictureBytes == null || pictureBytes.Length ==0) return;
+ var b64 = Convert.ToBase64String(pictureBytes);
+ await SaveStringToCacheAsync(CACHE_KEY_PROFILE_PICTURE, b64);
+ await SetCacheTimestampAsync(CACHE_KEY_PROFILE_PICTURE);
+ System.Diagnostics.Debug.WriteLine($"[Cache] Profile picture cached successfully ({pictureBytes.Length} bytes)");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache profile picture: {ex.Message}");
+ }
+ }
+
+ #endregion
+
  #region Cache Management
 
  public async Task<DateTime?> GetCacheTimestampAsync(string key)
@@ -649,7 +705,8 @@ public class CacheService : ICacheService
  CACHE_KEY_TEAMS,
  CACHE_KEY_MATCHES,
  CACHE_KEY_SCOUTING_DATA,
- CACHE_KEY_AVAILABLE_METRICS
+ CACHE_KEY_AVAILABLE_METRICS,
+ CACHE_KEY_PROFILE_PICTURE
  };
 
  foreach (var key in cacheKeys)

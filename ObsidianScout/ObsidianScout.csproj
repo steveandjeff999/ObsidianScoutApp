@@ -17,6 +17,9 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		
+		<!-- Enable unsafe code for Windows camera implementation -->
+		<AllowUnsafeBlocks Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">true</AllowUnsafeBlocks>
 
 		<!-- Display name -->
 		<ApplicationTitle>ObsidianScout</ApplicationTitle>
@@ -130,6 +133,19 @@
 		<PackageReference Include="QRCoder" Version="1.7.0" />
 		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.9" />
 		<PackageReference Include="Syncfusion.Maui.Charts" Version="28.1.35" />
+		<PackageReference Include="ZXing.Net" Version="0.16.11" />
+		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
+	</ItemGroup>
+
+	<!-- Android-specific packages to fix duplicate tracing classes -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.AndroidX.Tracing.Tracing" Version="1.3.0.1" />
+		<!-- Exclude Tracing.Ktx as it causes duplicate class errors -->
+		<PackageReference Include="Xamarin.AndroidX.Tracing.Tracing.Ktx" Version="1.2.0.10" ExcludeAssets="all" />
+		<!-- AndroidX Camera for QR scanning -->
+		<PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.4.2.1" />
+		<PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.4.2.1" />
+		<PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.4.2.1" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -177,6 +193,9 @@
 	 </MauiXaml>
 	 <MauiXaml Update="Views\PitScoutingPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\QRCodeScannerPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
 	 <MauiXaml Update="Views\RegisterPage.xaml">
 	   <Generator>MSBuild:Compile</Generator>

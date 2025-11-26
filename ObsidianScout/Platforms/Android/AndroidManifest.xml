@@ -56,6 +56,10 @@ android:configChanges="orientation|screenSize|uiMode|screenLayout|smallestScreen
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<!-- Required when using specific foreground service types on newer Android (e.g., dataSync) -->
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+	<!-- Camera permissions for QR code scanning -->
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-feature android:name="android.hardware.camera" android:required="false" />
+	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     
     <!-- Declare support for modern Android features -->
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />

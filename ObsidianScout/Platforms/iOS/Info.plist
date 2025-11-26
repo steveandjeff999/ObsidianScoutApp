@@ -29,6 +29,10 @@
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
 	
+	<!-- Camera permissions for QR code scanning -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan QR codes for scouting data</string>
+	
 	<!-- Allow HTTP connections and accept self-signed certificates -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
