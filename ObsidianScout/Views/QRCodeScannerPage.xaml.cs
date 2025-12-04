@@ -1,5 +1,7 @@
 using ObsidianScout.ViewModels;
 using System.Diagnostics;
+using Microsoft.Maui.ApplicationModel;
+using System;
 
 #if ANDROID
 using ObsidianScout.Platforms.Android;
@@ -1034,4 +1036,30 @@ _viewModel.StatusMessage = "Position QR code within frame";
  }
  }
 #endif
+
+ private async void OnUploadScannedDataClicked(object? sender, EventArgs e)
+ {
+ try
+ {
+ var text = _viewModel?.ScannedText;
+ if (string.IsNullOrWhiteSpace(text))
+ {
+ await DisplayAlert("No data", "There is no scanned QR data to upload.", "OK");
+ return;
+ }
+
+ // Default safe action: copy to clipboard and notify user
+ await Clipboard.SetTextAsync(text);
+ _viewModel.StatusMessage = "Copied scanned data to clipboard";
+
+ // Clear status after a short delay
+ await Task.Delay(1400);
+ _viewModel.StatusMessage = "Position QR code within frame";
+ }
+ catch (Exception ex)
+ {
+ Debug.WriteLine($"QRCodeScannerPage: OnUploadScannedDataClicked error: {ex.Message}");
+ try { await DisplayAlert("Error", "Failed to handle scanned data: " + ex.Message, "OK"); } catch { }
+ }
+ }
 }

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ x:Class="ObsidianScout.Views.ManageUsersPage"
+ Title="Manage Users">
+ <ContentPage.Content>
+ <StackLayout Padding="10">
+ <SearchBar x:Name="SearchInput" Placeholder="Search username or team" SearchButtonPressed="OnSearch" />
+ <CollectionView x:Name="UsersList" ItemsSource="{Binding Users}" SelectionMode="None" HeightRequest="400">
+ <CollectionView.ItemTemplate>
+ <DataTemplate>
+ <!-- Stack to contain card and divider -->
+ <StackLayout Spacing="0">
+ <!-- Card container for each user -->
+ <Frame Margin="6" Padding="10" CornerRadius="8" HasShadow="True"
+ BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}">
+ <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+ <!-- User info -->
+ <StackLayout Grid.Column="0" Orientation="Vertical" Spacing="4">
+ <Label Text="{Binding Username}" FontAttributes="Bold" FontSize="20" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Label Text="{Binding Email}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
+ <Label Text="{Binding TeamNumber, StringFormat='Team: {0}'}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
+ </StackLayout>
+
+ <!-- Actions column -->
+ <HorizontalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Center" Spacing="8">
+ <Button Text="Edit" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}" CommandParameter="{Binding .}" Margin="0" AutomationProperties.HelpText="Edit user details" />
+ <Button Text="Delete" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" BackgroundColor="#D9534F" TextColor="White" Margin="0" AutomationProperties.HelpText="Delete (deactivate) this user" />
+ </HorizontalStackLayout>
+ </Grid>
+ </Frame>
+ <!-- Divider line between cards -->
+ <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E0E0E0, Dark=#303030}" Margin="6,2,6,6" />
+ </StackLayout>
+ </DataTemplate>
+ </CollectionView.ItemTemplate>
+ </CollectionView>
+ <Button Text="Refresh" Command="{Binding RefreshCommand}" />
+ </StackLayout>
+ </ContentPage.Content>
+</ContentPage>

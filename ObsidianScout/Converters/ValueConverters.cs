@@ -352,3 +352,19 @@ public class BoolToFlashlightButtonTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+// New: converter used in XAML to check for non-null and non-empty strings
+public class IsNotNullOrEmptyConverter : IValueConverter
+{
+ public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+ {
+ if (value is string s)
+ return !string.IsNullOrEmpty(s);
+ return value != null; // treat non-string non-null as true
+ }
+
+ public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+ {
+ throw new NotImplementedException();
+ }
+}

@@ -7,14 +7,15 @@
   xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
   IgnorableNamespaces="uap rescap uap18">
 
-  <Identity Name="com-herodcorp-Obsidianscout" Publisher="CN=herodcorperation" Version="1.0.0.0" />
+  <Identity Name="com-herodcorp-Obsidianscout" Publisher="CN=steve" Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="A9EFEADB-9FE1-4BC8-B344-4100764B970F" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>ObsidianScout</DisplayName>
     <PublisherDisplayName>Obsidianscout</PublisherDisplayName>
-    <Logo>Resources\appicon.png</Logo>
+    <!-- Use specific sized PNGs for package icons -->
+    <Logo>Resources\Square150x150Logo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -30,16 +31,17 @@
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$" uap18:RuntimeBehavior="windowsApp">
       <uap:VisualElements
         DisplayName="ObsidianScout"
-        Description="$placeholder$"
-        Square150x150Logo="Resources\appicon.png"
-        Square44x44Logo="Resources\appicon.png"
+        Description="App for ObsidianScout"
+        Square150x150Logo="Resources\Square150x150Logo.png"
+        Square44x44Logo="Resources\Square44x44Logo.png"
         BackgroundColor="#0A0A0C">
-        <uap:DefaultTile Square71x71Logo="Resources\appicon.png" Wide310x150Logo="Resources\appicon.png" Square310x310Logo="Resources\appicon.png" />
-        <uap:SplashScreen Image="Resources\appicon.png" />
+        <uap:DefaultTile Square71x71Logo="Resources\Square71x71Logo.png" Wide310x150Logo="Resources\Wide310x150Logo.png" Square310x310Logo="Resources\Square310x310Logo.png" />
+        <!-- Use PNG splash required by appx schema -->
+        <uap:SplashScreen Image="Resources\Square150x150Logo.png" />
         <uap:InitialRotationPreference>
           <uap:Rotation Preference="landscape"/>
           <uap:Rotation Preference="portrait"/></uap:InitialRotationPreference>
-        <uap:LockScreen BadgeLogo="Resources\appicon.png" Notification="badgeAndTileText"/>
+        <uap:LockScreen BadgeLogo="Resources\Square44x44Logo.png" Notification="badgeAndTileText"/>
       </uap:VisualElements>
     </Application>
   </Applications>

@@ -8,6 +8,7 @@
  <Label Text="Management" FontSize="24" FontAttributes="Bold" />
  <Label Text="Administrative actions for your scouting team" />
  <Button Text="Edit Game Configuration" Clicked="OnEditGameConfigClicked" />
+ <Button Text="Manage Users" Clicked="OnManageUsersClicked" />
  </VerticalStackLayout>
  </ScrollView>
 </ContentPage>

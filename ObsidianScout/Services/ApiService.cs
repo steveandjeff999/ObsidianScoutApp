@@ -1226,7 +1226,7 @@ var errorContent = await response.Content.ReadAsStringAsync();
         return query.ToList();
     }
 
-    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0)
+    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset = 0)
     {
         if (!await ShouldUseNetworkAsync())
         {
@@ -1893,7 +1893,7 @@ var errorContent = await response.Content.ReadAsStringAsync();
             return new ChatStateResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
         }
         catch (Exception ex)
-        {
+       {
        System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync failed: {ex.Message}");
    return new ChatStateResponse { Success = false, Error = ex.Message };
         }
@@ -2514,6 +2514,163 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
  catch (Exception ex)
  {
  return new LoginResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<RolesResponse> GetAdminRolesAsync()
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new RolesResponse { Success = false, Error = "Offline - cannot fetch roles" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var url = $"{baseUrl}/admin/roles";
+ var response = await _httpClient.GetAsync(url);
+ if (response.IsSuccessStatusCode)
+ {
+ var result = await response.Content.ReadFromJsonAsync<RolesResponse>(_jsonOptions);
+ return result ?? new RolesResponse { Success = false };
+ }
+
+ var err = await response.Content.ReadAsStringAsync();
+ return new RolesResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+ }
+ catch (Exception ex)
+ {
+ return new RolesResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<UsersListResponse> GetAdminUsersAsync(string? search = null, int limit =200, int offset =0)
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new UsersListResponse { Success = false, Error = "Offline - cannot fetch users" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var url = $"{baseUrl}/admin/users?limit={limit}&offset={offset}";
+ if (!string.IsNullOrEmpty(search)) url += "&search=" + Uri.EscapeDataString(search);
+
+ var response = await _httpClient.GetAsync(url);
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ var result = System.Text.Json.JsonSerializer.Deserialize<UsersListResponse>(content, _jsonOptions);
+ return result ?? new UsersListResponse { Success = false };
+ }
+
+ return new UsersListResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+ }
+ catch (Exception ex)
+ {
+ return new UsersListResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<CreateUserResponse> CreateAdminUserAsync(CreateUserRequest request)
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new CreateUserResponse { Success = false, Error = "Offline - cannot create user" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var endpoint = $"{baseUrl}/admin/users";
+ var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ var result = System.Text.Json.JsonSerializer.Deserialize<CreateUserResponse>(content, _jsonOptions);
+ return result ?? new CreateUserResponse { Success = false };
+ }
+
+ return new CreateUserResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+ }
+ catch (Exception ex)
+ {
+ return new CreateUserResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<UserDetailResponse> GetAdminUserAsync(int userId)
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new UserDetailResponse { Success = false, Error = "Offline - cannot fetch user" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var url = $"{baseUrl}/admin/users/{userId}";
+ var response = await _httpClient.GetAsync(url);
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ var result = System.Text.Json.JsonSerializer.Deserialize<UserDetailResponse>(content, _jsonOptions);
+ return result ?? new UserDetailResponse { Success = false };
+ }
+
+ return new UserDetailResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+ }
+ catch (Exception ex)
+ {
+ return new UserDetailResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<UserDetailResponse> UpdateAdminUserAsync(int userId, UpdateUserRequest request)
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new UserDetailResponse { Success = false, Error = "Offline - cannot update user" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var endpoint = $"{baseUrl}/admin/users/{userId}";
+ var response = await _httpClient.PutAsJsonAsync(endpoint, request, _jsonOptions);
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ var result = System.Text.Json.JsonSerializer.Deserialize<UserDetailResponse>(content, _jsonOptions);
+ return result ?? new UserDetailResponse { Success = false };
+ }
+
+ return new UserDetailResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+ }
+ catch (Exception ex)
+ {
+ return new UserDetailResponse { Success = false, Error = ex.Message };
+ }
+ }
+
+ public async Task<ApiResponse<bool>> DeleteAdminUserAsync(int userId)
+ {
+ if (!await ShouldUseNetworkAsync())
+ return new ApiResponse<bool> { Success = false, Error = "Offline - cannot delete user" };
+
+ try
+ {
+ await AddAuthHeaderAsync();
+ var baseUrl = await GetBaseUrlAsync();
+ var endpoint = $"{baseUrl}/admin/users/{userId}";
+ var response = await _httpClient.DeleteAsync(endpoint);
+ var content = await response.Content.ReadAsStringAsync();
+ if (response.IsSuccessStatusCode)
+ {
+ return new ApiResponse<bool> { Success = true };
+ }
+
+ return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+ }
+ catch (Exception ex)
+ {
+ return new ApiResponse<bool> { Success = false, Error = ex.Message };
  }
  }
 }

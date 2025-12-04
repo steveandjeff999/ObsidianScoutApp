@@ -58,4 +58,12 @@ public interface IApiService
     Task<PitScoutingSubmitResponse> UpdatePitScoutingDataAsync(int entryId, PitScoutingSubmission submission);
     Task<ApiResponse<bool>> DeletePitScoutingEntryAsync(int entryId);
     Task<ApiResponse<bool>> SavePitConfigAsync(PitConfig config);
+
+    // Admin user management endpoints
+    Task<RolesResponse> GetAdminRolesAsync();
+    Task<UsersListResponse> GetAdminUsersAsync(string? search = null, int limit =200, int offset =0);
+    Task<CreateUserResponse> CreateAdminUserAsync(CreateUserRequest request);
+    Task<UserDetailResponse> GetAdminUserAsync(int userId);
+    Task<UserDetailResponse> UpdateAdminUserAsync(int userId, UpdateUserRequest request);
+    Task<ApiResponse<bool>> DeleteAdminUserAsync(int userId);
 }

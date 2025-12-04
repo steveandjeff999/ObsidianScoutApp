@@ -2,6 +2,7 @@ using ObsidianScout.Models;
 using System.Text.Json;
 using System.IO;
 using Microsoft.Maui.Storage;
+using System.Globalization;
 
 namespace ObsidianScout.Services;
 
@@ -52,6 +53,8 @@ public interface ICacheService
  
  // Cache Management
  Task<DateTime?> GetCacheTimestampAsync(string key);
+ Task<DateTime?> GetCacheCreatedAsync(string key);
+ Task<DateTime?> GetCacheLastUpdatedAsync(string key);
  Task ClearAllCacheAsync();
  Task<bool> IsCacheExpiredAsync(string key, TimeSpan maxAge);
  Task<bool> HasCachedDataAsync();
@@ -69,7 +72,9 @@ public class CacheService : ICacheService
  private const string CACHE_KEY_LAST_PRELOAD = "cache_last_preload";
  private const string CACHE_KEY_PROFILE_PICTURE = "cache_profile_picture";
  
- private const string TIMESTAMP_SUFFIX = "_timestamp";
+ private const string TIMESTAMP_SUFFIX = "_timestamp"; // legacy
+ private const string CREATED_SUFFIX = "_created";
+ private const string UPDATED_SUFFIX = "_updated";
  
  private readonly JsonSerializerOptions _jsonOptions;
 
@@ -147,11 +152,26 @@ public class CacheService : ICacheService
  }
  catch { }
 
+ // Remove legacy and new timestamp keys
  try { SecureStorage.Remove(key + TIMESTAMP_SUFFIX); } catch { }
+ try { SecureStorage.Remove(key + CREATED_SUFFIX); } catch { }
+ try { SecureStorage.Remove(key + UPDATED_SUFFIX); } catch { }
  try
  {
  var tsPath = GetFilePathForKey(key + TIMESTAMP_SUFFIX);
  if (File.Exists(tsPath)) File.Delete(tsPath);
+ }
+ catch { }
+ try
+ {
+ var createdPath = GetFilePathForKey(key + CREATED_SUFFIX);
+ if (File.Exists(createdPath)) File.Delete(createdPath);
+ }
+ catch { }
+ try
+ {
+ var updatedPath = GetFilePathForKey(key + UPDATED_SUFFIX);
+ if (File.Exists(updatedPath)) File.Delete(updatedPath);
  }
  catch { }
  }
@@ -186,7 +206,7 @@ public class CacheService : ICacheService
  System.Diagnostics.Debug.WriteLine("=== CACHE PRELOAD SKIPPED ===");
  return;
  }
- 
+
  System.Diagnostics.Debug.WriteLine("[Cache] Cache is stale (>24h), refreshing in background");
  }
  else
@@ -653,17 +673,71 @@ public class CacheService : ICacheService
 
  public async Task<DateTime?> GetCacheTimestampAsync(string key)
  {
+ // Keep legacy method but route to last-updated semantics
+ return await GetCacheLastUpdatedAsync(key);
+ }
+
+ public async Task<DateTime?> GetCacheCreatedAsync(string key)
+ {
  try
  {
- var timestampStr = await GetStringFromCacheAsync(key + TIMESTAMP_SUFFIX);
- if (!string.IsNullOrEmpty(timestampStr) && DateTime.TryParse(timestampStr, out var timestamp))
+ var createdStr = await GetStringFromCacheAsync(key + CREATED_SUFFIX);
+ if (!string.IsNullOrEmpty(createdStr))
  {
- return timestamp;
+ // Parse ISO8601 round-trip format as UTC to avoid local timezone interpretation
+ if (DateTime.TryParseExact(createdStr, "O", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var created))
+ {
+ return created;
+ }
+ // Fallback to permissive parse
+ if (DateTime.TryParse(createdStr, null, DateTimeStyles.AdjustToUniversal, out created))
+ {
+ return created;
+ }
  }
  }
  catch (Exception ex)
  {
- System.Diagnostics.Debug.WriteLine($"[Cache] Failed to get timestamp for {key}: {ex.Message}");
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to get created timestamp for {key}: {ex.Message}");
+ }
+ return null;
+ }
+
+ public async Task<DateTime?> GetCacheLastUpdatedAsync(string key)
+ {
+ try
+ {
+ // Prefer explicit updated key
+ var updatedStr = await GetStringFromCacheAsync(key + UPDATED_SUFFIX);
+ if (!string.IsNullOrEmpty(updatedStr))
+ {
+ if (DateTime.TryParseExact(updatedStr, "O", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var updated))
+ {
+ return updated;
+ }
+ if (DateTime.TryParse(updatedStr, null, DateTimeStyles.AdjustToUniversal, out updated))
+ {
+ return updated;
+ }
+ }
+
+ // Fallback to legacy timestamp suffix for backwards compatibility
+ var timestampStr = await GetStringFromCacheAsync(key + TIMESTAMP_SUFFIX);
+ if (!string.IsNullOrEmpty(timestampStr))
+ {
+ if (DateTime.TryParseExact(timestampStr, "O", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var timestamp))
+ {
+ return timestamp;
+ }
+ if (DateTime.TryParse(timestampStr, null, DateTimeStyles.AdjustToUniversal, out timestamp))
+ {
+ return timestamp;
+ }
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to get last-updated timestamp for {key}: {ex.Message}");
  }
  return null;
  }
@@ -672,7 +746,20 @@ public class CacheService : ICacheService
  {
  try
  {
- await SaveStringToCacheAsync(key + TIMESTAMP_SUFFIX, DateTime.UtcNow.ToString("O"));
+ var now = DateTime.UtcNow.ToString("O");
+
+ // Write updated timestamp
+ await SaveStringToCacheAsync(key + UPDATED_SUFFIX, now);
+
+ // Maintain legacy timestamp key for any existing consumers
+ await SaveStringToCacheAsync(key + TIMESTAMP_SUFFIX, now);
+
+ // If no created timestamp exists, set it now (preserve original creation time)
+ var created = await GetStringFromCacheAsync(key + CREATED_SUFFIX);
+ if (string.IsNullOrEmpty(created))
+ {
+ await SaveStringToCacheAsync(key + CREATED_SUFFIX, now);
+ }
  }
  catch (Exception ex)
  {
@@ -706,7 +793,9 @@ public class CacheService : ICacheService
  CACHE_KEY_MATCHES,
  CACHE_KEY_SCOUTING_DATA,
  CACHE_KEY_AVAILABLE_METRICS,
- CACHE_KEY_PROFILE_PICTURE
+ CACHE_KEY_PROFILE_PICTURE,
+ // Also clear last preload markers
+ CACHE_KEY_LAST_PRELOAD
  };
 
  foreach (var key in cacheKeys)

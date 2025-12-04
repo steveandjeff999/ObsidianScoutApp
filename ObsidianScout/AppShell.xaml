@@ -8,7 +8,7 @@
  Title="ObsidianScout"
  FlyoutBehavior="Flyout"
  FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
- FlyoutHeaderBehavior="CollapseOnScroll">
+ FlyoutHeaderBehavior="Fixed">
 
  <Shell.Resources>
  <ResourceDictionary>
@@ -43,9 +43,60 @@
  </ResourceDictionary>
  </Shell.Resources>
 
+ <!-- TitleView used to display an offline banner across the top when IsOfflineMode or a connection problem exists -->
+ <Shell.TitleView>
+ <!-- Use a ContentView that collapses when ShowTitleBanner is false -->
+ <ContentView x:Name="TitleContainer" IsVisible="{Binding ShowTitleBanner}" BackgroundColor="Transparent" Padding="0" HorizontalOptions="FillAndExpand" MinimumHeightRequest="0">
+ <ContentView.Triggers>
+ <DataTrigger TargetType="ContentView" Binding="{Binding ShowTitleBanner}" Value="False">
+ <Setter Property="HeightRequest" Value="0" />
+ <Setter Property="MinimumHeightRequest" Value="0" />
+ <Setter Property="IsVisible" Value="False" />
+ </DataTrigger>
+ <DataTrigger TargetType="ContentView" Binding="{Binding ShowTitleBanner}" Value="True">
+ <!-- Reserve enough vertical space for multi-line banners so they are not clipped by the nav bar -->
+ <Setter Property="MinimumHeightRequest" Value="78" />
+ <Setter Property="Padding" Value="0" />
+ </DataTrigger>
+ </ContentView.Triggers>
+
+ <VerticalStackLayout Spacing="0" HorizontalOptions="FillAndExpand">
+ <!-- Offline label (shows only in offline mode) -->
+ <Frame IsVisible="{Binding IsOfflineMode}" BackgroundColor="#FFF59D" Padding="6" HasShadow="False" CornerRadius="0" HorizontalOptions="FillAndExpand" Margin="0">
+ <Label Text="Offline — using cached data" TextColor="#000" HorizontalTextAlignment="Center" VerticalOptions="Center" LineBreakMode="WordWrap" />
+ </Frame>
+
+ <!-- Connection problem banner: visible when ShowConnectionBanner is true -->
+ <Grid IsVisible="{Binding ShowConnectionBanner}" BackgroundColor="#FFCC80" Padding="8" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" HorizontalOptions="FillAndExpand" VerticalOptions="Start">
+ <Label Grid.Column="0"
+ Text="{Binding ConnectionProblemMessage}"
+ VerticalOptions="Center"
+ HorizontalOptions="StartAndExpand"
+ FontSize="14"
+ TextColor="#000"
+ HorizontalTextAlignment="Start"
+ LineBreakMode="WordWrap"
+ Margin="0,4" />
+
+ <!-- Buttons: ensure they don't force extra reserved height when hidden -->
+ <Button Grid.Column="1" Text="Yes" Clicked="OnEnableOfflineClicked" BackgroundColor="#4CAF50" TextColor="#FFF" MinimumWidthRequest="70" HeightRequest="36" />
+ <Button Grid.Column="2" Text="No" Clicked="OnDismissConnectionClicked" BackgroundColor="#F44336" TextColor="#FFF" MinimumWidthRequest="70" HeightRequest="36" />
+ </Grid>
+ </VerticalStackLayout>
+ </ContentView>
+ </Shell.TitleView>
+
  <!-- Flyout Header: avatar, username, team, offline toggle -->
  <Shell.FlyoutHeader>
- <Grid Padding="0" Background="{AppThemeBinding Light={StaticResource FlyoutHeaderBrushLight}, Dark={StaticResource FlyoutHeaderBrushDark}}">
+ <!-- Two-row grid: header content + subtle shadow line -->
+ <Grid>
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto" />
+ <RowDefinition Height="2" />
+ </Grid.RowDefinitions>
+
+ <!-- Header content -->
+ <Grid Grid.Row="0" Padding="0" Background="{AppThemeBinding Light={StaticResource FlyoutHeaderBrushLight}, Dark={StaticResource FlyoutHeaderBrushDark}}">
  <Grid.RowDefinitions>
  <RowDefinition Height="Auto" />
  <RowDefinition Height="Auto" />
@@ -53,32 +104,33 @@
 
  <HorizontalStackLayout Spacing="12" VerticalOptions="Center" Padding="16">
  <!-- Avatar circle with proper layering -->
- <Grid WidthRequest="64" HeightRequest="64" HorizontalOptions="Start" VerticalOptions="Center">
+ <Grid WidthRequest="{StaticResource FlyoutAvatarSize}" HeightRequest="{StaticResource FlyoutAvatarSize}" HorizontalOptions="Start" VerticalOptions="Center" Margin="0,0,0,8">
  <!-- Background circle -->
- <Ellipse Fill="{AppThemeBinding Light=White, Dark={StaticResource DarkSurfaceElevated}}" 
- WidthRequest="64" 
- HeightRequest="64"
+ <Ellipse Fill="{AppThemeBinding Light=White, Dark={StaticResource DarkSurfaceElevated}}"
+ WidthRequest="{StaticResource FlyoutAvatarSize}"
+ HeightRequest="{StaticResource FlyoutAvatarSize}"
  Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#505050}"
  StrokeThickness="1" />
- 
- <!-- Profile picture with circular clip -->
+
+ <!-- Profile picture with circular clip (size driven by tokens) -->
  <Image Source="{Binding ProfilePictureSource}"
  Aspect="AspectFill"
  IsVisible="{Binding HasProfilePicture}"
- WidthRequest="64"
- HeightRequest="64"
+ WidthRequest="{StaticResource FlyoutAvatarSize}"
+ HeightRequest="{StaticResource FlyoutAvatarSize}"
  HorizontalOptions="Center"
  VerticalOptions="Center">
  <Image.Clip>
- <EllipseGeometry Center="32,32" RadiusX="32" RadiusY="32" />
+ <!-- Center uses radius value (adjust token if changing) -->
+ <EllipseGeometry Center="40,40" RadiusX="{StaticResource FlyoutAvatarRadius}" RadiusY="{StaticResource FlyoutAvatarRadius}" />
  </Image.Clip>
  </Image>
- 
+
  <!-- Fallback initials label -->
  <Label Text="{Binding UserInitials}"
  HorizontalTextAlignment="Center"
  VerticalTextAlignment="Center"
- FontSize="24"
+ FontSize="20"
  FontAttributes="Bold"
  TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
  IsVisible="{Binding HasProfilePicture, Converter={StaticResource InvertedBoolConverter}}"
@@ -88,10 +140,10 @@
 
  <VerticalStackLayout VerticalOptions="Center" Spacing="2">
  <Label Text="{Binding CurrentUsername}" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
- <Label.GestureRecognizers>
- <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
- </Label.GestureRecognizers>
- </Label>
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
+                            </Label.GestureRecognizers>
+                        </Label>
  <Label Text="{Binding CurrentTeamInfo}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" />
 
  <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="0,6,0,0">
@@ -100,6 +152,10 @@
  </HorizontalStackLayout>
  </VerticalStackLayout>
  </HorizontalStackLayout>
+ </Grid>
+
+ <!-- Subtle shadow line to give elevation -->
+ <BoxView Grid.Row="1" HeightRequest="2" BackgroundColor="Black" Opacity="0.12" />
  </Grid>
  </Shell.FlyoutHeader>
 
@@ -146,6 +202,10 @@
 
  <FlyoutItem Title="Management" IsVisible="{Binding HasManagementAccess}" Route="ManagementPage">
  <ShellContent ContentTemplate="{DataTemplate views:ManagementPage}" />
+ </FlyoutItem>
+
+ <FlyoutItem Title="Manage Users" IsVisible="{Binding HasManagementAccess}" Route="ManageUsersPage">
+ <ShellContent ContentTemplate="{DataTemplate views:ManageUsersPage}" />
  </FlyoutItem>
 
  <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">

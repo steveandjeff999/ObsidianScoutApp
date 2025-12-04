@@ -13,6 +13,10 @@ xmlns:converters="clr-namespace:ObsidianScout.Converters">
  <x:Double x:Key="CornerRadiusMedium">16</x:Double>
  <x:Double x:Key="CornerRadiusLarge">24</x:Double>
 
+ <!-- Flyout avatar sizing tokens (reduced to give breathing room) -->
+ <x:Double x:Key="FlyoutAvatarSize">80</x:Double>
+ <x:Double x:Key="FlyoutAvatarRadius">40</x:Double>
+
  <!-- Converters -->
  <converters:InvertedBoolConverter x:Key="InverseBooleanConverter" />
 
@@ -71,19 +75,20 @@ xmlns:converters="clr-namespace:ObsidianScout.Converters">
  <!-- Modern selection/flyout brushes -->
  <SolidColorBrush x:Key="FlyoutSelectionBrushLight" Color="#E6EEF2FF" />
  <SolidColorBrush x:Key="FlyoutSelectionBrushDark" Color="#264F46F8" />
- <LinearGradientBrush x:Key="FlyoutHeaderBrushLight" StartPoint="0,0" EndPoint="1,1">
- <GradientStop Color="#6366F1" Offset="0" />
- <GradientStop Color="#8B5CF6" Offset="1" />
+ <!-- Make flyout header match neutral app background instead of purple gradient -->
+ <LinearGradientBrush x:Key="FlyoutHeaderBrushLight" StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="{StaticResource LightSurface}" Offset="0" />
+ <GradientStop Color="{StaticResource LightSurfaceVariant}" Offset="1" />
  </LinearGradientBrush>
- <LinearGradientBrush x:Key="FlyoutHeaderBrushDark" StartPoint="0,0" EndPoint="1,1">
- <GradientStop Color="#818CF8" Offset="0" />
- <GradientStop Color="#A78BFA" Offset="1" />
+ <LinearGradientBrush x:Key="FlyoutHeaderBrushDark" StartPoint="0,0" EndPoint="0,1">
+ <GradientStop Color="{StaticResource DarkBackground}" Offset="0" />
+ <GradientStop Color="{StaticResource DarkSurface}" Offset="1" />
  </LinearGradientBrush>
 
  <!-- ========================================
  MODERN GLASS BRUSHES (rest unchanged)
  ======================================== -->
- 
+
  <LinearGradientBrush x:Key="GlassBrushLight" StartPoint="0,0" EndPoint="1,1">
  <GradientStop Color="#F5FFFFFF" Offset="0.0" />
  <GradientStop Color="#E5F8FAFC" Offset="1.0" />
@@ -377,6 +382,11 @@ xmlns:converters="clr-namespace:ObsidianScout.Converters">
  <Style x:Key="SecondaryGlassButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />
  <Style x:Key="OutlineGlassButton" TargetType="Button" BasedOn="{StaticResource OutlineButton}" />
  <Style x:Key="CounterButton" TargetType="Button" BasedOn="{StaticResource IconButton}" />
+
+ <!-- Backward-compatible aliases for older XAML keys -->
+ <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />
+ <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
+ <Style x:Key="OutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButton}" />
 
  <!-- ========================================
  MODERN INPUT STYLES

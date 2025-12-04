@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ x:Class="ObsidianScout.Views.ManageUserEditPage"
+ Title="Edit User">
+ <ContentPage.Content>
+ <ScrollView>
+ <VerticalStackLayout Padding="20" Spacing="12">
+ <Label Text="Edit user details" FontSize="18" FontAttributes="Bold" />
+ <Entry Placeholder="Username" Text="{Binding Username}" />
+ <Entry Placeholder="Email" Text="{Binding Email}" Keyboard="Email" />
+ <Entry Placeholder="New Password (leave blank to keep)" Text="{Binding Password}" IsPassword="True" />
+
+ <Label Text="Roles" FontAttributes="Bold" />
+ <CollectionView ItemsSource="{Binding Roles}" SelectionMode="None" HeightRequest="200">
+ <CollectionView.ItemTemplate>
+ <DataTemplate>
+ <Grid Padding="6" ColumnDefinitions="*,Auto" IsVisible="{Binding IsVisible}">
+ <StackLayout>
+ <Label Text="{Binding Name}" />
+ <Label Text="{Binding Description}" FontSize="12" Opacity="0.8" />
+ </StackLayout>
+ <CheckBox IsChecked="{Binding IsSelected}" Grid.Column="1" VerticalOptions="Center" />
+ </Grid>
+ </DataTemplate>
+ </CollectionView.ItemTemplate>
+ </CollectionView>
+
+ <HorizontalStackLayout Spacing="12">
+ <Button Text="Save" Command="{Binding SaveCommand}" />
+ <Button Text="Cancel" Command="{Binding CancelCommand}" />
+ </HorizontalStackLayout>
+ </VerticalStackLayout>
+ </ScrollView>
+ </ContentPage.Content>
+</ContentPage>

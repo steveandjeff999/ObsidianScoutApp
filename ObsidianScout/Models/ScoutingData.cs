@@ -95,7 +95,8 @@ public class ScoutingEntry
     public string ScoutName { get; set; } = string.Empty;
 
     [JsonPropertyName("scout_id")]
-    public int ScoutId { get; set; }
+    [JsonConverter(typeof(SafeNullableIntJsonConverter))]
+    public int? ScoutId { get; set; }
 
     [JsonPropertyName("scouting_station")]
     public string? ScoutingStation { get; set; }

@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace ObsidianScout.ViewModels;
 
@@ -19,7 +20,7 @@ public partial class DataViewModel : ObservableObject
 
     // Backing full lists used for filtering
     private readonly List<Event> _allEvents = new();
-  private readonly List<Team> _allTeams = new();
+    private readonly List<Team> _allTeams = new();
     private readonly List<MatchCard> _allMatches = new();
     private readonly List<ScoutingEntry> _allScouting = new();
 
@@ -54,17 +55,20 @@ public partial class DataViewModel : ObservableObject
     [ObservableProperty]
     private bool showEvents = true;
 
-  [ObservableProperty]
+    [ObservableProperty]
     private bool showTeams;
 
     [ObservableProperty]
-  private bool showMatches;
+    private bool showMatches;
 
     [ObservableProperty]
     private bool showScouting;
 
     [ObservableProperty]
 private Event? selectedEvent;
+
+    // New unified items collection for single list UI (explicit property so it's available at compile-time)
+    public ObservableCollection<object> CombinedItems { get; } = new();
 
     // Search query
     [ObservableProperty]
@@ -83,8 +87,16 @@ private Event? selectedEvent;
     [ObservableProperty]
     private bool isLoadingScouting;
 
-    public DataViewModel(IApiService apiService, ISettingsService settingsService)
-  {
+    // New property to track RefreshView's refreshing state separately
+    private bool _isRefreshing;
+    public bool IsRefreshing
+    {
+    get => _isRefreshing;
+    set => SetProperty(ref _isRefreshing, value);
+    }
+
+ public DataViewModel(IApiService apiService, ISettingsService settingsService)
+ {
         _apiService = apiService;
      _settingsService = settingsService;
     }
@@ -136,44 +148,83 @@ private Event? selectedEvent;
       {
             var q = string.IsNullOrWhiteSpace(Query) ? string.Empty : Query.Trim().ToLowerInvariant();
 
-   // Filter events
-     Events.Clear();
-   foreach (var ev in _allEvents.Take(100)) // Limit to prevent UI freeze
-            {
-       if (string.IsNullOrEmpty(q) || MatchesEvent(ev, q))
-  Events.Add(ev);
+ // Build filtered lists on background thread to avoid touching UI collections
+ var filteredEvents = new List<Event>();
+ foreach (var ev in _allEvents.Take(100)) // Limit to prevent UI freeze
+ {
+ if (string.IsNullOrEmpty(q) || MatchesEvent(ev, q))
+ filteredEvents.Add(ev);
  }
 
-            // Ensure SelectedEvent is still valid
-        if (SelectedEvent != null && !Events.Any(e => e.Id == SelectedEvent.Id))
-            {
-          SelectedEvent = Events.FirstOrDefault();
-            }
+ var filteredTeams = new List<Team>();
+ foreach (var t in _allTeams.Take(100)) // Limit to prevent UI freeze
+ {
+ if (string.IsNullOrEmpty(q) || MatchesTeam(t, q))
+ filteredTeams.Add(t);
+ }
 
-         // Filter teams
-         Teams.Clear();
-            foreach (var t in _allTeams.Take(100)) // Limit to prevent UI freeze
-            {
-              if (string.IsNullOrEmpty(q) || MatchesTeam(t, q))
-        Teams.Add(t);
-    }
+ var filteredMatches = new List<MatchCard>();
+ foreach (var m in _allMatches.Take(100)) // Limit to prevent UI freeze
+ {
+ if (string.IsNullOrEmpty(q) || MatchesMatch(m, q))
+ filteredMatches.Add(m);
+ }
 
-            // Filter matches
-            Matches.Clear();
-        foreach (var m in _allMatches.Take(100)) // Limit to prevent UI freeze
-            {
-    if (string.IsNullOrEmpty(q) || MatchesMatch(m, q))
-           Matches.Add(m);
-        }
-
-            // Filter scouting
-            Scouting.Clear();
+ var filteredScouting = new List<ScoutingEntry>();
  foreach (var s in _allScouting.Take(100)) // Limit to prevent UI freeze
-      {
-      if (string.IsNullOrEmpty(q) || MatchesScouting(s, q))
-        Scouting.Add(s);
-     }
-        }
+ {
+ if (string.IsNullOrEmpty(q) || MatchesScouting(s, q))
+ filteredScouting.Add(s);
+ }
+
+ // Build unified list in desired order: Events, Teams, Matches, Scouting
+ var unified = new List<object>();
+
+ // Add events first
+ unified.AddRange(filteredEvents.Cast<object>());
+
+ // Then teams
+ unified.AddRange(filteredTeams.Cast<object>());
+
+ // Then matches
+ unified.AddRange(filteredMatches.Cast<object>());
+
+ // Then scouting
+ unified.AddRange(filteredScouting.Cast<object>());
+
+
+ // Now update UI collections on the main thread in a single batch operation
+ Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
+ {
+ // Update unified collection used by the UI
+ this.CombinedItems.Clear();
+ foreach (var item in unified)
+ this.CombinedItems.Add(item);
+
+ // Also update typed collections for compatibility
+ Events.Clear();
+ foreach (var ev in filteredEvents)
+ Events.Add(ev);
+
+ Teams.Clear();
+ foreach (var t in filteredTeams)
+ Teams.Add(t);
+
+ Matches.Clear();
+ foreach (var mm in filteredMatches)
+ Matches.Add(mm);
+
+ Scouting.Clear();
+ foreach (var sc in filteredScouting)
+ Scouting.Add(sc);
+
+ // Ensure SelectedEvent is still valid
+ if (SelectedEvent != null && !Events.Any(e => e.Id == SelectedEvent.Id))
+ {
+ SelectedEvent = Events.FirstOrDefault();
+ }
+ }).Wait();
+ }
  catch (Exception ex)
         {
  System.Diagnostics.Debug.WriteLine($"[DataViewModel] Filter error: {ex.Message}");
@@ -355,7 +406,9 @@ private Event? selectedEvent;
 
      if (resp.Success && resp.Teams != null)
    {
-     foreach (var t in resp.Teams.OrderBy(t => t.TeamNumber))
+     // Merge teams that share the same team number before adding
+     var merged = MergeTeamsByNumber(resp.Teams).ToList();
+     foreach (var t in merged)
       _allTeams.Add(t);
 
         // Apply filter to update UI collection on main thread
@@ -583,10 +636,97 @@ await MainThread.InvokeOnMainThreadAsync(() => ApplyFilter());
  }
 
     [RelayCommand]
+ private async Task RefreshAsync()
+ {
+ // Don't start if a full load is already in progress
+ if (IsLoading)
+ return;
+
+ try
+ {
+ IsRefreshing = true;
+ await LoadAllAsync();
+ }
+ finally
+ {
+ IsRefreshing = false;
+ }
+ }
+
+    [RelayCommand]
     private void ClearAuthError()
     {
         HasAuthError = false;
     AuthErrorMessage = string.Empty;
   _consecutive401Count = 0;
     }
+
+    // Merge teams with same team number by combining available properties
+    private static IEnumerable<Team> MergeTeamsByNumber(IEnumerable<Team> teams)
+    {
+ if (teams == null) return Enumerable.Empty<Team>();
+
+ var groups = teams.GroupBy(t => t.TeamNumber);
+ var result = new List<Team>();
+
+ foreach (var g in groups)
+ {
+ var merged = g.First();
+
+ // Use reflection to copy missing values from other entries
+ var props = typeof(Team).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+ .Where(p => p.CanRead && p.CanWrite);
+
+ foreach (var prop in props)
+ {
+ try
+ {
+ var val = prop.GetValue(merged);
+
+ bool isEmptyString = prop.PropertyType == typeof(string) && string.IsNullOrEmpty((string?)val);
+ bool isDefaultValue = prop.PropertyType.IsValueType && object.Equals(val, Activator.CreateInstance(prop.PropertyType));
+ bool isNull = val == null;
+
+ if (!isNull && !isEmptyString && !isDefaultValue)
+ continue;
+
+ foreach (var other in g.Skip(1))
+ {
+ var otherVal = prop.GetValue(other);
+ if (otherVal == null) continue;
+
+ if (prop.PropertyType == typeof(string))
+ {
+ if (!string.IsNullOrEmpty((string?)otherVal))
+ {
+ prop.SetValue(merged, otherVal);
+ break;
+ }
+ }
+ else if (prop.PropertyType.IsValueType)
+ {
+ if (!object.Equals(otherVal, Activator.CreateInstance(prop.PropertyType)))
+ {
+ prop.SetValue(merged, otherVal);
+ break;
+ }
+ }
+ else
+ {
+ prop.SetValue(merged, otherVal);
+ break;
+ }
+ }
+ }
+ catch
+ {
+ // Swallow any reflection errors for robustness
+ }
+ }
+
+ result.Add(merged);
+ }
+
+ return result.OrderBy(t => t.TeamNumber);
+ }
 }

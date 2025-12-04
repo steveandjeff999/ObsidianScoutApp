@@ -41,6 +41,7 @@
             <converters:BoolToScanButtonTextConverter x:Key="BoolToScanButtonTextConverter" />
             <converters:BoolToTorchButtonTextConverter x:Key="BoolToTorchButtonTextConverter" />
             <converters:BoolToFlashlightButtonTextConverter x:Key="BoolToFlashlightButtonTextConverter" />
+            <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

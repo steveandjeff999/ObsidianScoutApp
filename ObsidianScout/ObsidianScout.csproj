@@ -32,7 +32,7 @@
 		<ApplicationVersion>1</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
-		<WindowsPackageType>None</WindowsPackageType>
+		<WindowsPackageType>MSIX</WindowsPackageType>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
@@ -40,8 +40,14 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<DefaultLanguage>en-us</DefaultLanguage>
-		<PackageCertificateThumbprint>EDF25F767574D07C989B670C3A206DB65EDA65A0</PackageCertificateThumbprint>
+		<PackageCertificateThumbprint>9102F0755C722ED69EC341C0E302A032423FDE5C</PackageCertificateThumbprint>
 		<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+		<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+		<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+		<AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+		<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+		<GenerateTestArtifacts>True</GenerateTestArtifacts>
+		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -98,6 +104,46 @@
 	 <None Remove="Resources\icons\%24placeholder%24.targetsize-32_altform-unplated.png" />
 	 <None Remove="Resources\icons\%24placeholder%24.targetsize-48.png" />
 	 <None Remove="Resources\icons\%24placeholder%24.targetsize-48_altform-lightunplated.png" />
+	 <None Remove="Resources\Square150x150Logo.scale-100.png" />
+	 <None Remove="Resources\Square150x150Logo.scale-125.png" />
+	 <None Remove="Resources\Square150x150Logo.scale-150.png" />
+	 <None Remove="Resources\Square150x150Logo.scale-200.png" />
+	 <None Remove="Resources\Square150x150Logo.scale-400.png" />
+	 <None Remove="Resources\Square310x310Logo.scale-100.png" />
+	 <None Remove="Resources\Square310x310Logo.scale-125.png" />
+	 <None Remove="Resources\Square310x310Logo.scale-150.png" />
+	 <None Remove="Resources\Square310x310Logo.scale-200.png" />
+	 <None Remove="Resources\Square310x310Logo.scale-400.png" />
+	 <None Remove="Resources\Square44x44Logo.scale-100.png" />
+	 <None Remove="Resources\Square44x44Logo.scale-125.png" />
+	 <None Remove="Resources\Square44x44Logo.scale-150.png" />
+	 <None Remove="Resources\Square44x44Logo.scale-200.png" />
+	 <None Remove="Resources\Square44x44Logo.scale-400.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-16.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-16_altform-lightunplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-16_altform-unplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-24.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-24_altform-lightunplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-24_altform-unplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-256.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-256_altform-lightunplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-256_altform-unplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-32.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-32_altform-lightunplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-32_altform-unplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-48.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+	 <None Remove="Resources\Square44x44Logo.targetsize-48_altform-unplated.png" />
+	 <None Remove="Resources\Square71x71Logo.scale-100.png" />
+	 <None Remove="Resources\Square71x71Logo.scale-125.png" />
+	 <None Remove="Resources\Square71x71Logo.scale-150.png" />
+	 <None Remove="Resources\Square71x71Logo.scale-200.png" />
+	 <None Remove="Resources\Square71x71Logo.scale-400.png" />
+	 <None Remove="Resources\Wide310x150Logo.scale-100.png" />
+	 <None Remove="Resources\Wide310x150Logo.scale-125.png" />
+	 <None Remove="Resources\Wide310x150Logo.scale-150.png" />
+	 <None Remove="Resources\Wide310x150Logo.scale-200.png" />
+	 <None Remove="Resources\Wide310x150Logo.scale-400.png" />
 	</ItemGroup>
 	<ItemGroup>
 	 <Content Include="Resources\icons\$placeholder$.scale-100.png" />
@@ -120,6 +166,46 @@
 	 <Content Include="Resources\icons\$placeholder$.targetsize-48.png" />
 	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-lightunplated.png" />
 	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-unplated.png" />
+	 <Content Include="Resources\Square150x150Logo.scale-100.png" />
+	 <Content Include="Resources\Square150x150Logo.scale-125.png" />
+	 <Content Include="Resources\Square150x150Logo.scale-150.png" />
+	 <Content Include="Resources\Square150x150Logo.scale-200.png" />
+	 <Content Include="Resources\Square150x150Logo.scale-400.png" />
+	 <Content Include="Resources\Square310x310Logo.scale-100.png" />
+	 <Content Include="Resources\Square310x310Logo.scale-125.png" />
+	 <Content Include="Resources\Square310x310Logo.scale-150.png" />
+	 <Content Include="Resources\Square310x310Logo.scale-200.png" />
+	 <Content Include="Resources\Square310x310Logo.scale-400.png" />
+	 <Content Include="Resources\Square44x44Logo.scale-100.png" />
+	 <Content Include="Resources\Square44x44Logo.scale-125.png" />
+	 <Content Include="Resources\Square44x44Logo.scale-150.png" />
+	 <Content Include="Resources\Square44x44Logo.scale-200.png" />
+	 <Content Include="Resources\Square44x44Logo.scale-400.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-16.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-16_altform-lightunplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-16_altform-unplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-24.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-24_altform-lightunplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-24_altform-unplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-256.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-256_altform-lightunplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-256_altform-unplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-32.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-32_altform-lightunplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-32_altform-unplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-48.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+	 <Content Include="Resources\Square44x44Logo.targetsize-48_altform-unplated.png" />
+	 <Content Include="Resources\Square71x71Logo.scale-100.png" />
+	 <Content Include="Resources\Square71x71Logo.scale-125.png" />
+	 <Content Include="Resources\Square71x71Logo.scale-150.png" />
+	 <Content Include="Resources\Square71x71Logo.scale-200.png" />
+	 <Content Include="Resources\Square71x71Logo.scale-400.png" />
+	 <Content Include="Resources\Wide310x150Logo.scale-100.png" />
+	 <Content Include="Resources\Wide310x150Logo.scale-125.png" />
+	 <Content Include="Resources\Wide310x150Logo.scale-150.png" />
+	 <Content Include="Resources\Wide310x150Logo.scale-200.png" />
+	 <Content Include="Resources\Wide310x150Logo.scale-400.png" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -176,6 +262,9 @@
 	 <MauiXaml Update="Views\ManagementPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Views\ManageUserEditPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Views\MatchesPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
@@ -223,6 +312,84 @@
 	<ItemGroup>
 	 <None Update="Package.appxmanifest">
 	 <SubType>Designer</SubType>
+	 </None>
+	</ItemGroup>
+
+	<!-- Include Windows-specific PNG assets in package Resources folder -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+	 <Content Include="Platforms\Windows\Resources\Square44x44Logo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\Square44x44Logo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\Square71x71Logo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\Square71x71Logo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\Square150x150Logo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\Square150x150Logo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\Wide310x150Logo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\Wide310x150Logo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\Square310x310Logo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\Square310x310Logo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\StoreLogo.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\StoreLogo.png</PackagePath>
+	 </Content>
+	 <Content Include="Platforms\Windows\Resources\appicon.png">
+	 <Pack>true</Pack>
+	 <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	 <PackagePath>Resources\appicon.png</PackagePath>
+	 </Content>
+	</ItemGroup>
+
+	<!-- Ensure Windows-specific PNG assets are included in MSIX package under Resources -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+	 <None Include="Platforms\Windows\Resources\Square44x44Logo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\Square44x44Logo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\Square71x71Logo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\Square71x71Logo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\Square150x150Logo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\Square150x150Logo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\Wide310x150Logo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\Wide310x150Logo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\Square310x310Logo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\Square310x310Logo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\StoreLogo.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\StoreLogo.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	 </None>
+	 <None Include="Platforms\Windows\Resources\appicon.png">
+	 <Pack>true</Pack>
+	 <PackagePath>Resources\appicon.png</PackagePath>
+	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	 </None>
 	</ItemGroup>
 

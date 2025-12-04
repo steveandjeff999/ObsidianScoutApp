@@ -22,6 +22,12 @@ public partial class SettingsViewModel : ObservableObject
     private string cacheStatus = "Cache is active";
 
     [ObservableProperty]
+    private string cacheAge = string.Empty;
+
+    [ObservableProperty]
+    private string cacheLastUpdated = string.Empty;
+
+    [ObservableProperty]
     private bool isClearing;
 
     [ObservableProperty]
@@ -52,6 +58,20 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    // New: Notifications enabled with immediate persistence
+    private bool _isNotificationsEnabled;
+    public bool IsNotificationsEnabled
+    {
+        get => _isNotificationsEnabled;
+        set
+        {
+            if (_isNotificationsEnabled == value) return;
+            _isNotificationsEnabled = value;
+            OnPropertyChanged();
+            _ = SetNotificationsEnabledAsync(value);
+        }
+    }
+
     public SettingsViewModel(ICacheService cacheService, ISettingsService settingsService, IDataPreloadService preloadService, INotificationPollingService? notificationPollingService = null, ILocalNotificationService? localNotificationService = null)
     {
         _cacheService = cacheService;
@@ -64,6 +84,7 @@ public partial class SettingsViewModel : ObservableObject
         _ = UpdateCacheStatusAsync();
         _ = LoadOfflineModeAsync();
         _ = CheckManagementAccessAsync();
+        _ = LoadNotificationsPreferenceAsync();
     }
 
     private async Task CheckManagementAccessAsync()
@@ -124,21 +145,31 @@ public partial class SettingsViewModel : ObservableObject
         try
         {
             var hasCache = await _cacheService.HasCachedDataAsync();
-            var lastPreload = await _cacheService.GetCacheTimestampAsync("cache_last_preload");
+            // Use preload key timestamps for overall cache metadata
+            var created = await _cacheService.GetCacheCreatedAsync("cache_last_preload");
+            var lastUpdated = await _cacheService.GetCacheLastUpdatedAsync("cache_last_preload");
 
-            if (hasCache && lastPreload.HasValue)
+            if (hasCache && (created.HasValue || lastUpdated.HasValue))
             {
-                var cacheAge = DateTime.UtcNow - lastPreload.Value;
-                CacheStatus = $"Cache active ({cacheAge.TotalHours:F1} hours old)";
+                // Compute reference time (prefer lastUpdated), ensure UTC kind
+                var reference = (lastUpdated ?? created.Value).ToUniversalTime();
+                var age = DateTime.UtcNow - reference;
+                CacheStatus = "Cache active";
+                CacheAge = $"{age.TotalHours:F1} hours old";
+                CacheLastUpdated = lastUpdated.HasValue ? lastUpdated.Value.ToLocalTime().ToString("g") : "Unknown";
             }
             else
             {
                 CacheStatus = "No cached data";
+                CacheAge = string.Empty;
+                CacheLastUpdated = string.Empty;
             }
         }
         catch
         {
             CacheStatus = "Unable to check cache status";
+            CacheAge = string.Empty;
+            CacheLastUpdated = string.Empty;
         }
     }
 
@@ -170,6 +201,48 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    private async Task LoadNotificationsPreferenceAsync()
+    {
+        try
+        {
+            var enabled = await _settingsService.GetNotificationsEnabledAsync();
+            IsNotificationsEnabled = enabled;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load notifications preference: {ex.Message}");
+            IsNotificationsEnabled = true;
+        }
+    }
+
+    private async Task SetNotificationsEnabledAsync(bool enabled)
+    {
+        try
+        {
+            await _settingsService.SetNotificationsEnabledAsync(enabled);
+            StatusMessage = enabled ? "Notifications enabled" : "Notifications disabled";
+            await Task.Delay(1200);
+            StatusMessage = string.Empty;
+
+            // If notification polling service is present, start/stop accordingly
+            try
+            {
+                if (_notificationPollingService != null)
+                {
+                    if (enabled)
+                        _notificationPollingService.Start();
+                    else
+                        _notificationPollingService.Stop();
+                }
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to set notifications preference: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private async Task ClearCacheAsync()
     {
@@ -182,6 +255,8 @@ public partial class SettingsViewModel : ObservableObject
         {
             await _cacheService.ClearAllCacheAsync();
             CacheStatus = "No cached data";
+            CacheAge = string.Empty;
+            CacheLastUpdated = string.Empty;
             StatusMessage = "? Cache cleared successfully";
 
             await Task.Delay(2000);

@@ -27,6 +27,11 @@ public interface ISettingsService
     Task SetEmailAsync(string? email);
     Task<bool> GetOfflineModeAsync();
     Task SetOfflineModeAsync(bool enabled);
+    Task<bool> GetNotificationsEnabledAsync();
+    Task SetNotificationsEnabledAsync(bool enabled);
+
+    // Event fired when offline mode is changed via the settings service
+    event EventHandler<bool> OfflineModeChanged;
 }
 
 public class SettingsService : ISettingsService
@@ -43,11 +48,14 @@ public class SettingsService : ISettingsService
     private const string ThemeKey = "app_theme";
     private const string EmailKey = "email";
     private const string OfflineModeKey = "offline_mode";
+    private const string NotificationsEnabledKey = "notifications_enabled";
 
     private const string DefaultProtocol = "https";
     private const string DefaultServerAddress = "your-server.com";
     private const string DefaultServerPort = "";
     private const string DefaultTheme = "Light";
+
+    public event EventHandler<bool> OfflineModeChanged;
 
     public async Task<string> GetProtocolAsync()
     {
@@ -314,10 +322,46 @@ public class SettingsService : ISettingsService
         try
         {
             await SecureStorage.SetAsync(OfflineModeKey, enabled ? "true" : "false");
+
+            // Notify subscribers that offline mode changed
+            try
+            {
+                OfflineModeChanged?.Invoke(this, enabled);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsService] OfflineModeChanged handler threw: {ex}");
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] Failed to set offline mode: {ex}");
+        }
+    }
+
+    public async Task<bool> GetNotificationsEnabledAsync()
+    {
+        try
+        {
+            var v = await SecureStorage.GetAsync(NotificationsEnabledKey);
+            if (string.IsNullOrEmpty(v)) return true; // default enabled
+            return v == "1";
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    public async Task SetNotificationsEnabledAsync(bool enabled)
+    {
+        try
+        {
+            await SecureStorage.SetAsync(NotificationsEnabledKey, enabled ? "1" : "0");
+        }
+        catch
+        {
+            // ignore storage failures
         }
     }
 }

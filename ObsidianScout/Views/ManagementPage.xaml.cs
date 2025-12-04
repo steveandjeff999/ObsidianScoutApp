@@ -28,4 +28,17 @@ public partial class ManagementPage : ContentPage
  await Shell.Current.Navigation.PushAsync(page);
  }
  }
+
+ private async void OnManageUsersClicked(object sender, EventArgs e)
+ {
+ try
+ {
+ await Shell.Current.GoToAsync("ManageUsersPage");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"Failed to navigate to ManageUsersPage: {ex.Message}");
+ await DisplayAlert("Navigation Error", "Could not open Manage Users page. Please try again.", "OK");
+ }
+ }
 }

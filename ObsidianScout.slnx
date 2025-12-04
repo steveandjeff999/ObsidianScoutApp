@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="ObsidianScout/ObsidianScout.csproj" />
+  <Project Path="ObsidianScout/ObsidianScout.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>

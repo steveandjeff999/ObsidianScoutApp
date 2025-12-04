@@ -131,7 +131,9 @@ namespace ObsidianScout
  builder.Services.AddTransient<PitConfigEditorViewModel>();
  builder.Services.AddTransient<RegisterViewModel>();
  builder.Services.AddTransient<QRCodeScannerViewModel>();
-
+ builder.Services.AddTransient<ManageUsersViewModel>();
+ builder.Services.AddTransient<ManageUserEditViewModel>();
+ 
  // Register Pages
  builder.Services.AddTransient<LoginPage>();
  builder.Services.AddTransient<MainPage>();
@@ -154,6 +156,8 @@ namespace ObsidianScout
  builder.Services.AddTransient<PitConfigEditorPage>();
  builder.Services.AddTransient<RegisterPage>();
  builder.Services.AddTransient<QRCodeScannerPage>(); // Register QRCodeScannerPage
+ builder.Services.AddTransient<ManageUsersPage>();
+ builder.Services.AddTransient<ManageUserEditPage>();
 
  var app = builder.Build();
 

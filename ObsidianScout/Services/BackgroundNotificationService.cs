@@ -18,7 +18,7 @@ public interface IBackgroundNotificationService
 public class BackgroundNotificationService : IBackgroundNotificationService, IDisposable
 {
     private readonly IApiService _apiService;
-    private readonly ISettingsService _settingsService;
+    private readonly ISettingsService _settings_service;
     private readonly ILocalNotificationService? _localNotificationService;
   
     private Timer? _timer;
@@ -45,7 +45,7 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
       ILocalNotificationService? localNotificationService = null)
     {
   _apiService = apiService;
-        _settingsService = settingsService;
+        _settings_service = settingsService;
      _localNotificationService = localNotificationService;
      
     // Set up tracking file path
@@ -59,9 +59,25 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     public async Task StartAsync()
     {
         if (_running) return;
-        
-    _running = true;
-    System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Starting background notification service");
+
+        // Check user setting: if notifications disabled, do not start polling
+        try
+        {
+            var enabled = await _settings_service.GetNotificationsEnabledAsync();
+            if (!enabled)
+            {
+                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Notifications disabled by user - service will not start");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting: {ex.Message}");
+            // proceed with start as a fallback
+        }
+
+        _running = true;
+        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Starting background notification service");
    System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Power optimization: Adaptive polling enabled");
  
         // Load tracking data
@@ -96,6 +112,22 @@ public void Stop()
 
     private async Task PollAsync()
     {
+        // Before doing any work, check if notifications are enabled
+        try
+        {
+            var enabled = await _settings_service.GetNotificationsEnabledAsync();
+            if (!enabled)
+            {
+                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Skipping poll because notifications are disabled");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting during poll: {ex.Message}");
+            // continue as fallback
+        }
+
         // Prevent concurrent polling
       if (!await _pollLock.WaitAsync(0))
   {

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace ObsidianScout.Models;
 
@@ -18,4 +19,8 @@ public class User
     
     [JsonPropertyName("profile_picture")]
     public string ProfilePicture { get; set; } = string.Empty;
+
+    // Added email for admin edit support
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
 }

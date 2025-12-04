@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Specialized;
 using System.Collections;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
+using System.Diagnostics;
 
 namespace ObsidianScout.Views;
 
@@ -568,6 +570,31 @@ _vm.ChatType = "group";
  {
  System.Diagnostics.Debug.WriteLine($"OnCreateGroupClicked failed: {ex.Message}");
  await DisplayAlert("Error", "Failed to create group", "OK");
+ }
+ }
+ 
+ // Handler for RemainingItemsThresholdReached from CollectionView (load older messages)
+ public async void OnScrolledNearTop(object? sender, EventArgs e)
+ {
+ try
+ {
+ if (BindingContext is ChatViewModel vm)
+ {
+ // Prefer async command if available
+ if (vm.LoadMoreMessagesCommand is IAsyncRelayCommand asyncCmd)
+ {
+ if (asyncCmd.CanExecute(null))
+ await asyncCmd.ExecuteAsync(null);
+ }
+ else if (vm.LoadMoreMessagesCommand != null && vm.LoadMoreMessagesCommand.CanExecute(null))
+ {
+ vm.LoadMoreMessagesCommand.Execute(null);
+ }
+ }
+ }
+ catch (Exception ex)
+ {
+ Debug.WriteLine($"ChatPage: OnScrolledNearTop failed: {ex.Message}");
  }
  }
 }

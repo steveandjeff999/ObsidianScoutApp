@@ -95,14 +95,14 @@ FontFamily="OpenSansSemibold"
    </HorizontalStackLayout>
    </Border>
 
-         <!-- Quick Stats -->
+         <!-- Dashboard Stats -->
          <Grid Grid.Row="3"
         ColumnDefinitions="*,*,*"
  ColumnSpacing="16"
         Margin="0,8,0,0"
 IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
     
- <!-- Scouting Stat -->
+ <!-- Current Event -->
    <Border Grid.Column="0" 
               Background="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
     Padding="16,12">
@@ -110,7 +110,7 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
           <RoundRectangle CornerRadius="12" />
           </Border.StrokeShape>
     <VerticalStackLayout Spacing="6">
-          <Label Text="Scouting"
+          <Label Text="Current Event"
       FontSize="12"
        TextColor="White"
       Opacity="0.8"
@@ -120,7 +120,7 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
   WidthRequest="40"
           HeightRequest="2"
     HorizontalOptions="Center" />
-     <Label Text="Active"
+     <Label Text="{Binding CurrentEventName}"
     FontSize="14"
        FontFamily="OpenSansSemibold"
         TextColor="White"
@@ -147,8 +147,8 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
           WidthRequest="40"
     HeightRequest="2"
          HorizontalOptions="Center" />
-    <Label Text="Browse"
-     FontSize="14"
+    <Label Text="{Binding TeamCount}"
+     FontSize="20"
       FontFamily="OpenSansSemibold"
     TextColor="White"
            HorizontalTextAlignment="Center"
@@ -156,7 +156,7 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
              </VerticalStackLayout>
 </Border>
 
-  <!-- Events Stat -->
+  <!-- Matches Stat -->
           <Border Grid.Column="2" 
        Background="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
        Padding="16,12">
@@ -164,7 +164,7 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
         <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
              <VerticalStackLayout Spacing="6">
-    <Label Text="Events"
+    <Label Text="Matches"
          FontSize="12"
    TextColor="White"
        Opacity="0.8"
@@ -174,8 +174,8 @@ IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}"
          WidthRequest="40"
      HeightRequest="2"
            HorizontalOptions="Center" />
- <Label Text="View"
-     FontSize="14"
+ <Label Text="{Binding MatchCount}"
+     FontSize="20"
        FontFamily="OpenSansSemibold"
   TextColor="White"
    HorizontalTextAlignment="Center"
