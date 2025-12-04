@@ -317,18 +317,18 @@ For issues or questions:
 
 ## License
 
-Copyright © 2024-2025 OBSIDIAN Scout Team
+Copyright Â© 2024-2025 OBSIDIAN Scout Team
 
 ## Version History
 
-### v1.0.1 (2025)
+### v1.0.1
 - ? Added support for self-signed SSL certificates
 - ? Added HTTP support for local development
 - ? Added team number to login (API requirement)
 - ?? Comprehensive SSL configuration documentation
 - ?? Platform-specific SSL/HTTP configurations
 
-### v1.0.0 (2024)
+### v1.0.0 
 - Initial release
 - Login and authentication
 - Team and event browsing
