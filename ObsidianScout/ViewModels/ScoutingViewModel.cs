@@ -1091,6 +1091,10 @@ if (selectedOption != null)
   return;
         }
 
+ // Capture current selections to ensure UI pickers remain selected while QR overlay is visible
+ var preservedTeam = SelectedTeam;
+ var preservedMatch = SelectedMatch;
+
         TeamId = SelectedTeam.Id;
  MatchId = SelectedMatch.Id;
         
@@ -1138,9 +1142,15 @@ qrData["offline_generated"] = true;
      // Serialize to JSON
       var jsonData = _qrCodeService.SerializeScoutingData(qrData);
             QrCodeImage = _qrCodeService.GenerateQRCode(jsonData);
-            IsQRCodeVisible = true;
-            StatusMessage = string.Empty;
-      }
+
+ // Show overlay but preserve selected items explicitly
+ IsQRCodeVisible = true;
+ StatusMessage = string.Empty;
+
+ // Re-assign preserved selections to ensure pickers keep their values
+ SelectedTeam = preservedTeam;
+ SelectedMatch = preservedMatch;
+ }
         catch (Exception ex)
    {
          StatusMessage = $"✗ Error generating QR code: {ex.Message}";

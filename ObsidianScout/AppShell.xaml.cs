@@ -30,6 +30,9 @@ namespace ObsidianScout
 		// Periodic health check cancellation and session suppression
 		private CancellationTokenSource? _healthCheckCts;
 		private bool _suppressBannerForSession = false;
+		
+		// Flag to track if initial navigation has been done
+		private bool _initialNavigationComplete = false;
 
 		public string CurrentUsername { get; set; } = string.Empty;
 		public string CurrentTeamInfo { get; set; } = string.Empty;
@@ -101,7 +104,6 @@ namespace ObsidianScout
 			}
 		}
 
-		// New connection problem properties
 		public bool IsConnectionProblem
 		{
 			get => _isConnectionProblem;
@@ -123,7 +125,6 @@ namespace ObsidianScout
 			}
 		}
 
-		// Banner visibility computed: show only when connection problem exists and offline mode is NOT enabled
 		public bool ShowConnectionBanner
 		{
 			get => _showConnectionBanner;
@@ -134,7 +135,6 @@ namespace ObsidianScout
 			}
 		}
 
-		// Title banner visibility: show if either offline mode label or connection banner should be visible
 		public bool ShowTitleBanner
 		{
 			get => _showTitleBanner;
@@ -147,39 +147,19 @@ namespace ObsidianScout
 
 		private void UpdateShowConnectionBanner()
 		{
-			// Determine if connection banner should be shown
 			ShowConnectionBanner = IsConnectionProblem && !IsOfflineMode && !_suppressBannerForSession;
-
-			// Title area is visible when offline label OR connection banner is visible
 			ShowTitleBanner = IsOfflineMode || ShowConnectionBanner;
 
-			// Ensure the Shell's TitleView is removed when there are no banners so the bar does not reserve space
 			try
 			{
-				MainThread.BeginInvokeOnMainThread(() =>
+				if (Application.Current is App app)
 				{
-					try
-					{
-						if (ShowTitleBanner)
-						{
-							// Restore the TitleView to the XAML container if needed
-							Shell.SetTitleView(this, TitleContainer);
-						}
-						else
-						{
-							// Remove the TitleView entirely to collapse the title area
-							Shell.SetTitleView(this, null);
-						}
-					}
-					catch (Exception ex)
-					{
-						System.Diagnostics.Debug.WriteLine($"UpdateShowConnectionBanner - TitleView update error: {ex.Message}");
-					}
-				});
+					app.UpdateBannerState(ShowTitleBanner, IsOfflineMode, ShowConnectionBanner, ConnectionProblemMessage);
+				}
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"UpdateShowConnectionBanner scheduling error: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"UpdateShowConnectionBanner - App banner update error: {ex.Message}");
 			}
 		}
 
@@ -191,7 +171,7 @@ namespace ObsidianScout
 			InitializeComponent();
 			BindingContext = this;
 
-			// Subscribe to offline mode changes from SettingsService so banner hides when offline enabled elsewhere
+			// Subscribe to offline mode changes
 			try
 			{
 				_settingsService.OfflineModeChanged += SettingsService_OfflineModeChanged;
@@ -199,6 +179,17 @@ namespace ObsidianScout
 			catch { }
 
 			// Register routes used by Shell
+			RegisterRoutes();
+
+			// CRITICAL: Check auth status synchronously first to set IsLoggedIn before any navigation
+			_ = InitializeAuthAndNavigationAsync();
+
+			Navigating += OnNavigating;
+		}
+
+		private void RegisterRoutes()
+		{
+			Routing.RegisterRoute("MainPage", typeof(MainPage));
 			Routing.RegisterRoute("TeamsPage", typeof(TeamsPage));
 			Routing.RegisterRoute("EventsPage", typeof(EventsPage));
 			Routing.RegisterRoute("ScoutingPage", typeof(ScoutingPage));
@@ -216,26 +207,174 @@ namespace ObsidianScout
 			Routing.RegisterRoute("PitConfigEditorPage", typeof(PitConfigEditorPage));
 			Routing.RegisterRoute("QRCodeScannerPage", typeof(QRCodeScannerPage));
 			Routing.RegisterRoute("ManageUsersPage", typeof(ManageUsersPage));
-
-			// NEW: Register Chat route for deep linking from notifications
+			Routing.RegisterRoute("MenuPage", typeof(Views.MenuPage));
+			Routing.RegisterRoute("LoginPage", typeof(LoginPage));
+			Routing.RegisterRoute("DataPage", typeof(DataPage));
 			Routing.RegisterRoute("Chat", typeof(ChatPage));
 			Routing.RegisterRoute("ChatPage", typeof(ChatPage));
-
-			// NEW: Register MatchPredictionPage for deep linking from match notifications
 			Routing.RegisterRoute("MatchPredictionPage", typeof(MatchPredictionPage));
+		}
 
-			CheckAuthStatus();
+		/// <summary>
+		/// Initialize authentication state and configure navigation BEFORE any UI appears
+		/// </summary>
+		private async Task InitializeAuthAndNavigationAsync()
+		{
+			try
+			{
+				System.Diagnostics.Debug.WriteLine("[AppShell] InitializeAuthAndNavigationAsync - Starting...");
+				
+				// Check authentication status from stored token
+				var token = await _settingsService.GetTokenAsync();
+				var expiration = await _settingsService.GetTokenExpirationAsync();
+				var isLoggedIn = !string.IsNullOrEmpty(token) && expiration.HasValue && expiration.Value > DateTime.UtcNow;
 
-			// Load offline mode state
-			_ = LoadOfflineModeStateAsync();
+				System.Diagnostics.Debug.WriteLine($"[AppShell] Token exists: {!string.IsNullOrEmpty(token)}");
+				System.Diagnostics.Debug.WriteLine($"[AppShell] Expiration: {expiration}");
+				System.Diagnostics.Debug.WriteLine($"[AppShell] Is expired: {expiration.HasValue && expiration.Value <= DateTime.UtcNow}");
+				System.Diagnostics.Debug.WriteLine($"[AppShell] IsLoggedIn: {isLoggedIn}");
 
-			// Perform startup health check immediately (so banner can show at app start)
-			_ = StartupHealthCheckAsync();
+				// Set login state BEFORE configuring navigation
+				IsLoggedIn = isLoggedIn;
 
-			// Start periodic health check loop
-			_ = StartPeriodicHealthCheckLoopAsync();
+				if (isLoggedIn)
+				{
+					// Load user roles and info
+					var roles = await _settingsService.GetUserRolesAsync();
+					System.Diagnostics.Debug.WriteLine($"[AppShell] User has {roles.Count} roles");
 
-			Navigating += OnNavigating;
+					HasAnalyticsAccess = roles.Any(r =>
+						r.Equals("analytics", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("analytics_admin", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("superadmin", StringComparison.OrdinalIgnoreCase));
+
+					HasManagementAccess = roles.Any(r =>
+						r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("superadmin", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("management", StringComparison.OrdinalIgnoreCase) ||
+						r.Equals("manager", StringComparison.OrdinalIgnoreCase));
+
+					await LoadCurrentUserInfoAsync();
+				}
+
+				// Load offline mode state
+				IsOfflineMode = await _settingsService.GetOfflineModeAsync();
+
+				// Configure platform navigation AFTER auth state is determined
+				await MainThread.InvokeOnMainThreadAsync(() =>
+				{
+					ConfigurePlatformNavigation(isLoggedIn);
+				});
+
+				_initialNavigationComplete = true;
+
+				// Start background tasks after navigation is set up
+				_ = StartupHealthCheckAsync();
+				_ = StartPeriodicHealthCheckLoopAsync();
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[AppShell] InitializeAuthAndNavigationAsync error: {ex.Message}");
+				// On error, default to logged out state
+				IsLoggedIn = false;
+				await MainThread.InvokeOnMainThreadAsync(() =>
+				{
+					ConfigurePlatformNavigation(false);
+				});
+				_initialNavigationComplete = true;
+			}
+		}
+
+		/// <summary>
+		/// Configure platform-specific navigation based on login state
+		/// </summary>
+		private void ConfigurePlatformNavigation(bool isLoggedIn)
+		{
+			System.Diagnostics.Debug.WriteLine($"[AppShell] ConfigurePlatformNavigation - IsLoggedIn: {isLoggedIn}");
+
+#if ANDROID || IOS
+			// On mobile platforms, use TabBars
+			FlyoutBehavior = FlyoutBehavior.Disabled;
+
+			// Hide all FlyoutItems on mobile
+			foreach (var item in this.Items.ToList())
+			{
+				if (item is FlyoutItem)
+				{
+					item.IsVisible = false;
+				}
+			}
+
+			var loginTabBar = this.FindByName<TabBar>("LoginTabBar");
+			var mobileTabBar = this.FindByName<TabBar>("MobileTabBar");
+
+			if (isLoggedIn)
+			{
+				// User is logged in - show main TabBar, hide login TabBar
+				System.Diagnostics.Debug.WriteLine("[AppShell] Showing MobileTabBar (logged in)");
+				
+				if (loginTabBar != null)
+				{
+					loginTabBar.IsVisible = false;
+				}
+				if (mobileTabBar != null)
+				{
+					mobileTabBar.IsVisible = true;
+					// Navigate to the main TabBar's first tab
+					MainThread.BeginInvokeOnMainThread(async () =>
+					{
+						try
+						{
+							await Task.Delay(50); // Small delay for shell to be ready
+							await Shell.Current.GoToAsync("//MobileTabBar/MainPage");
+							System.Diagnostics.Debug.WriteLine("[AppShell] Navigated to MobileTabBar/MainPage");
+						}
+						catch (Exception ex)
+						{
+							System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation to MainPage failed: {ex.Message}");
+						}
+					});
+				}
+			}
+			else
+			{
+				// User is NOT logged in - show login TabBar, hide main TabBar
+				System.Diagnostics.Debug.WriteLine("[AppShell] Showing LoginTabBar (not logged in)");
+				
+				if (mobileTabBar != null)
+				{
+					mobileTabBar.IsVisible = false;
+				}
+				if (loginTabBar != null)
+				{
+					loginTabBar.IsVisible = true;
+					// Navigate to the login TabBar
+					MainThread.BeginInvokeOnMainThread(async () =>
+					{
+						try
+						{
+							await Task.Delay(50);
+							await Shell.Current.GoToAsync("//LoginTabBar/LoginPage");
+							System.Diagnostics.Debug.WriteLine("[AppShell] Navigated to LoginTabBar/LoginPage");
+						}
+						catch (Exception ex)
+						{
+							System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation to LoginPage failed: {ex.Message}");
+						}
+					});
+				}
+			}
+#else
+			// On desktop (Windows, Mac), use flyout
+			var loginTabBar = this.FindByName<TabBar>("LoginTabBar");
+			var mobileTabBar = this.FindByName<TabBar>("MobileTabBar");
+			
+			if (loginTabBar != null) loginTabBar.IsVisible = false;
+			if (mobileTabBar != null) mobileTabBar.IsVisible = false;
+
+			FlyoutBehavior = FlyoutBehavior.Flyout;
+#endif
 		}
 
 		// Handler for offline mode changes triggered elsewhere in the app
@@ -293,79 +432,114 @@ namespace ObsidianScout
 			}
 		}
 
-		private async void CheckAuthStatus()
+		private void OnNavigating(object? sender, ShellNavigatingEventArgs e)
 		{
-			try
+			// Don't block navigation until initial setup is complete
+			if (!_initialNavigationComplete)
+				return;
+
+			var target = e.Target.Location.OriginalString;
+
+			// Allow login and register pages always
+			if (target.Contains("LoginPage", StringComparison.OrdinalIgnoreCase) ||
+				target.Contains("RegisterPage", StringComparison.OrdinalIgnoreCase) ||
+				target.Contains("LoginTabBar", StringComparison.OrdinalIgnoreCase))
+				return;
+
+			// Check auth for protected pages
+			if (!IsLoggedIn)
 			{
-				var token = await _settingsService.GetTokenAsync();
-				var expiration = await _settingsService.GetTokenExpirationAsync();
-
-				IsLoggedIn = !string.IsNullOrEmpty(token) && expiration.HasValue && expiration.Value > DateTime.UtcNow;
-
-				if (IsLoggedIn)
+#if ANDROID || IOS
+				// Allow MenuPage even when not logged in
+				if (target.Contains("MenuPage", StringComparison.OrdinalIgnoreCase))
+					return;
+					
+				e.Cancel();
+				System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation blocked - user not logged in, redirecting to LoginPage");
+				_ = Shell.Current.GoToAsync("//LoginTabBar/LoginPage");
+				return;
+#else
+				if (target.Contains("MainPage", StringComparison.OrdinalIgnoreCase) ||
+					target.Contains("TeamsPage", StringComparison.OrdinalIgnoreCase) ||
+					target.Contains("EventsPage", StringComparison.OrdinalIgnoreCase) ||
+					target.Contains("ScoutingPage", StringComparison.OrdinalIgnoreCase) ||
+					target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase))
 				{
-					var roles = await _settingsService.GetUserRolesAsync();
-
-					System.Diagnostics.Debug.WriteLine($"[AppShell] CheckAuthStatus: User has {roles.Count} roles");
-					foreach (var role in roles)
-					{
-						System.Diagnostics.Debug.WriteLine($"[AppShell] Role: '{role}'");
-					}
-
-					HasAnalyticsAccess = roles.Any(r =>
-						r.Equals("analytics", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("analytics_admin", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("superadmin", StringComparison.OrdinalIgnoreCase));
-
-					// Management access: admin, superadmin, or management role
-					HasManagementAccess = roles.Any(r =>
-						r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("superadmin", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("management", StringComparison.OrdinalIgnoreCase) ||
-						r.Equals("manager", StringComparison.OrdinalIgnoreCase));
-
-					System.Diagnostics.Debug.WriteLine($"[AppShell] HasAnalyticsAccess: {HasAnalyticsAccess}");
-					System.Diagnostics.Debug.WriteLine($"[AppShell] HasManagementAccess: {HasManagementAccess}");
-
-					await LoadCurrentUserInfoAsync();
-
-					// Force refresh all property bindings
-					OnPropertyChanged(nameof(HasAnalyticsAccess));
-					OnPropertyChanged(nameof(HasManagementAccess));
-
-					// Force update of FlyoutItems visibility after a short delay to ensure binding context is ready
-					await Task.Delay(100);
-					MainThread.BeginInvokeOnMainThread(() =>
-					{
-						try
-						{
-							// Refresh the flyout to update visibility
-							FlyoutIsPresented = false;
-							System.Diagnostics.Debug.WriteLine($"[AppShell] CheckAuthStatus: Forced flyout refresh - HasManagementAccess={HasManagementAccess}");
-						}
-						catch (Exception ex)
-						{
-							System.Diagnostics.Debug.WriteLine($"[AppShell] Flyout refresh error: {ex.Message}");
-						}
-					});
+					e.Cancel();
+					_ = Shell.Current.DisplayAlertAsync("Authentication Required", "Please log in to access this page.", "OK");
+					_ = Shell.Current.GoToAsync("//LoginPage");
+					return;
 				}
-				else
-				{
-					HasAnalyticsAccess = false;
-					HasManagementAccess = false;
-					CurrentUsername = string.Empty;
-					CurrentTeamInfo = string.Empty;
-					System.Diagnostics.Debug.WriteLine("[AppShell] User not logged in");
-				}
+#endif
 			}
-			catch (Exception ex)
+
+			if (target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase) && !HasAnalyticsAccess)
 			{
-				System.Diagnostics.Debug.WriteLine($"Error checking auth status: {ex.Message}");
-				IsLoggedIn = false;
+				e.Cancel();
+				_ = Shell.Current.DisplayAlertAsync("Access Denied", "You need analytics privileges to access this page.", "OK");
+			}
+		}
+
+		/// <summary>
+		/// Called after successful login to update UI and navigate to main content
+		/// </summary>
+		public async void UpdateAuthenticationState(bool isLoggedIn)
+		{
+			System.Diagnostics.Debug.WriteLine($"[AppShell] UpdateAuthenticationState: {isLoggedIn}");
+			IsLoggedIn = isLoggedIn;
+
+			if (IsLoggedIn)
+			{
+				var roles = await _settingsService.GetUserRolesAsync();
+
+				HasAnalyticsAccess = roles.Any(r => r.Equals("analytics", StringComparison.OrdinalIgnoreCase) ||
+												   r.Equals("analytics_admin", StringComparison.OrdinalIgnoreCase) ||
+												   r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+												   r.Equals("superadmin", StringComparison.OrdinalIgnoreCase));
+
+				HasManagementAccess = roles.Any(r =>
+					r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+					r.Equals("superadmin", StringComparison.OrdinalIgnoreCase) ||
+					r.Equals("management", StringComparison.OrdinalIgnoreCase) ||
+					r.Equals("manager", StringComparison.OrdinalIgnoreCase));
+
+				await LoadCurrentUserInfoAsync();
+
+				OnPropertyChanged(nameof(HasAnalyticsAccess));
+				OnPropertyChanged(nameof(HasManagementAccess));
+
+#if ANDROID || IOS
+				// Switch to main TabBar after login
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					ConfigurePlatformNavigation(true);
+				});
+#else
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					FlyoutIsPresented = false;
+				});
+#endif
+			}
+			else
+			{
 				HasAnalyticsAccess = false;
 				HasManagementAccess = false;
+				CurrentUsername = string.Empty;
+				CurrentTeamInfo = string.Empty;
+				UserInitials = "?";
+				ProfilePictureSource = null;
+
+#if ANDROID || IOS
+				// Switch to login TabBar after logout
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					ConfigurePlatformNavigation(false);
+				});
+#endif
 			}
+
+			OnPropertyChanged(nameof(IsLoggedIn));
 		}
 
 		private async Task LoadCurrentUserInfoAsync()
@@ -375,17 +549,15 @@ namespace ObsidianScout
 				var username = await _settingsService.GetUsernameAsync();
 				var teamNumber = await _settingsService.GetTeamNumberAsync();
 
-			(CurrentUsername, CurrentTeamInfo) = (string.IsNullOrEmpty(username) ? "Unknown User" : username, teamNumber.HasValue ? $"Team {teamNumber.Value}" : string.Empty);
+				(CurrentUsername, CurrentTeamInfo) = (string.IsNullOrEmpty(username) ? "Unknown User" : username, teamNumber.HasValue ? $"Team {teamNumber.Value}" : string.Empty);
 
-				// Compute initials from username
 				UserInitials = GetInitialsFromUsername(CurrentUsername);
 
-				// Notify bindings
 				OnPropertyChanged(nameof(CurrentUsername));
 				OnPropertyChanged(nameof(CurrentTeamInfo));
 
-				// Load profile picture
-				await LoadProfilePictureAsync();
+				// Load profile picture in background (don't await)
+				_ = LoadProfilePictureAsync();
 			}
 			catch (Exception ex)
 			{
@@ -400,24 +572,19 @@ namespace ObsidianScout
 		{
 			if (string.IsNullOrWhiteSpace(username) || username == "Unknown User")
 				return "?";
-			// Get first2 characters for initials
 			var parts = username.Trim().Split(new[] { ' ', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
 			if (parts.Length >= 2)
 			{
-				// First letter of first two parts
 				return $"{parts[0][0]}{parts[1][0]}".ToUpper();
 			}
 			else if (parts.Length == 1 && parts[0].Length >= 2)
 			{
-				// First two letters of single word
 				return parts[0].Substring(0, 2).ToUpper();
 			}
 			else if (parts.Length == 1 && parts[0].Length == 1)
 			{
-				// Single letter
 				return parts[0].ToUpper();
 			}
-
 			return "?";
 		}
 
@@ -426,55 +593,33 @@ namespace ObsidianScout
 			try
 			{
 				System.Diagnostics.Debug.WriteLine("[AppShell] Loading profile picture...");
-
 				var pictureBytes = await _apiService.GetProfilePictureAsync();
 
 				if (pictureBytes != null && pictureBytes.Length > 0)
 				{
-					System.Diagnostics.Debug.WriteLine($"[AppShell] ✓ Received profile picture: {pictureBytes.Length} bytes");
-
-					// Check if bytes look like a valid image (check for common image headers)
 					var isValidImage = IsValidImageData(pictureBytes);
-					var validationStatus = isValidImage ? "VALID" : "INVALID";
-					System.Diagnostics.Debug.WriteLine($"[AppShell] Image validation: {validationStatus}");
-
 					if (isValidImage)
 					{
-						// Create ImageSource from stream
 						ProfilePictureSource = ImageSource.FromStream(() => new MemoryStream(pictureBytes));
-						System.Diagnostics.Debug.WriteLine("[AppShell] ✓ ProfilePictureSource created successfully");
-						System.Diagnostics.Debug.WriteLine($"[AppShell] HasProfilePicture: {HasProfilePicture}");
-
-						// Force UI update on main thread
 						MainThread.BeginInvokeOnMainThread(() =>
 						{
 							OnPropertyChanged(nameof(ProfilePictureSource));
 							OnPropertyChanged(nameof(HasProfilePicture));
-							System.Diagnostics.Debug.WriteLine("[AppShell] ✓ Profile picture bindings refreshed");
 						});
 					}
 					else
 					{
-						System.Diagnostics.Debug.WriteLine("[AppShell] ✗ Image data validation failed - not a valid image format");
 						ProfilePictureSource = null;
 					}
 				}
 				else
 				{
-					System.Diagnostics.Debug.WriteLine($"[AppShell] ✗ No profile picture data received (null or empty)");
-					System.Diagnostics.Debug.WriteLine($"[AppShell] pictureBytes is null: {pictureBytes == null}");
-					if (pictureBytes != null)
-					{
-						System.Diagnostics.Debug.WriteLine($"[AppShell] pictureBytes length: {pictureBytes.Length}");
-					}
 					ProfilePictureSource = null;
 				}
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"[AppShell] ✗ Failed to load profile picture: {ex.Message}");
-				System.Diagnostics.Debug.WriteLine($"[AppShell] Exception type: {ex.GetType().Name}");
-				System.Diagnostics.Debug.WriteLine($"[AppShell] Stack trace: {ex.StackTrace}");
+				System.Diagnostics.Debug.WriteLine($"[AppShell] Failed to load profile picture: {ex.Message}");
 				ProfilePictureSource = null;
 			}
 		}
@@ -484,136 +629,24 @@ namespace ObsidianScout
 			if (data == null || data.Length < 4)
 				return false;
 
-			// Check for common image file signatures
-			// PNG:89504E47
+			// PNG
 			if (data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47)
-			{
-				System.Diagnostics.Debug.WriteLine("[AppShell] Image format: PNG");
 				return true;
-			}
-
-			// JPEG: FF D8 FF
+			// JPEG
 			if (data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF)
-			{
-				System.Diagnostics.Debug.WriteLine("[AppShell] Image format: JPEG");
 				return true;
-			}
-
-			// GIF:474946
+			// GIF
 			if (data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46)
-			{
-				System.Diagnostics.Debug.WriteLine("[AppShell] Image format: GIF");
 				return true;
-			}
-
-			// BMP:424D
+			// BMP
 			if (data[0] == 0x42 && data[1] == 0x4D)
-			{
-				System.Diagnostics.Debug.WriteLine("[AppShell] Image format: BMP");
 				return true;
-			}
-
-			// WebP: starts with RIFF....WEBP
+			// WebP
 			if (data.Length >= 12 && data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 &&
 				data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50)
-			{
-				System.Diagnostics.Debug.WriteLine("[AppShell] Image format: WebP");
 				return true;
-			}
 
-			System.Diagnostics.Debug.WriteLine($"[AppShell] Unknown image format. First4 bytes: {data[0]:X2} {data[1]:X2} {data[2]:X2} {data[3]:X2}");
 			return false;
-		}
-
-		private void OnNavigating(object? sender, ShellNavigatingEventArgs e)
-		{
-			var target = e.Target.Location.OriginalString;
-
-			// Allow login page
-			if (target.Contains("LoginPage", StringComparison.OrdinalIgnoreCase))
-				return;
-
-			if (!IsLoggedIn && (target.Contains("MainPage", StringComparison.OrdinalIgnoreCase) ||
-								target.Contains("TeamsPage", StringComparison.OrdinalIgnoreCase) ||
-								target.Contains("EventsPage", StringComparison.OrdinalIgnoreCase) ||
-								target.Contains("ScoutingPage", StringComparison.OrdinalIgnoreCase) ||
-								target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase)))
-			{
-				e.Cancel();
-				_ = Shell.Current.DisplayAlertAsync("Authentication Required", "Please log in to access this page.", "OK");
-				_ = Shell.Current.GoToAsync("//LoginPage");
-				return;
-			}
-
-			if (target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase) && !HasAnalyticsAccess)
-			{
-				e.Cancel();
-				_ = Shell.Current.DisplayAlertAsync("Access Denied", "You need analytics privileges to access this page.", "OK");
-			}
-		}
-
-		public async void UpdateAuthenticationState(bool isLoggedIn)
-		{
-			IsLoggedIn = isLoggedIn;
-
-			if (IsLoggedIn)
-			{
-				var roles = await _settingsService.GetUserRolesAsync();
-
-				System.Diagnostics.Debug.WriteLine($"[AppShell] UpdateAuthenticationState: User has {roles.Count} roles");
-				foreach (var role in roles)
-				{
-					System.Diagnostics.Debug.WriteLine($"[AppShell] Role: '{role}'");
-				}
-
-				HasAnalyticsAccess = roles.Any(r => r.Equals("analytics", StringComparison.OrdinalIgnoreCase) ||
-												   r.Equals("analytics_admin", StringComparison.OrdinalIgnoreCase) ||
-												   r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
-												   r.Equals("superadmin", StringComparison.OrdinalIgnoreCase));
-
-				// Management access: admin, superadmin, or management role
-				HasManagementAccess = roles.Any(r =>
-					r.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
-					r.Equals("superadmin", StringComparison.OrdinalIgnoreCase) ||
-					r.Equals("management", StringComparison.OrdinalIgnoreCase) ||
-					r.Equals("manager", StringComparison.OrdinalIgnoreCase));
-
-				System.Diagnostics.Debug.WriteLine($"[AppShell] HasAnalyticsAccess: {HasAnalyticsAccess}");
-				System.Diagnostics.Debug.WriteLine($"[AppShell] HasManagementAccess: {HasManagementAccess}");
-
-				await LoadCurrentUserInfoAsync();
-
-				// Force refresh all property bindings
-				OnPropertyChanged(nameof(HasAnalyticsAccess));
-				OnPropertyChanged(nameof(HasManagementAccess));
-
-				// Force update of FlyoutItems visibility
-				MainThread.BeginInvokeOnMainThread(() =>
-				{
-					try
-					{
-						// Refresh the flyout to update visibility
-						FlyoutIsPresented = false;
-						System.Diagnostics.Debug.WriteLine($"[AppShell] Forced flyout refresh - HasManagementAccess={HasManagementAccess}");
-					}
-					catch (Exception ex)
-					{
-						System.Diagnostics.Debug.WriteLine($"[AppShell] Flyout refresh error: {ex.Message}");
-					}
-				});
-			}
-			else
-			{
-				HasAnalyticsAccess = false;
-				HasManagementAccess = false;
-				CurrentUsername = string.Empty;
-				CurrentTeamInfo = string.Empty;
-				UserInitials = "?";
-				ProfilePictureSource = null; // Clear profile picture on logout
-				System.Diagnostics.Debug.WriteLine("[AppShell] UpdateAuthenticationState: Logged out, cleared profile picture");
-			}
-
-			OnPropertyChanged(nameof(IsLoggedIn));
 		}
 
 		private async void OnLogoutClicked(object sender, EventArgs e)
@@ -631,11 +664,9 @@ namespace ObsidianScout
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine($"[AppShell] Failed to clear auth data: {ex}");
-					await DisplayAlertAsync("Logout", "Warning: failed to clear some local data. You have been logged out of the app UI.", "OK");
 				}
 
 				UpdateAuthenticationState(false);
-				await GoToAsync("//LoginPage");
 			}
 			catch (Exception ex)
 			{
@@ -649,42 +680,30 @@ namespace ObsidianScout
 			const string route = "UserPage";
 			try
 			{
-				// Try simple route then absolute route then fallback to PushAsync
 				try
 				{
 					await Shell.Current.GoToAsync(route);
 					return;
 				}
-				catch (Exception exRoute)
-				{
-					System.Diagnostics.Debug.WriteLine($"GoToAsync(route) failed: {exRoute}");
-				}
+				catch { }
 
 				try
 				{
 					await Shell.Current.GoToAsync($"//{route}");
 					return;
 				}
-				catch (Exception exAbs)
-				{
-					System.Diagnostics.Debug.WriteLine($"GoToAsync(//route) failed: {exAbs}");
-				}
+				catch { }
 
 				try
 				{
-					// Fallback: resolve UserViewModel from DI if available, otherwise create one
 					var services = Application.Current?.Handler?.MauiContext?.Services;
 					var vm = services?.GetService<ObsidianScout.ViewModels.UserViewModel>() ?? new ObsidianScout.ViewModels.UserViewModel();
 					var page = new UserPage(vm);
 					await Shell.Current.Navigation.PushAsync(page);
 					return;
 				}
-				catch (Exception exPush)
-				{
-					System.Diagnostics.Debug.WriteLine($"PushAsync fallback failed: {exPush}");
-				}
+				catch { }
 
-				// If all fails, show an error
 				await DisplayAlertAsync("Navigation failed", "Could not open user page.", "OK");
 			}
 			catch (Exception ex)
@@ -697,7 +716,6 @@ namespace ObsidianScout
 		{
 			try
 			{
-				// Navigate to the shared SettingsPage route
 				await Shell.Current.GoToAsync("SettingsPage");
 			}
 			catch (Exception ex)
@@ -706,15 +724,13 @@ namespace ObsidianScout
 			}
 		}
 
-		// New: user clicked Yes on connection banner to enable offline mode
-		public async void OnEnableOfflineClicked(object sender, EventArgs e)
+		public async void OnEnableOfflineClicked(object? sender, EventArgs e)
 		{
 			try
 			{
 				await _settingsService.SetOfflineModeAsync(true);
 				IsOfflineMode = true;
 				SetConnectionProblemState(false, null, overrideSuppress: true);
-				await DisplayAlertAsync("Offline Enabled", "Offline mode enabled. The app will use cached data where available.", "OK");
 			}
 			catch (Exception ex)
 			{
@@ -723,32 +739,23 @@ namespace ObsidianScout
 			}
 		}
 
-		// New: user clicked No to dismiss the banner
-		public void OnDismissConnectionClicked(object sender, EventArgs e)
+		public void OnDismissConnectionClicked(object? sender, EventArgs e)
 		{
-			// Suppress the banner for the rest of this app session
 			_suppressBannerForSession = true;
-
-			System.Diagnostics.Debug.WriteLine("[AppShell] Banner dismissed for session (suppressBannerForSession=true)");
-
 			SetConnectionProblemState(false);
 		}
 
-		// Run a quick health check on startup and show banner if server unreachable
 		private async Task StartupHealthCheckAsync()
 		{
 			try
 			{
-				// Wait a short moment to avoid racing with other startup tasks
 				await Task.Delay(500);
-
 				var result = await _apiService.HealthCheckAsync();
 				if (result == null || !result.Success)
 				{
-					// Only show banner when not explicitly in offline mode
 					if (!await _settingsService.GetOfflineModeAsync())
 					{
-						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode to use cached data and speed things up?");
+						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode?");
 					}
 				}
 			}
@@ -759,20 +766,17 @@ namespace ObsidianScout
 				{
 					if (!await _settingsService.GetOfflineModeAsync())
 					{
-						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode to use cached data and speed things up?");
+						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode?");
 					}
 				}
 				catch { }
 			}
 		}
 
-		// Centralized setter that respects session suppression
 		private void SetConnectionProblemState(bool isProblem, string? message = null, bool overrideSuppress = false)
 		{
-			// If user suppressed the banner for this session, do not show it again
 			if (isProblem && _suppressBannerForSession && !overrideSuppress)
 			{
-				// still update the internal flag but don't show the banner
 				_isConnectionProblem = true;
 				if (message != null) ConnectionProblemMessage = message;
 				OnPropertyChanged(nameof(IsConnectionProblem));
@@ -780,7 +784,6 @@ namespace ObsidianScout
 				return;
 			}
 
-			// Normal flow: set via property so bindings and update logic run
 			if (message != null)
 				ConnectionProblemMessage = message;
 
@@ -789,7 +792,6 @@ namespace ObsidianScout
 				ShowConnectionBanner = false;
 		}
 
-		// New: periodic health check loop
 		private async Task StartPeriodicHealthCheckLoopAsync()
 		{
 			_healthCheckCts = new CancellationTokenSource();
@@ -799,68 +801,50 @@ namespace ObsidianScout
 			{
 				while (!token.IsCancellationRequested)
 				{
-					// Wait before next check
 					await Task.Delay(TimeSpan.FromSeconds(15), token);
-
-					// Perform the health check
 					await CheckHealthOnceAsync();
 				}
 			}
-			catch (TaskCanceledException)
-			{
-				// Expected on cancellation, no action needed
-			}
+			catch (TaskCanceledException) { }
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"Periodic health check error: {ex.Message}");
 			}
 		}
 
-		// New: check health once, used by both startup and periodic checks
 		private async Task CheckHealthOnceAsync()
 		{
 			try
 			{
-				// If the user suppressed the banner for this session, don't update connection problem state
 				if (_suppressBannerForSession)
 				{
-					System.Diagnostics.Debug.WriteLine("[AppShell] Health check skipped UI update due to session suppression");
-					// Still perform the health call in background (no UI changes) to keep internal state updated,
-					// but do not change IsConnectionProblem/ShowConnectionBanner so the banner stays hidden until restart.
-					try
-					{
-						await _apiService.HealthCheckAsync();
-					}
-					catch { }
+					try { await _apiService.HealthCheckAsync(); } catch { }
 					return;
 				}
 
 				var result = await _apiService.HealthCheckAsync();
 				if (result == null || !result.Success)
 				{
-					// Show banner if there's a connection problem and we're not in offline mode
 					if (!await _settingsService.GetOfflineModeAsync())
 					{
-						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode to use cached data and speed things up?");
+						SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode?");
 					}
 				}
 				else
 				{
-					// Hide banner on successful health check
 					SetConnectionProblemState(false);
 				}
 			}
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine($"Health check failed: {ex}");
-				// Only update banner if the user hasn't suppressed it for this session
 				if (!_suppressBannerForSession)
 				{
 					try
 					{
 						if (!await _settingsService.GetOfflineModeAsync())
 						{
-							SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode to use cached data and speed things up?");
+							SetConnectionProblemState(true, "Cannot connect to server. Would you like to enable offline mode?");
 						}
 					}
 					catch { }
@@ -868,11 +852,9 @@ namespace ObsidianScout
 			}
 		}
 
-		// Dispose health check when shell is disposed
 		protected override void OnHandlerChanged()
 		{
 			base.OnHandlerChanged();
-			// If handler is removed (app shutting down), cancel background checks
 			if (Handler == null)
 			{
 				try { _healthCheckCts?.Cancel(); } catch { }

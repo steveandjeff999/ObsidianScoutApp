@@ -160,39 +160,52 @@ private bool isViewingHistory = false;
     private async Task LoadTeamsAsync(bool silent = false)
     {
         try
-        {
-       if (!silent)
-            {
-        StatusMessage = "Loading teams...";
+   {
+            if (!silent)
+      {
+          StatusMessage = "Loading teams...";
             }
 
-            var response = await _apiService.GetTeamsAsync(limit: 500);
+    var response = await _apiService.GetTeamsAsync(limit: 500);
 
             if (response.Success && response.Teams != null && response.Teams.Count > 0)
-     {
-    Teams.Clear();
-       foreach (var team in response.Teams.OrderBy(t => t.TeamNumber))
-    {
-              Teams.Add(team);
+         {
+       Teams.Clear();
+     foreach (var team in response.Teams.OrderBy(t => t.TeamNumber))
+         {
+  Teams.Add(team);
        }
 
-        if (!string.IsNullOrEmpty(response.Error) && response.Error.Contains("offline"))
-     {
-        IsOfflineMode = true;
-     }
-      else
-   {
-        IsOfflineMode = false;
+     if (!string.IsNullOrEmpty(response.Error) && response.Error.Contains("offline"))
+                {
+               IsOfflineMode = true;
           }
-   }
-        }
-        catch (Exception ex)
+   else
+                {
+  IsOfflineMode = false;
+      }
+          
+    // Clear status message after successful load
+       if (!silent)
+         {
+         StatusMessage = string.Empty;
+       }
+         }
+            else
+   {
+             if (!silent)
     {
-        if (!silent)
-      {
-         StatusMessage = $"Error loading teams: {ex.Message}";
+     StatusMessage = $"Failed to load teams: {response.Error}";
+         }
+     }
+        }
+    catch (Exception ex)
+        {
+     if (!silent)
+       {
+    StatusMessage = $"Error loading teams: {ex.Message}";
             }
-}
+     }
     }
 
     private void InitializeFieldValues()

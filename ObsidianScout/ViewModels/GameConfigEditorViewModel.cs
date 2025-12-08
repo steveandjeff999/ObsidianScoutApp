@@ -116,27 +116,28 @@ public ObservableCollection<ScoringOption> CurrentElementOptions { get; } = new(
     [RelayCommand]
     public async Task LoadAsync()
     {
-    try
-        {
-            StatusMessage = "Loading...";
-      var resp = await _api.GetGameConfigAsync();
+ try
+     {
+    StatusMessage = "Loading...";
+   // Use team config endpoint for editors (explicit per-team config, not alliance)
+      var resp = await _api.GetTeamGameConfigAsync();
       if (resp.Success && resp.Config != null)
-  {
-    NormalizeConfig(resp.Config);
-CurrentConfig = resp.Config;
-      JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
- PopulateCollections(resp.Config);
-           UpdateStatusCounts();
-        StatusMessage = "Loaded";
-         }
+ {
+                NormalizeConfig(resp.Config);
+  CurrentConfig = resp.Config;
+        JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
+    PopulateCollections(resp.Config);
+        UpdateStatusCounts();
+   StatusMessage = "Loaded";
+     }
 else
-            {
- StatusMessage = resp.Error ?? "Failed to load";
-}
+  {
+       StatusMessage = resp.Error ?? "Failed to load";
         }
-        catch (Exception ex)
+     }
+ catch (Exception ex)
         {
-            StatusMessage = $"Error loading: {ex.Message}";
+       StatusMessage = $"Error loading: {ex.Message}";
         }
     }
 

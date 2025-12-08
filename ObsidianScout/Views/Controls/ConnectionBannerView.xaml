@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ x:Class="ObsidianScout.Views.Controls.ConnectionBannerView"
+             x:Name="BannerRoot"
+     IsVisible="{Binding ShowBanner, Source={x:Reference BannerRoot}}"
+      VerticalOptions="Start"
+  HorizontalOptions="FillAndExpand"
+      ZIndex="9999">
+
+    <VerticalStackLayout Spacing="0" HorizontalOptions="FillAndExpand" BackgroundColor="Transparent">
+     
+        <!-- Offline mode banner -->
+   <Frame IsVisible="{Binding ShowOfflineBanner, Source={x:Reference BannerRoot}}" 
+          BackgroundColor="#FFF59D" 
+               Padding="8" 
+               HasShadow="True" 
+      CornerRadius="0" 
+          HorizontalOptions="FillAndExpand" 
+               Margin="0">
+       <Label Text="Offline � using cached data" 
+   TextColor="#000" 
+      HorizontalTextAlignment="Center" 
+            VerticalOptions="Center" 
+       FontSize="12"
+               LineBreakMode="WordWrap" />
+        </Frame>
+
+    <!-- Connection problem banner -->
+    <Frame IsVisible="{Binding ShowConnectionProblem, Source={x:Reference BannerRoot}}" 
+          BackgroundColor="#FFCC80" 
+    Padding="8" 
+HasShadow="True" 
+          CornerRadius="0" 
+          HorizontalOptions="FillAndExpand" 
+      Margin="0">
+  <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" RowDefinitions="Auto">
+    <Label Grid.Column="0"
+               Text="{Binding Message, Source={x:Reference BannerRoot}}"
+     VerticalOptions="Center"
+    HorizontalOptions="StartAndExpand"
+           FontSize="12"
+      TextColor="#000"
+                HorizontalTextAlignment="Start"
+       LineBreakMode="WordWrap"
+     MaxLines="4" />
+
+          <Button Grid.Column="1" 
+       Text="Yes" 
+     Clicked="OnYesClicked" 
+       BackgroundColor="#4CAF50" 
+     TextColor="#FFF" 
+     WidthRequest="56"
+               HeightRequest="32"
+          FontSize="12"
+       Padding="4,0" />
+         
+        <Button Grid.Column="2" 
+  Text="No" 
+     Clicked="OnNoClicked" 
+            BackgroundColor="#F44336" 
+ TextColor="#FFF" 
+           WidthRequest="56"
+         HeightRequest="32"
+  FontSize="12"
+     Padding="4,0" />
+            </Grid>
+    </Frame>
+        
+    </VerticalStackLayout>
+</ContentView>

@@ -40,10 +40,10 @@ namespace ObsidianScout
         EnableStrictMode();
      #endif
  
-            // Optimize window for performance
-            OptimizeWindowPerformance();
+         // Optimize window for performance (without edge-to-edge that causes TabBar overlap)
+    OptimizeWindowPerformance();
     
-   // Apply global Android optimizations
+         // Apply global Android optimizations
       Platforms.Android.AndroidPerformanceOptimizer.ApplyGlobalOptimizations(this);
 
     base.OnCreate(savedInstanceState);
@@ -52,115 +52,96 @@ namespace ObsidianScout
    {
    System.Diagnostics.Debug.WriteLine("[MainActivity] OnCreate called");
              
-           // ========================================
-                // MODERN ANDROID UI SETUP (Async to avoid blocking)
-    // ========================================
-                
-    // Enable edge-to-edge display for modern Android look
-     if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
-         {
-   Window?.SetDecorFitsSystemWindows(false);
- 
-         // Modern gesture navigation
-           var windowInsetsController = Window?.InsetsController;
-        if (windowInsetsController != null)
-       {
-      // Use light or dark status bar icons based on theme
-  var uiMode = Resources?.Configuration?.UiMode ?? 0;
-            var isNightMode = (uiMode & global::Android.Content.Res.UiMode.NightMask) == global::Android.Content.Res.UiMode.NightYes;
-             
-           if (isNightMode)
-    {
-              // Dark mode - use light status bar icons
-        windowInsetsController.SetSystemBarsAppearance(0, (int)WindowInsetsControllerAppearance.LightStatusBars);
-        }
-                   else
-               {
-                // Light mode - use dark status bar icons
-     windowInsetsController.SetSystemBarsAppearance(
-            (int)WindowInsetsControllerAppearance.LightStatusBars,
-             (int)WindowInsetsControllerAppearance.LightStatusBars);
-   }
-
-   // Enable gesture navigation
-             windowInsetsController.SystemBarsBehavior = (int)WindowInsetsControllerBehavior.ShowTransientBarsBySwipe;
-           }
-            }
-           
-         // Set modern status bar and navigation bar colors
-                if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop && Window != null)
-         {
+          // ========================================
+        // Set status bar and navigation bar colors (NO edge-to-edge)
+       // ========================================
+     if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop && Window != null)
+            {
+                // IMPORTANT: Do NOT use SetDecorFitsSystemWindows(false) - it causes TabBar overlap
+        // Keep the default behavior where app content fits within system windows
+        
          var uiMode = Resources?.Configuration?.UiMode ?? 0;
    var isNightMode = (uiMode & global::Android.Content.Res.UiMode.NightMask) == global::Android.Content.Res.UiMode.NightYes;
      
-     if (isNightMode)
-            {
-         // Dark mode colors
-       Window.SetStatusBarColor(new Android.Graphics.Color(0x1E, 0x1E, 0x1E)); // #1E1E1E
- Window.SetNavigationBarColor(new Android.Graphics.Color(0x2D, 0x2D, 0x30)); // #2D2D30
-          }
-        else
+      if (isNightMode)
         {
- // Light mode colors
-              Window.SetStatusBarColor(new Android.Graphics.Color(0x63, 0x66, 0xF1)); // #6366F1
-        Window.SetNavigationBarColor(new Android.Graphics.Color(0xFF, 0xFF, 0xFF)); // #FFFFFF
-   }
+     // Dark mode colors
+   Window.SetStatusBarColor(new Android.Graphics.Color(0x1E, 0x1E, 0x1E)); // #1E1E1E
+      Window.SetNavigationBarColor(new Android.Graphics.Color(0x2D, 0x2D, 0x30)); // #2D2D30
   }
+else
+          {
+          // Light mode colors
+    Window.SetStatusBarColor(new Android.Graphics.Color(0x63, 0x66, 0xF1)); // #6366F1
+          Window.SetNavigationBarColor(new Android.Graphics.Color(0xFF, 0xFF, 0xFF)); // #FFFFFF
+  }
+         
+           // Set light/dark status bar icons based on theme
+if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+             {
+   var windowInsetsController = Window.InsetsController;
+      if (windowInsetsController != null)
+   {
+              if (isNightMode)
+      {
+      // Dark mode - use light status bar icons
+  windowInsetsController.SetSystemBarsAppearance(0, (int)WindowInsetsControllerAppearance.LightStatusBars);
+        }
+        else
+          {
+     // Light mode - use dark status bar icons
+  windowInsetsController.SetSystemBarsAppearance(
+        (int)WindowInsetsControllerAppearance.LightStatusBars,
+    (int)WindowInsetsControllerAppearance.LightStatusBars);
+        }
+         }
+ }
+           }
 
                 // ========================================
-          // CRITICAL: Initialize heavy operations asynchronously
-         // ========================================
-     InitializeAsync();
+     // CRITICAL: Initialize heavy operations asynchronously
+    // ========================================
+   InitializeAsync();
+        }
+            catch (System.Exception ex)
+  {
+          System.Diagnostics.Debug.WriteLine($"[MainActivity] OnCreate error: {ex.Message}");
             }
-    catch (System.Exception ex)
-         {
- System.Diagnostics.Debug.WriteLine($"[MainActivity] OnCreate error: {ex.Message}");
-       }
-      }
+        }
 
         /// <summary>
-        /// Optimize window for maximum performance
-     /// </summary>
+        /// Optimize window for maximum performance (WITHOUT edge-to-edge mode)
+        /// </summary>
         private void OptimizeWindowPerformance()
         {
             try
-  {
-     if (Window == null) return;
+   {
+  if (Window == null) return;
 
-           // ========================================
-        // CRITICAL PERFORMANCE FLAGS
-    // ========================================
+     // ========================================
+    // HARDWARE ACCELERATION ONLY - NO EDGE-TO-EDGE
+// ========================================
+  
+      // Enable hardware acceleration at window level
+         Window.SetFlags(WindowManagerFlags.HardwareAccelerated, WindowManagerFlags.HardwareAccelerated);
         
-    // Enable hardware acceleration at window level
-    Window.SetFlags(WindowManagerFlags.HardwareAccelerated, WindowManagerFlags.HardwareAccelerated);
-        
-   // Optimize for smooth rendering
-          if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
-          {
-         // Allow content to draw under system bars (reduces overdraw)
-          Window.SetFlags(WindowManagerFlags.LayoutNoLimits, WindowManagerFlags.LayoutNoLimits);
-            }
-        
-        // Set pixel format for best performance
-     Window.SetFormat(global::Android.Graphics.Format.Rgba8888);
+         // Set pixel format for best performance
+   Window.SetFormat(global::Android.Graphics.Format.Rgba8888);
          
- // Enable translucent status/nav bars for smooth edge-to-edge
-  if (Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat)
-       {
-         Window.SetFlags(
-     WindowManagerFlags.TranslucentStatus | WindowManagerFlags.TranslucentNavigation,
-          WindowManagerFlags.TranslucentStatus | WindowManagerFlags.TranslucentNavigation);
+  // DO NOT use these flags - they cause TabBar to go under system navigation:
+         // - WindowManagerFlags.LayoutNoLimits
+  // - WindowManagerFlags.TranslucentNavigation
+        // - SetDecorFitsSystemWindows(false)
+
+      System.Diagnostics.Debug.WriteLine("[MainActivity] Window performance optimizations applied (no edge-to-edge)");
           }
-
-      System.Diagnostics.Debug.WriteLine("[MainActivity] Window performance optimizations applied");
+   catch (System.Exception ex)
+       {
+      System.Diagnostics.Debug.WriteLine($"[MainActivity] Window optimization error: {ex.Message}");
             }
-            catch (System.Exception ex)
-      {
-       System.Diagnostics.Debug.WriteLine($"[MainActivity] Window optimization error: {ex.Message}");
-      }
-        }
+     }
 
-  /// <summary>
+        /// <summary>
         /// Enable StrictMode to catch performance issues in debug builds
      /// </summary>
         [System.Diagnostics.Conditional("DEBUG")]

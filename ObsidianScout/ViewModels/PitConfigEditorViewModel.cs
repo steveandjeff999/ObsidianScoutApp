@@ -71,17 +71,18 @@ public partial class PitConfigEditorViewModel : ObservableObject
         try
   {
      StatusMessage = "Loading pit config...";
-  var resp = await _api.GetPitConfigAsync();
-            
+            // Use team config endpoint for editors (explicit per-team config, not alliance)
+  var resp = await _api.GetTeamPitConfigAsync();
+ 
   if (resp.Success && resp.Config != null)
       {
 NormalizeConfig(resp.Config);
    CurrentConfig = resp.Config;
-      JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
-        PopulateCollections(resp.Config);
+   JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
+     PopulateCollections(resp.Config);
      UpdateStatusCounts();
        StatusMessage = "Loaded pit config successfully";
-       }
+  }
       else
     {
    StatusMessage = resp.Error ?? "Failed to load pit config";

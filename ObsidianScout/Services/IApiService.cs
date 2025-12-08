@@ -20,6 +20,7 @@ public interface IApiService
     Task<MatchesResponse> GetMatchesAsync(int eventId, string? matchType = null, int? teamNumber = null);
     Task<ScoutingSubmitResponse> SubmitScoutingDataAsync(ScoutingSubmission submission);
     Task<GameConfigResponse> GetGameConfigAsync();
+    Task<GameConfigResponse> GetTeamGameConfigAsync();
     Task<ApiResponse<string>> HealthCheckAsync();
     Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId);
     Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request);
@@ -52,6 +53,7 @@ public interface IApiService
     
     // Pit Scouting
     Task<PitConfigResponse> GetPitConfigAsync();
+    Task<PitConfigResponse> GetTeamPitConfigAsync();
     Task<PitScoutingSubmitResponse> SubmitPitScoutingDataAsync(PitScoutingSubmission submission);
     Task<PitScoutingListResponse> GetPitScoutingDataAsync(int? teamNumber = null);
     Task<PitScoutingEntry?> GetPitScoutingEntryAsync(int entryId);

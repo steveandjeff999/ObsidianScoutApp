@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+        x:Class="ObsidianScout.Views.MenuPage"
+   Title="Menu">
+    <ScrollView>
+  <VerticalStackLayout Padding="20" Spacing="12">
+          
+          <!-- User Info Header -->
+       <Frame BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}"
+   Padding="16"
+ CornerRadius="12"
+       BorderColor="Transparent"
+       Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+         <Label x:Name="UsernameLabel" 
+                 Text="User" 
+    FontSize="18" 
+      FontAttributes="Bold"
+    TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+      Grid.Row="0" Grid.Column="0" />
+     <Label x:Name="TeamLabel" 
+   Text="" 
+      FontSize="14"
+      TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}"
+ Grid.Row="1" Grid.Column="0" />
+           <Button Text="Logout" 
+          Clicked="OnLogoutClicked" 
+  Style="{StaticResource OutlineGlassButton}"
+        Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+        VerticalOptions="Center" />
+            </Grid>
+  </Frame>
+ 
+       <!-- Offline Mode Toggle -->
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}"
+     Padding="16"
+            CornerRadius="12"
+           BorderColor="Transparent"
+                 Margin="0,0,0,8">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+         <Label Text="Offline Mode" 
+   FontSize="16" 
+           FontAttributes="Bold"
+            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+   VerticalOptions="Center"
+       Grid.Row="0" Grid.Column="0" />
+    <Label Text="Work without server connection" 
+     FontSize="12"
+ TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}"
+                  Grid.Row="1" Grid.Column="0" />
+        <Switch x:Name="OfflineModeSwitch"
+             Toggled="OnOfflineModeToggled"
+        Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+               VerticalOptions="Center" />
+   </Grid>
+ </Frame>
+ 
+    <Label Text="All Pages" Style="{StaticResource SectionHeader}" />
+            
+    <Button Text="Home" Clicked="OnHomeClicked" Style="{StaticResource PrimaryButton}" />
+          <Button Text="Teams" Clicked="OnTeamsClicked" Style="{StaticResource SecondaryButton}" />
+       <Button Text="Events" Clicked="OnEventsClicked" Style="{StaticResource SecondaryButton}" />
+            <Button Text="Matches" Clicked="OnMatchesClicked" Style="{StaticResource SecondaryButton}" />
+  <Button Text="QR Scanner" Clicked="OnQRScannerClicked" Style="{StaticResource SecondaryButton}" />
+      <Button Text="Graphs" Clicked="OnGraphsClicked" Style="{StaticResource SecondaryButton}" />
+          <Button Text="Match Prediction" Clicked="OnMatchPredictionClicked" Style="{StaticResource SecondaryButton}" />
+  <Button Text="Server Data" Clicked="OnDataClicked" Style="{StaticResource SecondaryButton}" />
+   <Button Text="Chat" Clicked="OnChatClicked" Style="{StaticResource SecondaryButton}" />
+            <Button x:Name="ManagementButton" Text="Management" Clicked="OnManagementClicked" Style="{StaticResource SecondaryButton}" />
+  <Button x:Name="ManageUsersButton" Text="Manage Users" Clicked="OnManageUsersClicked" Style="{StaticResource SecondaryButton}" />
+    <Button Text="Settings" Clicked="OnSettingsClicked" Style="{StaticResource SecondaryButton}" />
+  
+            <!-- Simple spacer at bottom for TabBar - no complex calculations -->
+        <BoxView HeightRequest="80" Color="Transparent" />
+  </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

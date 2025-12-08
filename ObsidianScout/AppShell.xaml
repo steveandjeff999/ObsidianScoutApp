@@ -12,90 +12,72 @@
 
  <Shell.Resources>
  <ResourceDictionary>
- <!-- Modern flyout item template: icon + label -->
  <DataTemplate x:Key="FlyoutItemTemplate">
- <Grid HeightRequest="54" Padding="16,8">
- <!-- Single centered text column for a clean icon-free flyout -->
+ <Grid HeightRequest="56" Padding="12,8">
+ <Grid.ColumnDefinitions>
+ <ColumnDefinition Width="6" />
+ <ColumnDefinition Width="*" />
+ </Grid.ColumnDefinitions>
+
+ <BoxView
+ Grid.Column="0"
+ WidthRequest="6"
+ CornerRadius="3"
+ BackgroundColor="{AppThemeBinding Light={StaticResource Primary500}, Dark={StaticResource Primary300}}"
+ Opacity="0.0"
+ x:Name="AccentBar" />
+
  <Label
+ Grid.Column="1"
  Text="{Binding Title}"
  VerticalOptions="Center"
  HorizontalOptions="Start"
  FontSize="16"
  FontFamily="OpenSansRegular"
  TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+
+ <VisualStateManager.VisualStateGroups>
+ <VisualStateGroup Name="CommonStates">
+ <VisualState Name="Normal" />
+ <VisualState Name="Selected">
+ <VisualState.Setters>
+ <Setter TargetName="AccentBar" Property="Opacity" Value="1" />
+ <Setter TargetName="AccentBar" Property="WidthRequest" Value="6" />
+ </VisualState.Setters>
+ </VisualState>
+ </VisualStateGroup>
+ </VisualStateManager.VisualStateGroups>
  </Grid>
  </DataTemplate>
 
- <!-- Apply the template to FlyoutItems -->
  <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
  <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
- <!-- Ensure consistent flyout item background -->
  <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
  </Style>
 
- <!-- Small section header used inside flyout content when needed -->
  <Style x:Key="FlyoutSectionHeader" TargetType="Label">
  <Setter Property="FontAttributes" Value="Bold" />
  <Setter Property="FontSize" Value="12" />
  <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
  <Setter Property="Margin" Value="12,8,12,4" />
  </Style>
+
+ <Style TargetType="TabBar">
+ <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+ <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+ <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Style>
  </ResourceDictionary>
  </Shell.Resources>
 
- <!-- TitleView used to display an offline banner across the top when IsOfflineMode or a connection problem exists -->
- <Shell.TitleView>
- <!-- Use a ContentView that collapses when ShowTitleBanner is false -->
- <ContentView x:Name="TitleContainer" IsVisible="{Binding ShowTitleBanner}" BackgroundColor="Transparent" Padding="0" HorizontalOptions="FillAndExpand" MinimumHeightRequest="0">
- <ContentView.Triggers>
- <DataTrigger TargetType="ContentView" Binding="{Binding ShowTitleBanner}" Value="False">
- <Setter Property="HeightRequest" Value="0" />
- <Setter Property="MinimumHeightRequest" Value="0" />
- <Setter Property="IsVisible" Value="False" />
- </DataTrigger>
- <DataTrigger TargetType="ContentView" Binding="{Binding ShowTitleBanner}" Value="True">
- <!-- Reserve enough vertical space for multi-line banners so they are not clipped by the nav bar -->
- <Setter Property="MinimumHeightRequest" Value="78" />
- <Setter Property="Padding" Value="0" />
- </DataTrigger>
- </ContentView.Triggers>
-
- <VerticalStackLayout Spacing="0" HorizontalOptions="FillAndExpand">
- <!-- Offline label (shows only in offline mode) -->
- <Frame IsVisible="{Binding IsOfflineMode}" BackgroundColor="#FFF59D" Padding="6" HasShadow="False" CornerRadius="0" HorizontalOptions="FillAndExpand" Margin="0">
- <Label Text="Offline — using cached data" TextColor="#000" HorizontalTextAlignment="Center" VerticalOptions="Center" LineBreakMode="WordWrap" />
- </Frame>
-
- <!-- Connection problem banner: visible when ShowConnectionBanner is true -->
- <Grid IsVisible="{Binding ShowConnectionBanner}" BackgroundColor="#FFCC80" Padding="8" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" HorizontalOptions="FillAndExpand" VerticalOptions="Start">
- <Label Grid.Column="0"
- Text="{Binding ConnectionProblemMessage}"
- VerticalOptions="Center"
- HorizontalOptions="StartAndExpand"
- FontSize="14"
- TextColor="#000"
- HorizontalTextAlignment="Start"
- LineBreakMode="WordWrap"
- Margin="0,4" />
-
- <!-- Buttons: ensure they don't force extra reserved height when hidden -->
- <Button Grid.Column="1" Text="Yes" Clicked="OnEnableOfflineClicked" BackgroundColor="#4CAF50" TextColor="#FFF" MinimumWidthRequest="70" HeightRequest="36" />
- <Button Grid.Column="2" Text="No" Clicked="OnDismissConnectionClicked" BackgroundColor="#F44336" TextColor="#FFF" MinimumWidthRequest="70" HeightRequest="36" />
- </Grid>
- </VerticalStackLayout>
- </ContentView>
- </Shell.TitleView>
-
- <!-- Flyout Header: avatar, username, team, offline toggle -->
  <Shell.FlyoutHeader>
- <!-- Two-row grid: header content + subtle shadow line -->
  <Grid>
  <Grid.RowDefinitions>
  <RowDefinition Height="Auto" />
  <RowDefinition Height="2" />
  </Grid.RowDefinitions>
 
- <!-- Header content -->
  <Grid Grid.Row="0" Padding="0" Background="{AppThemeBinding Light={StaticResource FlyoutHeaderBrushLight}, Dark={StaticResource FlyoutHeaderBrushDark}}">
  <Grid.RowDefinitions>
  <RowDefinition Height="Auto" />
@@ -103,34 +85,29 @@
  </Grid.RowDefinitions>
 
  <HorizontalStackLayout Spacing="12" VerticalOptions="Center" Padding="16">
- <!-- Avatar circle with proper layering -->
- <Grid WidthRequest="{StaticResource FlyoutAvatarSize}" HeightRequest="{StaticResource FlyoutAvatarSize}" HorizontalOptions="Start" VerticalOptions="Center" Margin="0,0,0,8">
- <!-- Background circle -->
+ <Grid WidthRequest="48" HeightRequest="48" HorizontalOptions="Start" VerticalOptions="Center" Margin="0,0,0,8">
  <Ellipse Fill="{AppThemeBinding Light=White, Dark={StaticResource DarkSurfaceElevated}}"
- WidthRequest="{StaticResource FlyoutAvatarSize}"
- HeightRequest="{StaticResource FlyoutAvatarSize}"
- Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#505050}"
+ WidthRequest="48"
+ HeightRequest="48"
+ Stroke="{AppThemeBinding Light=#E8E8E8, Dark=#4A4A4A}"
  StrokeThickness="1" />
 
- <!-- Profile picture with circular clip (size driven by tokens) -->
  <Image Source="{Binding ProfilePictureSource}"
  Aspect="AspectFill"
  IsVisible="{Binding HasProfilePicture}"
- WidthRequest="{StaticResource FlyoutAvatarSize}"
- HeightRequest="{StaticResource FlyoutAvatarSize}"
+ WidthRequest="48"
+ HeightRequest="48"
  HorizontalOptions="Center"
  VerticalOptions="Center">
  <Image.Clip>
- <!-- Center uses radius value (adjust token if changing) -->
- <EllipseGeometry Center="40,40" RadiusX="{StaticResource FlyoutAvatarRadius}" RadiusY="{StaticResource FlyoutAvatarRadius}" />
+ <EllipseGeometry Center="24,24" RadiusX="24" RadiusY="24" />
  </Image.Clip>
  </Image>
 
- <!-- Fallback initials label -->
  <Label Text="{Binding UserInitials}"
  HorizontalTextAlignment="Center"
  VerticalTextAlignment="Center"
- FontSize="20"
+ FontSize="16"
  FontAttributes="Bold"
  TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
  IsVisible="{Binding HasProfilePicture, Converter={StaticResource InvertedBoolConverter}}"
@@ -139,12 +116,12 @@
  </Grid>
 
  <VerticalStackLayout VerticalOptions="Center" Spacing="2">
- <Label Text="{Binding CurrentUsername}" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
-                            </Label.GestureRecognizers>
-                        </Label>
- <Label Text="{Binding CurrentTeamInfo}" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" />
+ <Label Text="{Binding CurrentUsername}" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+ <Label.GestureRecognizers>
+ <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
+ </Label.GestureRecognizers>
+ </Label>
+ <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" />
 
  <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="0,6,0,0">
  <Label Text="Offline Mode" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" VerticalOptions="Center" />
@@ -154,12 +131,58 @@
  </HorizontalStackLayout>
  </Grid>
 
- <!-- Subtle shadow line to give elevation -->
- <BoxView Grid.Row="1" HeightRequest="2" BackgroundColor="Black" Opacity="0.12" />
+ <BoxView Grid.Row="1" HeightRequest="2" BackgroundColor="Black" Opacity="0.06" />
  </Grid>
  </Shell.FlyoutHeader>
 
- <!-- Primary application pages (use vector icons from IconFonts resource dictionary) -->
+ <!-- Login TabBar for unauthenticated users on mobile -->
+ <TabBar x:Name="LoginTabBar" Route="LoginTabBar">
+ <Tab Title="Login" Route="LoginPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="🔑" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+ </Tab>
+ </TabBar>
+
+ <!-- Main TabBar with Android-specific bottom margin to sit above system navigation -->
+ <TabBar x:Name="MobileTabBar" Route="MobileTabBar">
+ <Tab Title="Home" Route="MainPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="🏠" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+ </Tab>
+
+ <Tab Title="Match" Route="ScoutingLandingPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="🎯" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+ </Tab>
+
+ <Tab Title="Pit" Route="PitScoutingPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="🔧" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
+ </Tab>
+
+ <Tab Title="Settings" Route="SettingsPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="⚙" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
+ </Tab>
+
+ <Tab Title="Menu" Route="MenuPage">
+ <Tab.Icon>
+ <FontImageSource Glyph="☰" FontFamily="OpenSansSemibold" Size="28" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ </Tab.Icon>
+ <ShellContent ContentTemplate="{DataTemplate views:MenuPage}" />
+ </Tab>
+ </TabBar>
+
  <FlyoutItem Title="Home" IsVisible="{Binding IsLoggedIn}" Route="MainPage">
  <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
  </FlyoutItem>
@@ -212,7 +235,6 @@
  <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
  </FlyoutItem>
 
- <!-- Settings and Login -->
  <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
  <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
  </FlyoutItem>
@@ -221,7 +243,6 @@
  <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
  </FlyoutItem>
 
- <!-- Flyout Footer: Settings + Logout compact row -->
  <Shell.FlyoutFooter>
  <Grid Padding="12" BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
  <Grid.ColumnDefinitions>

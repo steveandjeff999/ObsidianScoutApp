@@ -71,6 +71,7 @@
 		<AndroidResource Include="Platforms\Android\Resources\xml\network_security_config.xml" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 	 <AndroidResource Remove="Platforms\Android\Resources\drawable-night\card_background_dark.xml" />
 	 <AndroidResource Remove="Platforms\Android\Resources\drawable-night\edittext_background_dark.xml" />
@@ -241,6 +242,9 @@
 	 <MauiXaml Update="Views\ChatPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Views\Controls\ConnectionBannerView.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Views\DataPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
@@ -270,6 +274,12 @@
 	 </MauiXaml>
 	 <MauiXaml Update="Views\MatchPredictionPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\MenuFlyoutOpenerPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
+	 <MauiXaml Update="Views\MenuPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
 	 <MauiXaml Update="Views\NotificationsViewerPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
