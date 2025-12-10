@@ -1,265 +1,337 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell
- x:Class="ObsidianScout.AppShell"
- xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
- xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:local="clr-namespace:ObsidianScout"
- xmlns:views="clr-namespace:ObsidianScout.Views"
- Title="ObsidianScout"
- FlyoutBehavior="Flyout"
- FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
- FlyoutHeaderBehavior="Fixed">
+    x:Class="ObsidianScout.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:ObsidianScout"
+    xmlns:views="clr-namespace:ObsidianScout.Views"
+    Title="ObsidianScout"
+    FlyoutBehavior="Flyout"
+    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
+    FlyoutHeaderBehavior="Fixed"
+    Shell.TabBarBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
+    Shell.TabBarForegroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+    Shell.TabBarUnselectedColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+    Shell.TabBarTitleColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
 
- <Shell.Resources>
- <ResourceDictionary>
- <DataTemplate x:Key="FlyoutItemTemplate">
- <Grid HeightRequest="56" Padding="12,8">
- <Grid.ColumnDefinitions>
- <ColumnDefinition Width="6" />
- <ColumnDefinition Width="*" />
- </Grid.ColumnDefinitions>
+    <Shell.Resources>
+        <ResourceDictionary>
+   <!-- Flyout Item Template -->
+     <DataTemplate x:Key="FlyoutItemTemplate">
+   <Grid HeightRequest="52" Padding="16,0" ColumnSpacing="16">
+     <Grid.ColumnDefinitions>
+ <ColumnDefinition Width="4" />
+     <ColumnDefinition Width="*" />
+       </Grid.ColumnDefinitions>
 
- <BoxView
- Grid.Column="0"
- WidthRequest="6"
- CornerRadius="3"
- BackgroundColor="{AppThemeBinding Light={StaticResource Primary500}, Dark={StaticResource Primary300}}"
- Opacity="0.0"
- x:Name="AccentBar" />
+            <!-- Selection indicator -->
+            <BoxView
+  Grid.Column="0"
+     WidthRequest="4"
+               CornerRadius="2"
+   BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+  Opacity="0"
+            VerticalOptions="Center"
+ HeightRequest="24"
+            x:Name="AccentBar" />
 
- <Label
- Grid.Column="1"
- Text="{Binding Title}"
- VerticalOptions="Center"
- HorizontalOptions="Start"
- FontSize="16"
- FontFamily="OpenSansRegular"
- TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+ <!-- Menu item text -->
+    <Label
+            Grid.Column="1"
+   Text="{Binding Title}"
+            VerticalOptions="Center"
+             HorizontalOptions="Start"
+FontSize="15"
+     FontFamily="OpenSansRegular"
+  TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
 
- <VisualStateManager.VisualStateGroups>
- <VisualStateGroup Name="CommonStates">
- <VisualState Name="Normal" />
- <VisualState Name="Selected">
- <VisualState.Setters>
- <Setter TargetName="AccentBar" Property="Opacity" Value="1" />
- <Setter TargetName="AccentBar" Property="WidthRequest" Value="6" />
- </VisualState.Setters>
- </VisualState>
- </VisualStateGroup>
- </VisualStateManager.VisualStateGroups>
- </Grid>
- </DataTemplate>
+       <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup Name="CommonStates">
+            <VisualState Name="Normal">
+          <VisualState.Setters>
+           <Setter TargetName="AccentBar" Property="Opacity" Value="0" />
+    </VisualState.Setters>
+   </VisualState>
+   <VisualState Name="Selected">
+      <VisualState.Setters>
+   <Setter TargetName="AccentBar" Property="Opacity" Value="1" />
+          </VisualState.Setters>
+         </VisualState>
+     </VisualStateGroup>
+</VisualStateManager.VisualStateGroups>
+       </Grid>
+            </DataTemplate>
 
- <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
+     <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
  <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
- <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
- </Style>
+     <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+            </Style>
 
- <Style x:Key="FlyoutSectionHeader" TargetType="Label">
- <Setter Property="FontAttributes" Value="Bold" />
- <Setter Property="FontSize" Value="12" />
- <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
- <Setter Property="Margin" Value="12,8,12,4" />
- </Style>
+       <Style x:Key="FlyoutSectionHeader" TargetType="Label">
+       <Setter Property="FontAttributes" Value="Bold" />
+          <Setter Property="FontSize" Value="12" />
+ <Setter Property="CharacterSpacing" Value="0.5" />
+          <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+         <Setter Property="Margin" Value="16,16,16,8" />
+    </Style>
 
- <Style TargetType="TabBar">
- <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
- <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+     <Style TargetType="TabBar">
+            <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
+     <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />
  <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
- <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Style>
- </ResourceDictionary>
- </Shell.Resources>
+   <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />
+    </Style>
+        </ResourceDictionary>
+    </Shell.Resources>
 
- <Shell.FlyoutHeader>
- <Grid>
- <Grid.RowDefinitions>
- <RowDefinition Height="Auto" />
- <RowDefinition Height="2" />
- </Grid.RowDefinitions>
+    <Shell.FlyoutHeader>
+  <Grid BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}">
+         <Grid.RowDefinitions>
+             <RowDefinition Height="Auto" />
+                <RowDefinition Height="1" />
+    </Grid.RowDefinitions>
 
- <Grid Grid.Row="0" Padding="0" Background="{AppThemeBinding Light={StaticResource FlyoutHeaderBrushLight}, Dark={StaticResource FlyoutHeaderBrushDark}}">
- <Grid.RowDefinitions>
- <RowDefinition Height="Auto" />
- <RowDefinition Height="Auto" />
- </Grid.RowDefinitions>
+       <!-- Header Content -->
+  <Grid Grid.Row="0" Padding="20,24,20,20" RowSpacing="16">
+                <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+  <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
 
- <HorizontalStackLayout Spacing="12" VerticalOptions="Center" Padding="16">
- <Grid WidthRequest="48" HeightRequest="48" HorizontalOptions="Start" VerticalOptions="Center" Margin="0,0,0,8">
- <Ellipse Fill="{AppThemeBinding Light=White, Dark={StaticResource DarkSurfaceElevated}}"
- WidthRequest="48"
- HeightRequest="48"
- Stroke="{AppThemeBinding Light=#E8E8E8, Dark=#4A4A4A}"
- StrokeThickness="1" />
+    <!-- User info row -->
+       <HorizontalStackLayout Grid.Row="0" Spacing="16" VerticalOptions="Center">
+ <!-- Avatar -->
+           <Grid WidthRequest="52" HeightRequest="52">
+          <Ellipse 
+         Fill="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+    WidthRequest="52"
+          HeightRequest="52"
+   Stroke="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+      StrokeThickness="1" />
 
- <Image Source="{Binding ProfilePictureSource}"
- Aspect="AspectFill"
- IsVisible="{Binding HasProfilePicture}"
- WidthRequest="48"
- HeightRequest="48"
- HorizontalOptions="Center"
- VerticalOptions="Center">
+  <Image 
+Source="{Binding ProfilePictureSource}"
+               Aspect="AspectFill"
+      IsVisible="{Binding HasProfilePicture}"
+     WidthRequest="52"
+       HeightRequest="52"
+           HorizontalOptions="Center"
+   VerticalOptions="Center">
  <Image.Clip>
- <EllipseGeometry Center="24,24" RadiusX="24" RadiusY="24" />
+            <EllipseGeometry Center="26,26" RadiusX="26" RadiusY="26" />
  </Image.Clip>
- </Image>
+          </Image>
 
- <Label Text="{Binding UserInitials}"
- HorizontalTextAlignment="Center"
- VerticalTextAlignment="Center"
- FontSize="16"
- FontAttributes="Bold"
- TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
- IsVisible="{Binding HasProfilePicture, Converter={StaticResource InvertedBoolConverter}}"
- HorizontalOptions="Center"
- VerticalOptions="Center" />
- </Grid>
+          <Label 
+   Text="{Binding UserInitials}"
+      HorizontalTextAlignment="Center"
+            VerticalTextAlignment="Center"
+        FontSize="18"
+        FontAttributes="Bold"
+       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+        IsVisible="{Binding HasProfilePicture, Converter={StaticResource InvertedBoolConverter}}"
+  HorizontalOptions="Center"
+        VerticalOptions="Center" />
+    </Grid>
 
- <VerticalStackLayout VerticalOptions="Center" Spacing="2">
- <Label Text="{Binding CurrentUsername}" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
- <Label.GestureRecognizers>
- <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
- </Label.GestureRecognizers>
+        <!-- User details -->
+           <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+           <Label 
+     Text="{Binding CurrentUsername}" 
+              FontSize="17" 
+     FontAttributes="Bold" 
+        FontFamily="OpenSansSemibold"
+        TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+         <Label.GestureRecognizers>
+        <TapGestureRecognizer Tapped="OnUserTapped" NumberOfTapsRequired="1" />
+      </Label.GestureRecognizers>
  </Label>
- <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" />
+             <Label 
+         Text="{Binding CurrentTeamInfo}" 
+     FontSize="13" 
+              TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+        </VerticalStackLayout>
+          </HorizontalStackLayout>
 
- <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="0,6,0,0">
- <Label Text="Offline Mode" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" Opacity="0.9" VerticalOptions="Center" />
- <Switch IsToggled="{Binding IsOfflineMode, Mode=TwoWay}" Toggled="OnOfflineModeToggled" HorizontalOptions="Start" VerticalOptions="Center" />
- </HorizontalStackLayout>
- </VerticalStackLayout>
- </HorizontalStackLayout>
- </Grid>
+        <!-- Offline mode toggle -->
+            <Border 
+         Grid.Row="1"
+        BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+     StrokeThickness="0"
+         Padding="12,10">
+         <Border.StrokeShape>
+            <RoundRectangle CornerRadius="10" />
+   </Border.StrokeShape>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <Label 
+ Text="Offline Mode" 
+    FontSize="14" 
+    TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" 
+     VerticalOptions="Center" />
+           <Switch 
+              IsToggled="{Binding IsOfflineMode, Mode=TwoWay}" 
+ Toggled="OnOfflineModeToggled" 
+     VerticalOptions="Center" />
+          </Grid>
+    </Border>
+         </Grid>
 
- <BoxView Grid.Row="1" HeightRequest="2" BackgroundColor="Black" Opacity="0.06" />
- </Grid>
- </Shell.FlyoutHeader>
+ <!-- Separator -->
+         <BoxView 
+        Grid.Row="1" 
+                HeightRequest="1" 
+           BackgroundColor="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" />
+     </Grid>
+    </Shell.FlyoutHeader>
 
- <!-- Login TabBar for unauthenticated users on mobile -->
- <TabBar x:Name="LoginTabBar" Route="LoginTabBar">
- <Tab Title="Login" Route="LoginPage">
- <Tab.Icon>
- <FontImageSource Glyph="🔑" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+    <!-- Login TabBar for unauthenticated users on mobile -->
+    <TabBar x:Name="LoginTabBar" Route="LoginTabBar">
+        <Tab Title="Login" Route="LoginPage">
+       <Tab.Icon>
+                <FontImageSource Glyph="🔑" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+            </Tab.Icon>
+    <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
  </Tab>
- </TabBar>
+    </TabBar>
 
- <!-- Main TabBar with Android-specific bottom margin to sit above system navigation -->
- <TabBar x:Name="MobileTabBar" Route="MobileTabBar">
- <Tab Title="Home" Route="MainPage">
- <Tab.Icon>
- <FontImageSource Glyph="🏠" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
- </Tab>
+    <!-- Main TabBar -->
+    <TabBar x:Name="MobileTabBar" Route="MobileTabBar">
+        <Tab Title="Home" Route="MainPage">
+      <Tab.Icon>
+   <FontImageSource Glyph="🏠" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+  </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        </Tab>
 
- <Tab Title="Match" Route="ScoutingLandingPage">
- <Tab.Icon>
- <FontImageSource Glyph="🎯" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
- </Tab>
+    <Tab Title="Match" Route="ScoutingLandingPage">
+            <Tab.Icon>
+    <FontImageSource Glyph="🎯" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+        </Tab>
 
- <Tab Title="Pit" Route="PitScoutingPage">
- <Tab.Icon>
- <FontImageSource Glyph="🔧" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
- </Tab>
+   <Tab Title="Pit" Route="PitScoutingPage">
+        <Tab.Icon>
+        <FontImageSource Glyph="🔧" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+    </Tab.Icon>
+     <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
+        </Tab>
 
- <Tab Title="Settings" Route="SettingsPage">
- <Tab.Icon>
- <FontImageSource Glyph="⚙" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
- </Tab>
+        <Tab Title="Settings" Route="SettingsPage">
+          <Tab.Icon>
+         <FontImageSource Glyph="⚙" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
+      </Tab>
 
- <Tab Title="Menu" Route="MenuPage">
- <Tab.Icon>
- <FontImageSource Glyph="☰" FontFamily="OpenSansSemibold" Size="28" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- </Tab.Icon>
- <ShellContent ContentTemplate="{DataTemplate views:MenuPage}" />
- </Tab>
- </TabBar>
+   <Tab Title="Menu" Route="MenuPage">
+            <Tab.Icon>
+        <FontImageSource Glyph="☰" FontFamily="OpenSansSemibold" Size="28" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:MenuPage}" />
+        </Tab>
+  </TabBar>
 
- <FlyoutItem Title="Home" IsVisible="{Binding IsLoggedIn}" Route="MainPage">
- <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
- </FlyoutItem>
+    <!-- Flyout Items -->
+    <FlyoutItem Title="Home" IsVisible="{Binding IsLoggedIn}" Route="MainPage">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Scouting" IsVisible="{Binding IsLoggedIn}" Route="ScoutingLandingPage">
- <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Scouting" IsVisible="{Binding IsLoggedIn}" Route="ScoutingLandingPage">
+<ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Pit Scouting" IsVisible="{Binding IsLoggedIn}" Route="PitScoutingPage">
- <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Pit Scouting" IsVisible="{Binding IsLoggedIn}" Route="PitScoutingPage">
+        <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="QR Scanner" IsVisible="{Binding IsLoggedIn}" Route="QRCodeScannerPage">
- <ShellContent ContentTemplate="{DataTemplate views:QRCodeScannerPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="QR Scanner" IsVisible="{Binding IsLoggedIn}" Route="QRCodeScannerPage">
+        <ShellContent ContentTemplate="{DataTemplate views:QRCodeScannerPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Teams" IsVisible="{Binding IsLoggedIn}" Route="TeamsPage">
- <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Teams" IsVisible="{Binding IsLoggedIn}" Route="TeamsPage">
+    <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Events" IsVisible="{Binding IsLoggedIn}" Route="EventsPage">
- <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Events" IsVisible="{Binding IsLoggedIn}" Route="EventsPage">
+  <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Matches" IsVisible="{Binding IsLoggedIn}" Route="MatchesPage">
- <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Matches" IsVisible="{Binding IsLoggedIn}" Route="MatchesPage">
+        <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Graphs" IsVisible="{Binding IsLoggedIn}" Route="GraphsPage">
- <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Graphs" IsVisible="{Binding IsLoggedIn}" Route="GraphsPage">
+        <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Match Prediction" IsVisible="{Binding IsLoggedIn}" Route="MatchPredictionPage">
- <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Match Prediction" IsVisible="{Binding IsLoggedIn}" Route="MatchPredictionPage">
+   <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Server Data" IsVisible="{Binding IsLoggedIn}" Route="DataPage">
- <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Server Data" IsVisible="{Binding IsLoggedIn}" Route="DataPage">
+        <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Management" IsVisible="{Binding HasManagementAccess}" Route="ManagementPage">
- <ShellContent ContentTemplate="{DataTemplate views:ManagementPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Management" IsVisible="{Binding HasManagementAccess}" Route="ManagementPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ManagementPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Manage Users" IsVisible="{Binding HasManagementAccess}" Route="ManageUsersPage">
- <ShellContent ContentTemplate="{DataTemplate views:ManageUsersPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Manage Users" IsVisible="{Binding HasManagementAccess}" Route="ManageUsersPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ManageUsersPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
- <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
+        <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
- <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
+     <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </FlyoutItem>
 
- <FlyoutItem Title="Login" IsVisible="{Binding IsLoggedOut}" Route="LoginPage">
- <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
- </FlyoutItem>
+    <FlyoutItem Title="Login" IsVisible="{Binding IsLoggedOut}" Route="LoginPage">
+        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+    </FlyoutItem>
 
- <Shell.FlyoutFooter>
- <Grid Padding="12" BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurface}}">
- <Grid.ColumnDefinitions>
- <ColumnDefinition Width="*" />
- <ColumnDefinition Width="Auto" />
- </Grid.ColumnDefinitions>
+    <Shell.FlyoutFooter>
+        <Border 
+     BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+  Padding="16"
+     StrokeThickness="0">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+           <!-- User info -->
+                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+        <Label 
+      Text="{Binding CurrentUsername}" 
+               FontSize="14" 
+   FontAttributes="Bold" 
+         FontFamily="OpenSansSemibold"
+      TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+       <Label 
+         Text="{Binding CurrentTeamInfo}" 
+  FontSize="12" 
+        TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+        </VerticalStackLayout>
 
- <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
- <Label Text="{Binding CurrentUsername}" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
- <Label Text="{Binding CurrentTeamInfo}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextTertiary}, Dark={StaticResource DarkTextSecondary}}" />
- </VerticalStackLayout>
-
- <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
- <Button Text="Settings" Clicked="OnFooterSettingsClicked" Style="{StaticResource OutlineGlassButton}" />
- <Button Text="Logout" Clicked="OnLogoutClicked" Style="{StaticResource OutlineGlassButton}" />
- </HorizontalStackLayout>
- </Grid>
- </Shell.FlyoutFooter>
+                <!-- Action buttons -->
+     <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+    <Button 
+            Text="Settings" 
+    Clicked="OnFooterSettingsClicked" 
+   Style="{StaticResource SecondaryButton}"
+    HeightRequest="36"
+             Padding="12,0"
+               FontSize="13" />
+       <Button 
+    Text="Logout" 
+        Clicked="OnLogoutClicked" 
+                Style="{StaticResource OutlineButton}"
+            HeightRequest="36"
+           Padding="12,0"
+        FontSize="13" />
+          </HorizontalStackLayout>
+   </Grid>
+        </Border>
+    </Shell.FlyoutFooter>
 
 </Shell>

@@ -86,6 +86,10 @@ public class CacheService : ICacheService
  private const string CREATED_SUFFIX = "_created";
  private const string UPDATED_SUFFIX = "_updated";
  
+ // Maximum approximate length (characters) we will attempt to store in SecureStorage
+ // Windows application data container and many secure stores have small limits (~8KB).
+ private const int SECURE_STORAGE_MAX_VALUE_LENGTH =8 *1024; //8 KB
+ 
  private readonly JsonSerializerOptions _jsonOptions;
 
  public CacheService()
@@ -106,12 +110,28 @@ public class CacheService : ICacheService
  // Try SecureStorage first (encrypted), fallback to file storage for large values
  try
  {
+ // If the value is too large, skip attempting SecureStorage to avoid platform exceptions
+ if (!string.IsNullOrEmpty(value) && value.Length > SECURE_STORAGE_MAX_VALUE_LENGTH)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Value too large for SecureStorage for {key} ({value.Length} chars). Using file fallback.");
+ }
+ else
+ {
+ try
+ {
  await SecureStorage.SetAsync(key, value);
  return;
  }
  catch (Exception ex)
  {
  System.Diagnostics.Debug.WriteLine($"[Cache] SecureStorage write failed for {key}: {ex.Message}. Falling back to file.");
+ }
+ }
+ }
+ catch (Exception ex)
+ {
+ // Catching any unexpected exceptions interacting with SecureStorage
+ System.Diagnostics.Debug.WriteLine($"[Cache] SecureStorage attempt error for {key}: {ex.Message}. Falling back to file.");
  }
 
  try
@@ -716,6 +736,28 @@ public class CacheService : ICacheService
  {
  try
  {
+ // Prefer binary file storage for profile pictures to avoid base64 expansion and secure storage limits
+ var binPath = GetFilePathForKey(CACHE_KEY_PROFILE_PICTURE).Replace(".json", ".bin");
+ if (File.Exists(binPath))
+ {
+ try
+ {
+ var bytes = await File.ReadAllBytesAsync(binPath);
+ var timestamp = await GetCacheTimestampAsync(CACHE_KEY_PROFILE_PICTURE);
+ if (timestamp.HasValue)
+ {
+ var age = DateTime.UtcNow - timestamp.Value;
+ System.Diagnostics.Debug.WriteLine($"[Cache] Profile picture loaded from binary cache (age: {age.TotalHours:F1}h, bytes: {bytes.Length})");
+ }
+ return bytes;
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to read binary profile picture: {ex.Message}");
+ }
+ }
+
+ // Fallback: legacy base64 string storage
  var b64 = await GetStringFromCacheAsync(CACHE_KEY_PROFILE_PICTURE);
  if (!string.IsNullOrEmpty(b64))
  {
@@ -748,8 +790,23 @@ public class CacheService : ICacheService
  try
  {
  if (pictureBytes == null || pictureBytes.Length ==0) return;
- var b64 = Convert.ToBase64String(pictureBytes);
- await SaveStringToCacheAsync(CACHE_KEY_PROFILE_PICTURE, b64);
+ // If the image is reasonably large, write as binary file to avoid SecureStorage limits and base64 expansion
+ var binPath = GetFilePathForKey(CACHE_KEY_PROFILE_PICTURE).Replace(".json", ".bin");
+ try
+ {
+ await File.WriteAllBytesAsync(binPath, pictureBytes);
+ System.Diagnostics.Debug.WriteLine($"[Cache] Wrote binary profile picture to file: {binPath}");
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[Cache] Failed to write binary profile picture: {ex.Message}");
+ // Fallback to base64 string storage if binary write fails
+ var b64Fallback = Convert.ToBase64String(pictureBytes);
+ await SaveStringToCacheAsync(CACHE_KEY_PROFILE_PICTURE, b64Fallback);
+ System.Diagnostics.Debug.WriteLine($"[Cache] Wrote profile picture as base64 fallback (chars: {b64Fallback.Length})");
+ }
+
+ // Update timestamp metadata
  await SetCacheTimestampAsync(CACHE_KEY_PROFILE_PICTURE);
  System.Diagnostics.Debug.WriteLine($"[Cache] Profile picture cached successfully ({pictureBytes.Length} bytes)");
  }

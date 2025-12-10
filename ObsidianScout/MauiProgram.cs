@@ -18,8 +18,11 @@ namespace ObsidianScout
     public static class MauiProgram
     {
         public static MauiApp CreateMauiApp()
-{
-        var builder = MauiApp.CreateBuilder();
+        {
+     // Set up global exception handlers FIRST before anything else
+            SetupGlobalExceptionHandlers();
+
+      var builder = MauiApp.CreateBuilder();
      builder
         .UseMauiApp<App>()
                 .UseSkiaSharp()
@@ -45,6 +48,9 @@ namespace ObsidianScout
  builder.Services.AddSingleton<IQRCodeService, QRCodeService>();
  builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
  builder.Services.AddSingleton<IUIThreadingService, UIThreadingService>();
+ 
+ // Register notification navigation service (handles navigation from notification taps)
+ builder.Services.AddSingleton<INotificationNavigationService, NotificationNavigationService>();
 
  // Register platform-specific services
 #if ANDROID
@@ -102,8 +108,25 @@ namespace ObsidianScout
 
  var client = new HttpClient(handler);
 
- // Set timeout to15 seconds (was default100 seconds)
- client.Timeout = TimeSpan.FromSeconds(15);
+ // Get timeout from settings (default to 8 seconds if not set or on error)
+ int timeoutSeconds = 8;
+ try
+ {
+ var settingsService = sp.GetService<ISettingsService>();
+ if (settingsService != null)
+ {
+ // Use Task.Run to avoid blocking on startup
+ timeoutSeconds = Task.Run(async () => await settingsService.GetNetworkTimeoutAsync()).Result;
+ System.Diagnostics.Debug.WriteLine($"[MauiProgram] Network timeout loaded from settings: {timeoutSeconds}s");
+ }
+ }
+ catch (Exception ex)
+ {
+ System.Diagnostics.Debug.WriteLine($"[MauiProgram] Failed to load network timeout from settings: {ex.Message}. Using default: {timeoutSeconds}s");
+ }
+
+ client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+ System.Diagnostics.Debug.WriteLine($"[MauiProgram] HttpClient timeout set to {timeoutSeconds} seconds");
 
  return client;
  });
@@ -196,5 +219,25 @@ namespace ObsidianScout
 
  return app;
  }
- }
+
+        private static void SetupGlobalExceptionHandlers()
+        {
+          // Handle exceptions from the current AppDomain
+     AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+ {
+         var exception = args.ExceptionObject as Exception;
+     System.Diagnostics.Debug.WriteLine($"[FATAL] Unhandled AppDomain exception: {exception?.Message}");
+   System.Diagnostics.Debug.WriteLine($"[FATAL] Stack trace: {exception?.StackTrace}");
+      // Don't rethrow - let the app continue if possible
+          };
+
+   // Handle exceptions from background tasks
+            TaskScheduler.UnobservedTaskException += (sender, args) =>
+  {
+        System.Diagnostics.Debug.WriteLine($"[ERROR] Unobserved task exception: {args.Exception?.Message}");
+            System.Diagnostics.Debug.WriteLine($"[ERROR] Stack trace: {args.Exception?.StackTrace}");
+             args.SetObserved(); // Prevent the exception from terminating the process
+       };
+   }
+    }
 }

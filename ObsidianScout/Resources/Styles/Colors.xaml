@@ -5,160 +5,206 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <!-- ========================================
-       MODERN LIGHT MODE COLORS
-         Professional & Clean Design
-  ======================================== -->
+         MODERN LIGHT MODE COLORS
+         Clean, Professional Design with High Contrast
+    ======================================== -->
     
-    <!-- Primary Brand Colors for Light Mode - Modern Blue/Purple -->
-    <Color x:Key="LightPrimary">#6366F1</Color><!-- Vibrant Indigo -->
-    <Color x:Key="LightPrimaryDark">#4F46E5</Color><!-- Deep Indigo -->
-    <Color x:Key="LightSecondary">#8B5CF6</Color><!-- Purple -->
-    <Color x:Key="LightTertiary">#EC4899</Color><!-- Pink accent -->
+    <!-- Primary Brand Colors for Light Mode - Vibrant Blue -->
+    <Color x:Key="LightPrimary">#2563EB</Color><!-- Blue 600 -->
+    <Color x:Key="LightPrimaryDark">#1D4ED8</Color><!-- Blue 700 -->
+    <Color x:Key="LightPrimaryLight">#3B82F6</Color><!-- Blue 500 -->
+    <Color x:Key="LightSecondary">#7C3AED</Color><!-- Violet 600 -->
+    <Color x:Key="LightSecondaryLight">#8B5CF6</Color><!-- Violet 500 -->
+    <Color x:Key="LightTertiary">#DB2777</Color><!-- Pink 600 -->
+    <Color x:Key="LightAccent">#0EA5E9</Color><!-- Sky 500 -->
     
-    <!-- Backgrounds for Light Mode - Modern Neutrals -->
-    <Color x:Key="LightBackground">#F8FAFC</Color><!-- Soft Blue-Gray -->
-    <Color x:Key="LightSurface">#FFFFFF</Color><!-- Pure White -->
-    <Color x:Key="LightSurfaceVariant">#F1F5F9</Color><!-- Light Gray -->
-    <Color x:Key="LightSurfaceElevated">#FEFEFE</Color><!-- Slightly elevated -->
+    <!-- Backgrounds for Light Mode - Warm Neutrals -->
+    <Color x:Key="LightBackground">#FAFAFA</Color><!-- Neutral 50 -->
+    <Color x:Key="LightSurface">#FFFFFF</Color><!-- White -->
+    <Color x:Key="LightSurfaceVariant">#F5F5F5</Color><!-- Neutral 100 -->
+    <Color x:Key="LightSurfaceElevated">#FFFFFF</Color><!-- White elevated -->
+    <Color x:Key="LightSurfaceContainer">#F0F0F0</Color><!-- Input backgrounds -->
 
     <!-- Text Colors for Light Mode - High Contrast -->
-    <Color x:Key="LightTextPrimary">#0F172A</Color><!-- Nearly Black -->
-    <Color x:Key="LightTextSecondary">#475569</Color><!-- Medium Gray -->
-    <Color x:Key="LightTextTertiary">#94A3B8</Color><!-- Light Gray -->
+ <Color x:Key="LightTextPrimary">#171717</Color><!-- Neutral 900 -->
+    <Color x:Key="LightTextSecondary">#525252</Color><!-- Neutral 600 -->
+    <Color x:Key="LightTextTertiary">#A3A3A3</Color><!-- Neutral 400 -->
+    <Color x:Key="LightTextOnPrimary">#FFFFFF</Color>
     
     <!-- Borders and Dividers for Light Mode -->
-    <Color x:Key="LightBorder">#E2E8F0</Color><!-- Subtle Border -->
-    <Color x:Key="LightDivider">#CBD5E1</Color><!-- Divider -->
+    <Color x:Key="LightBorder">#E5E5E5</Color><!-- Neutral 200 -->
+    <Color x:Key="LightBorderStrong">#D4D4D4</Color><!-- Neutral 300 -->
+    <Color x:Key="LightDivider">#E5E5E5</Color><!-- Neutral 200 -->
     
-  <!-- Status Colors for Light Mode -->
-    <Color x:Key="LightSuccess">#10B981</Color><!-- Green -->
-    <Color x:Key="LightWarning">#F59E0B</Color><!-- Amber -->
-    <Color x:Key="LightError">#EF4444</Color><!-- Red -->
-    <Color x:Key="LightInfo">#3B82F6</Color><!-- Blue -->
+    <!-- Status Colors for Light Mode -->
+    <Color x:Key="LightSuccess">#16A34A</Color><!-- Green 600 -->
+    <Color x:Key="LightSuccessLight">#22C55E</Color><!-- Green 500 -->
+    <Color x:Key="LightSuccessBg">#DCFCE7</Color><!-- Green 100 -->
+    <Color x:Key="LightWarning">#D97706</Color><!-- Amber 600 -->
+    <Color x:Key="LightWarningLight">#F59E0B</Color><!-- Amber 500 -->
+    <Color x:Key="LightWarningBg">#FEF3C7</Color><!-- Amber 100 -->
+    <Color x:Key="LightError">#DC2626</Color><!-- Red 600 -->
+    <Color x:Key="LightErrorLight">#EF4444</Color><!-- Red 500 -->
+    <Color x:Key="LightErrorBg">#FEE2E2</Color><!-- Red 100 -->
+    <Color x:Key="LightInfo">#0284C7</Color><!-- Sky 600 -->
+    <Color x:Key="LightInfoLight">#0EA5E9</Color><!-- Sky 500 -->
+    <Color x:Key="LightInfoBg">#E0F2FE</Color><!-- Sky 100 -->
 
     <!-- Interactive States Light -->
-    <Color x:Key="LightHover">#F1F5F9</Color>
-    <Color x:Key="LightPressed">#E2E8F0</Color>
-    <Color x:Key="LightDisabled">#F8FAFC</Color>
-    <Color x:Key="LightDisabledText">#CBD5E1</Color>
+    <Color x:Key="LightHover">#F5F5F5</Color>
+    <Color x:Key="LightPressed">#E5E5E5</Color>
+    <Color x:Key="LightDisabled">#FAFAFA</Color>
+    <Color x:Key="LightDisabledText">#D4D4D4</Color>
+    <Color x:Key="LightFocusRing">#3B82F6</Color>
 
     <!-- ========================================
-         MODERN DARK MODE COLORS
-         Professional Grays (No Black)
+  MODERN DARK MODE COLORS
+         Professional Dark Theme with Soft Contrast
     ======================================== -->
     
     <!-- Primary Brand Colors for Dark Mode -->
-    <Color x:Key="DarkPrimary">#818CF8</Color><!-- Soft Indigo -->
-    <Color x:Key="DarkPrimaryDark">#6366F1</Color><!-- Indigo -->
-    <Color x:Key="DarkSecondary">#A78BFA</Color><!-- Soft Purple -->
-    <Color x:Key="DarkTertiary">#F472B6</Color><!-- Soft Pink -->
+    <Color x:Key="DarkPrimary">#60A5FA</Color><!-- Blue 400 -->
+    <Color x:Key="DarkPrimaryDark">#3B82F6</Color><!-- Blue 500 -->
+    <Color x:Key="DarkPrimaryLight">#93C5FD</Color><!-- Blue 300 -->
+    <Color x:Key="DarkSecondary">#A78BFA</Color><!-- Violet 400 -->
+    <Color x:Key="DarkSecondaryLight">#C4B5FD</Color><!-- Violet 300 -->
+    <Color x:Key="DarkTertiary">#F472B6</Color><!-- Pink 400 -->
+    <Color x:Key="DarkAccent">#38BDF8</Color><!-- Sky 400 -->
     
-    <!-- Backgrounds for Dark Mode - Professional Grays (No Black) -->
-  <Color x:Key="DarkBackground">#1E1E1E</Color><!-- Dark Gray (VS Code style) -->
-    <Color x:Key="DarkSurface">#2D2D30</Color><!-- Medium Dark Gray -->
-    <Color x:Key="DarkSurfaceVariant">#3E3E42</Color><!-- Lighter Gray -->
-    <Color x:Key="DarkSurfaceElevated">#505053</Color><!-- Elevated Gray -->
+    <!-- Backgrounds for Dark Mode - Neutral Grays -->
+    <Color x:Key="DarkBackground">#121212</Color><!-- Material Dark -->
+    <Color x:Key="DarkSurface">#1E1E1E</Color><!-- Elevated surface -->
+    <Color x:Key="DarkSurfaceVariant">#2A2A2A</Color><!-- Cards and containers -->
+ <Color x:Key="DarkSurfaceElevated">#333333</Color><!-- Higher elevation -->
+    <Color x:Key="DarkSurfaceContainer">#262626</Color><!-- Input backgrounds -->
     
     <!-- Text Colors for Dark Mode -->
-    <Color x:Key="DarkTextPrimary">#E4E4E7</Color><!-- Light Gray -->
-    <Color x:Key="DarkTextSecondary">#A1A1AA</Color><!-- Medium Gray -->
-    <Color x:Key="DarkTextTertiary">#71717A</Color><!-- Darker Gray -->
+    <Color x:Key="DarkTextPrimary">#FAFAFA</Color><!-- Neutral 50 -->
+ <Color x:Key="DarkTextSecondary">#A3A3A3</Color><!-- Neutral 400 -->
+  <Color x:Key="DarkTextTertiary">#737373</Color><!-- Neutral 500 -->
+    <Color x:Key="DarkTextOnPrimary">#171717</Color>
     
     <!-- Borders and Dividers for Dark Mode -->
-    <Color x:Key="DarkBorder">#3F3F46</Color><!-- Border Gray -->
-    <Color x:Key="DarkDivider">#27272A</Color><!-- Divider Gray -->
+    <Color x:Key="DarkBorder">#3D3D3D</Color><!-- Subtle border -->
+    <Color x:Key="DarkBorderStrong">#525252</Color><!-- Stronger border -->
+    <Color x:Key="DarkDivider">#2A2A2A</Color><!-- Divider -->
     
     <!-- Status Colors for Dark Mode -->
-    <Color x:Key="DarkSuccess">#34D399</Color>
-    <Color x:Key="DarkWarning">#FBBF24</Color>
-    <Color x:Key="DarkError">#F87171</Color>
-    <Color x:Key="DarkInfo">#60A5FA</Color>
+    <Color x:Key="DarkSuccess">#4ADE80</Color><!-- Green 400 -->
+    <Color x:Key="DarkSuccessLight">#86EFAC</Color><!-- Green 300 -->
+    <Color x:Key="DarkSuccessBg">#14532D</Color><!-- Green 900 -->
+    <Color x:Key="DarkWarning">#FBBF24</Color><!-- Amber 400 -->
+    <Color x:Key="DarkWarningLight">#FCD34D</Color><!-- Amber 300 -->
+    <Color x:Key="DarkWarningBg">#78350F</Color><!-- Amber 900 -->
+    <Color x:Key="DarkError">#F87171</Color><!-- Red 400 -->
+    <Color x:Key="DarkErrorLight">#FCA5A5</Color><!-- Red 300 -->
+    <Color x:Key="DarkErrorBg">#7F1D1D</Color><!-- Red 900 -->
+    <Color x:Key="DarkInfo">#38BDF8</Color><!-- Sky 400 -->
+    <Color x:Key="DarkInfoLight">#7DD3FC</Color><!-- Sky 300 -->
+    <Color x:Key="DarkInfoBg">#0C4A6E</Color><!-- Sky 900 -->
 
     <!-- Interactive States Dark -->
-    <Color x:Key="DarkHover">#3E3E42</Color>
-  <Color x:Key="DarkPressed">#505053</Color>
-    <Color x:Key="DarkDisabled">#2D2D30</Color>
-    <Color x:Key="DarkDisabledText">#52525B</Color>
+    <Color x:Key="DarkHover">#333333</Color>
+    <Color x:Key="DarkPressed">#404040</Color>
+    <Color x:Key="DarkDisabled">#1E1E1E</Color>
+    <Color x:Key="DarkDisabledText">#525252</Color>
+    <Color x:Key="DarkFocusRing">#60A5FA</Color>
 
     <!-- ========================================
- ADAPTIVE COLORS (Use AppThemeBinding)
+  SEMANTIC COLORS (Theme-aware aliases)
     ======================================== -->
     
-    <Color x:Key="Primary">#6366F1</Color>
-  <Color x:Key="PrimaryDark">#4F46E5</Color>
-    <Color x:Key="Secondary">#8B5CF6</Color>
- <Color x:Key="Tertiary">#EC4899</Color>
+    <Color x:Key="Primary">#2563EB</Color>
+    <Color x:Key="PrimaryDark">#1D4ED8</Color>
+    <Color x:Key="Secondary">#7C3AED</Color>
+    <Color x:Key="Tertiary">#DB2777</Color>
     
-    <Color x:Key="Background">#F8FAFC</Color>
+    <Color x:Key="Background">#FAFAFA</Color>
     <Color x:Key="Surface">#FFFFFF</Color>
-    <Color x:Key="SurfaceVariant">#F1F5F9</Color>
+    <Color x:Key="SurfaceVariant">#F5F5F5</Color>
     
-    <Color x:Key="TextPrimary">#0F172A</Color>
-    <Color x:Key="TextSecondary">#475569</Color>
-    <Color x:Key="TextTertiary">#94A3B8</Color>
+    <Color x:Key="TextPrimary">#171717</Color>
+    <Color x:Key="TextSecondary">#525252</Color>
+    <Color x:Key="TextTertiary">#A3A3A3</Color>
     
-    <Color x:Key="BorderColor">#E2E8F0</Color>
-    <Color x:Key="DividerColor">#CBD5E1</Color>
+    <Color x:Key="BorderColor">#E5E5E5</Color>
+    <Color x:Key="DividerColor">#E5E5E5</Color>
   
- <Color x:Key="Success">#10B981</Color>
-    <Color x:Key="Warning">#F59E0B</Color>
-    <Color x:Key="Error">#EF4444</Color>
-    <Color x:Key="Info">#3B82F6</Color>
+    <Color x:Key="Success">#16A34A</Color>
+    <Color x:Key="Warning">#D97706</Color>
+    <Color x:Key="Error">#DC2626</Color>
+    <Color x:Key="Info">#0284C7</Color>
 
-    <!-- Glassmorphism Overlay Colors (made more translucent for stronger translucency) -->
-    <Color x:Key="GlassOverlayLight">#66FFFFFF</Color> <!--40% white -->
-    <Color x:Key="GlassOverlayDark">#661E293B</Color> <!--40% of dark gray-blue -->
+    <!-- ========================================
+         GLASS/OVERLAY COLORS
+    ======================================== -->
+    
+    <!-- Glassmorphism Overlay Colors -->
+    <Color x:Key="GlassOverlayLight">#B3FFFFFF</Color><!-- 70% white -->
+  <Color x:Key="GlassOverlayDark">#B3121212</Color><!-- 70% dark -->
     <Color x:Key="GlassOverlay">#F5FFFFFF</Color>
 
-    <!-- Deep grey-blue background for pages -->
-    <Color x:Key="DeepGreyBlueLight">#EAF4FB</Color> <!-- subtle light for light theme -->
-    <Color x:Key="DeepGreyBlueDark">#0F172A</Color> <!-- deep grey-blue for dark theme -->
+ <!-- Subtle overlays for cards -->
+    <Color x:Key="CardOverlayLight">#FFFFFF</Color>
+ <Color x:Key="CardOverlayDark">#1E1E1E</Color>
 
-    <!-- Intermediate translucent stops for smoother gradients -->
-    <Color x:Key="LiquidStopLight1">#55EAF4FB</Color>
-    <Color x:Key="LiquidStopLight2">#33EAF4FB</Color>
-    <Color x:Key="LiquidStopLight3">#11EAF4FB</Color>
+    <!-- Page background gradients -->
+    <Color x:Key="DeepGreyBlueLight">#F5F7FA</Color>
+    <Color x:Key="DeepGreyBlueDark">#0A0A0A</Color>
 
-    <Color x:Key="LiquidStopDark1">#4D1E293B</Color>
-    <Color x:Key="LiquidStopDark2">#331E293B</Color>
-    <Color x:Key="LiquidStopDark3">#191E293B</Color>
+<!-- Gradient stops -->
+    <Color x:Key="LiquidStopLight1">#66F5F7FA</Color>
+    <Color x:Key="LiquidStopLight2">#33F5F7FA</Color>
+    <Color x:Key="LiquidStopLight3">#19F5F7FA</Color>
 
-    <!-- Primary button translucent stops -->
-    <Color x:Key="PrimaryBtnStop1">#806366F1</Color>
-    <Color x:Key="PrimaryBtnStop2">#4D6366F1</Color>
-    <Color x:Key="PrimaryBtnStop3">#1A6366F1</Color>
+    <Color x:Key="LiquidStopDark1">#660A0A0A</Color>
+    <Color x:Key="LiquidStopDark2">#330A0A0A</Color>
+    <Color x:Key="LiquidStopDark3">#190A0A0A</Color>
+
+    <!-- Primary button gradient stops -->
+    <Color x:Key="PrimaryBtnStop1">#802563EB</Color>
+    <Color x:Key="PrimaryBtnStop2">#4D2563EB</Color>
+    <Color x:Key="PrimaryBtnStop3">#1A2563EB</Color>
 
     <!-- ========================================
          ALLIANCE COLORS (FRC Red/Blue)
     ======================================== -->
-    <Color x:Key="AllianceRed">#EF4444</Color>
-    <Color x:Key="AllianceRedDark">#DC2626</Color>
-    <Color x:Key="AllianceBlue">#3B82F6</Color>
-    <Color x:Key="AllianceBlueDark">#2563EB</Color>
+    <Color x:Key="AllianceRed">#DC2626</Color>
+    <Color x:Key="AllianceRedDark">#B91C1C</Color>
+    <Color x:Key="AllianceRedLight">#FEE2E2</Color>
+    <Color x:Key="AllianceBlue">#2563EB</Color>
+    <Color x:Key="AllianceBlueDark">#1D4ED8</Color>
+    <Color x:Key="AllianceBlueLight">#DBEAFE</Color>
 
     <!-- ========================================
- ADDITIONAL UI COLORS
+     GRAY SCALE (Tailwind Neutral)
     ======================================== -->
     
-    <!-- Gray Scale -->
-    <Color x:Key="Gray50">#F8FAFC</Color>
-    <Color x:Key="Gray100">#F1F5F9</Color>
-    <Color x:Key="Gray200">#E2E8F0</Color>
-  <Color x:Key="Gray300">#CBD5E1</Color>
-    <Color x:Key="Gray400">#94A3B8</Color>
-    <Color x:Key="Gray500">#64748B</Color>
-    <Color x:Key="Gray600">#475569</Color>
-    <Color x:Key="Gray700">#334155</Color>
-  <Color x:Key="Gray800">#1E293B</Color>
-    <Color x:Key="Gray900">#0F172A</Color>
-    <Color x:Key="Gray950">#020617</Color>
+    <Color x:Key="Gray50">#FAFAFA</Color>
+    <Color x:Key="Gray100">#F5F5F5</Color>
+  <Color x:Key="Gray200">#E5E5E5</Color>
+    <Color x:Key="Gray300">#D4D4D4</Color>
+    <Color x:Key="Gray400">#A3A3A3</Color>
+    <Color x:Key="Gray500">#737373</Color>
+    <Color x:Key="Gray600">#525252</Color>
+    <Color x:Key="Gray700">#404040</Color>
+    <Color x:Key="Gray800">#262626</Color>
+  <Color x:Key="Gray900">#171717</Color>
+    <Color x:Key="Gray950">#0A0A0A</Color>
  
     <!-- Basic Colors -->
     <Color x:Key="White">#FFFFFF</Color>
-    <Color x:Key="Black">#000000</Color>
+<Color x:Key="Black">#000000</Color>
     <Color x:Key="Transparent">#00FFFFFF</Color>
 
-    <!-- Danger alias for Delete buttons -->
-    <Color x:Key="Danger">#EF4444</Color>
+ <!-- Danger alias for Delete buttons -->
+    <Color x:Key="Danger">#DC2626</Color>
+    <Color x:Key="DangerDark">#B91C1C</Color>
+
+    <!-- ========================================
+         LEGACY ALIASES (for backward compatibility)
+    ======================================== -->
+    <Color x:Key="Primary500">#2563EB</Color>
+    <Color x:Key="Primary300">#93C5FD</Color>
 
 </ResourceDictionary>

@@ -68,4 +68,7 @@ public interface IApiService
     Task<UserDetailResponse> GetAdminUserAsync(int userId);
     Task<UserDetailResponse> UpdateAdminUserAsync(int userId, UpdateUserRequest request);
     Task<ApiResponse<bool>> DeleteAdminUserAsync(int userId);
+    
+    // Network configuration
+    Task UpdateHttpClientTimeoutAsync();
 }

@@ -759,4 +759,24 @@ UI ELEMENTS
         <Setter Property="RefreshColor" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />
     </Style>
 
+    <!-- ========================================
+         GLASS UI ALIASES
+         These provide seamless transition between standard and glass UI
+         Pages can use these keys, and they will automatically get the 
+  appropriate style based on whether Glass UI is enabled.
+    ======================================== -->
+
+    <!-- Glass Card Aliases - use these in pages for glass-aware styling -->
+    <Style x:Key="AdaptiveGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}" />
+    <Style x:Key="AdaptiveCompactCard" TargetType="Border" BasedOn="{StaticResource CompactGlassCard}" />
+    <Style x:Key="AdaptiveElevatedCard" TargetType="Border" BasedOn="{StaticResource ElevatedGlassCard}" />
+    
+    <!-- Glass Button Aliases -->
+    <Style x:Key="AdaptivePrimaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
+    <Style x:Key="AdaptiveSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />
+    <Style x:Key="AdaptiveIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}" />
+
+    <!-- Glass Badge Alias -->
+    <Style x:Key="AdaptiveBadge" TargetType="Border" BasedOn="{StaticResource Badge}" />
+
 </ResourceDictionary>

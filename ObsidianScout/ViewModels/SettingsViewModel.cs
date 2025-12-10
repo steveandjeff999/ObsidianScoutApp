@@ -14,6 +14,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IDataPreloadService _preloadService;
     private readonly INotificationPollingService? _notificationPollingService;
     private readonly ILocalNotificationService? _localNotificationService;
+    private readonly IApiService? _apiService;
 
     [ObservableProperty]
     private bool isDarkMode;
@@ -72,19 +73,37 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    public SettingsViewModel(ICacheService cacheService, ISettingsService settingsService, IDataPreloadService preloadService, INotificationPollingService? notificationPollingService = null, ILocalNotificationService? localNotificationService = null)
+    // New: Network timeout in seconds with immediate persistence
+    private int _networkTimeoutSeconds = 8;
+    public int NetworkTimeoutSeconds
+    {
+        get => _networkTimeoutSeconds;
+        set
+        {
+            if (_networkTimeoutSeconds == value) return;
+            // Clamp between 5 and 60 seconds
+            var clamped = Math.Clamp(value, 5, 60);
+            _networkTimeoutSeconds = clamped;
+            OnPropertyChanged();
+            _ = SetNetworkTimeoutAsync(clamped);
+        }
+    }
+
+    public SettingsViewModel(ICacheService cacheService, ISettingsService settingsService, IDataPreloadService preloadService, INotificationPollingService? notificationPollingService = null, ILocalNotificationService? localNotificationService = null, IApiService? apiService = null)
     {
         _cacheService = cacheService;
         _settingsService = settingsService;
         _preloadService = preloadService;
         _notificationPollingService = notificationPollingService;
         _localNotificationService = localNotificationService;
+        _apiService = apiService;
 
         LoadThemePreference();
         _ = UpdateCacheStatusAsync();
         _ = LoadOfflineModeAsync();
         _ = CheckManagementAccessAsync();
         _ = LoadNotificationsPreferenceAsync();
+        _ = LoadNetworkTimeoutAsync();
     }
 
     private async Task CheckManagementAccessAsync()
@@ -240,6 +259,45 @@ public partial class SettingsViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusMessage = $"Failed to set notifications preference: {ex.Message}";
+        }
+    }
+
+    private async Task LoadNetworkTimeoutAsync()
+    {
+        try
+        {
+            var timeout = await _settingsService.GetNetworkTimeoutAsync();
+            NetworkTimeoutSeconds = timeout;
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded network timeout: {timeout}s");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load network timeout: {ex.Message}");
+            NetworkTimeoutSeconds = 8; // Default
+        }
+    }
+
+    private async Task SetNetworkTimeoutAsync(int timeoutSeconds)
+    {
+        try
+        {
+            await _settingsService.SetNetworkTimeoutAsync(timeoutSeconds);
+
+            // Update the HttpClient timeout in ApiService
+            if (_apiService != null)
+            {
+                await _apiService.UpdateHttpClientTimeoutAsync();
+            }
+
+            StatusMessage = $"Network timeout set to {timeoutSeconds}s";
+            await Task.Delay(1500);
+            StatusMessage = string.Empty;
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Network timeout saved: {timeoutSeconds}s");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to set network timeout: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to save network timeout: {ex.Message}");
         }
     }
 

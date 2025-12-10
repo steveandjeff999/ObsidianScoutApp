@@ -112,7 +112,7 @@ public partial class ScoutingViewModel : ObservableObject
 
     private void StartPeriodicRefresh()
     {
-        // Refresh every 60 seconds - runs OFF UI thread to prevent lag
+        // Refresh every 120 seconds (reduced from 60) - runs OFF UI thread to prevent lag
         _refreshTimer = new System.Threading.Timer(
             async _ =>
             {
@@ -128,16 +128,16 @@ public partial class ScoutingViewModel : ObservableObject
                         
                         // Refresh matches if we have an event
                         if (GameConfig != null && !string.IsNullOrEmpty(GameConfig.CurrentEventCode))
-                        {
-                            await AutoLoadMatchesAsync(silent: true);
-                        }
-                        
-                        // Update timestamp on UI thread
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            LastRefresh = DateTime.Now;
-                        });
-                        
+    {
+      await AutoLoadMatchesAsync(silent: true);
+             }
+         
+        // Update timestamp on UI thread
+         await MainThread.InvokeOnMainThreadAsync(() =>
+                   {
+    LastRefresh = DateTime.Now;
+            });
+                         
                         System.Diagnostics.Debug.WriteLine($"✓ Background refresh completed at {DateTime.Now:HH:mm:ss}");
                     }
                     catch (Exception ex)
@@ -147,8 +147,8 @@ public partial class ScoutingViewModel : ObservableObject
                 });
             },
             null,
-            TimeSpan.FromSeconds(60),  // Initial delay
-            TimeSpan.FromSeconds(60)); // Repeat interval
+        TimeSpan.FromSeconds(120),  // Initial delay - increased from 60s
+            TimeSpan.FromSeconds(120)); // Repeat interval - increased from 60s
     }
 
     private async Task RefreshDataInBackground()

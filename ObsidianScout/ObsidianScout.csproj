@@ -50,6 +50,12 @@
 		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
 	</PropertyGroup>
 
+	<!-- Disable XAML-generated debugger break on unhandled exceptions for Windows in Debug mode -->
+	<!-- This allows our custom exception handler in App.xaml.cs to handle non-fatal exceptions gracefully -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION</DefineConstants>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon: use vector SVG named 'appicon.svg' so AndroidManifest @mipmap/appicon matches generated resource -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#000000" />
@@ -134,7 +140,6 @@
 	 <None Remove="Resources\Square44x44Logo.targetsize-32_altform-unplated.png" />
 	 <None Remove="Resources\Square44x44Logo.targetsize-48.png" />
 	 <None Remove="Resources\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
-	 <None Remove="Resources\Square44x44Logo.targetsize-48_altform-unplated.png" />
 	 <None Remove="Resources\Square71x71Logo.scale-100.png" />
 	 <None Remove="Resources\Square71x71Logo.scale-125.png" />
 	 <None Remove="Resources\Square71x71Logo.scale-150.png" />
@@ -166,7 +171,6 @@
 	 <Content Include="Resources\icons\$placeholder$.targetsize-32_altform-unplated.png" />
 	 <Content Include="Resources\icons\$placeholder$.targetsize-48.png" />
 	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-lightunplated.png" />
-	 <Content Include="Resources\icons\$placeholder$.targetsize-48_altform-unplated.png" />
 	 <Content Include="Resources\Square150x150Logo.scale-100.png" />
 	 <Content Include="Resources\Square150x150Logo.scale-125.png" />
 	 <Content Include="Resources\Square150x150Logo.scale-150.png" />
@@ -196,7 +200,6 @@
 	 <Content Include="Resources\Square44x44Logo.targetsize-32_altform-unplated.png" />
 	 <Content Include="Resources\Square44x44Logo.targetsize-48.png" />
 	 <Content Include="Resources\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
-	 <Content Include="Resources\Square44x44Logo.targetsize-48_altform-unplated.png" />
 	 <Content Include="Resources\Square71x71Logo.scale-100.png" />
 	 <Content Include="Resources\Square71x71Logo.scale-125.png" />
 	 <Content Include="Resources\Square71x71Logo.scale-150.png" />
@@ -236,6 +239,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	 <MauiXaml Update="Resources\Styles\GlassStyles.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Resources\Styles\IconFonts.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>

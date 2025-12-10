@@ -1,179 +1,360 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-  xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
-    xmlns:models="clr-namespace:ObsidianScout.Models"
-          x:Class="ObsidianScout.Views.PitScoutingPage"
-    Title="Pit Scouting"
-             x:DataType="vm:PitScoutingViewModel">
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+     xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
+   xmlns:models="clr-namespace:ObsidianScout.Models"
+         x:Class="ObsidianScout.Views.PitScoutingPage"
+      Title="Pit Scouting"
+        x:DataType="vm:PitScoutingViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="16">
-        
-     <!-- Header -->
-   <VerticalStackLayout Grid.Row="0" Spacing="12">
-       
-            <!-- Title -->
+    <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}">
+
+   <!-- ═══════════════════════════════════════════════════════════════
+        HEADER SECTION
+    ═══════════════════════════════════════════════════════════════ -->
+   <Border Grid.Row="0"
+   Padding="20"
+     Shadow="{StaticResource ShadowMd}"
+   Margin="16,16,16,8">
+  <Border.Background>
+     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+     <GradientStop Color="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}" Offset="0.0" />
+  <GradientStop Color="{AppThemeBinding Light={StaticResource LightTertiary}, Dark={StaticResource DarkTertiary}}" Offset="1.0" />
+ </LinearGradientBrush>
+        </Border.Background>
+   <Border.StrokeShape>
+   <RoundRectangle CornerRadius="16" />
+    </Border.StrokeShape>
+        <Border.StrokeThickness>0</Border.StrokeThickness>
+
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+      <!-- Icon -->
+ <Border Grid.Column="0"
+          BackgroundColor="#1AFFFFFF"
+      WidthRequest="44"
+    HeightRequest="44"
+     VerticalOptions="Center">
+ <Border.StrokeShape>
+    <RoundRectangle CornerRadius="12" />
+      </Border.StrokeShape>
+     <Border.StrokeThickness>0</Border.StrokeThickness>
+       <Label Text="🔧"
+       FontSize="20"
+  HorizontalOptions="Center"
+         VerticalOptions="Center" />
+   </Border>
+
+        <!-- Title and Description -->
+  <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
             <Label Text="{Binding PitConfig.PitScouting.Title, FallbackValue='Pit Scouting'}"
-          FontSize="24"
-       FontAttributes="Bold"
-            HorizontalOptions="Center"/>
+       FontSize="20"
+    FontFamily="OpenSansSemibold"
+ FontAttributes="Bold"
+   TextColor="White" />
+     <Label Text="{Binding PitConfig.PitScouting.Description, FallbackValue='Record team pit data'}"
+ FontSize="12"
+TextColor="White"
+    Opacity="0.85"
+     LineBreakMode="TailTruncation"
+ IsVisible="{Binding PitConfig.PitScouting.Description, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+     </VerticalStackLayout>
 
-       <!-- Description -->
-          <Label Text="{Binding PitConfig.PitScouting.Description}"
-       FontSize="14"
-        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-    HorizontalOptions="Center"
-         IsVisible="{Binding PitConfig.PitScouting.Description, Converter={StaticResource IsNotNullOrEmptyConverter}}"/>
+<!-- History Button -->
+        <Border Grid.Column="2"
+BackgroundColor="#20FFFFFF"
+      WidthRequest="44"
+    HeightRequest="44"
+      VerticalOptions="Center"
+  IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}">
+    <Border.StrokeShape>
+    <RoundRectangle CornerRadius="12" />
+       </Border.StrokeShape>
+        <Border.StrokeThickness>0</Border.StrokeThickness>
+   <Border.GestureRecognizers>
+<TapGestureRecognizer Command="{Binding ViewHistoryCommand}" />
+            </Border.GestureRecognizers>
+ <Label Text="📜"
+     FontSize="18"
+      TextColor="White"
+          HorizontalOptions="Center"
+ VerticalOptions="Center" />
+           </Border>
+         </Grid>
+   </Border>
 
-            <!-- Scout Name -->
-            <Entry Placeholder="Scout Name"
-         Text="{Binding ScoutName}"
-           FontSize="16"/>
+ <!-- ═══════════════════════════════════════════════════════════════
+        MAIN FORM CONTENT
+        ═══════════════════════════════════════════════════════════════ -->
+        <ScrollView Grid.Row="1" Margin="0,8,0,0">
+   <VerticalStackLayout Spacing="16" Padding="16,8,16,16">
 
-  <!-- Team Picker -->
-            <Picker Title="Select Team"
-     ItemsSource="{Binding Teams}"
-  SelectedItem="{Binding SelectedTeam}"
-   FontSize="16">
+<!-- Scout & Team Selection Card -->
+<Border Style="{StaticResource GlassCard}" Padding="20">
+      <VerticalStackLayout Spacing="16">
+    <Label Text="SCOUT INFO"
+   FontSize="12"
+          FontFamily="OpenSansSemibold"
+CharacterSpacing="0.5"
+            TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+Margin="0,0,0,4" />
+
+  <!-- Scout Name Input -->
+       <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+        Padding="4"
+    StrokeThickness="1"
+Stroke="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}">
+      <Border.StrokeShape>
+       <RoundRectangle CornerRadius="12" />
+         </Border.StrokeShape>
+   <Entry Placeholder="Your name"
+      Text="{Binding ScoutName}"
+       FontSize="15"
+           Margin="12,0" />
+   </Border>
+
+   <!-- Team Picker -->
+   <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceContainer}, Dark={StaticResource DarkSurfaceContainer}}"
+        Padding="4"
+          StrokeThickness="1"
+   Stroke="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}">
+     <Border.StrokeShape>
+  <RoundRectangle CornerRadius="12" />
+      </Border.StrokeShape>
+   <Picker Title="Select Team"
+    ItemsSource="{Binding Teams}"
+         SelectedItem="{Binding SelectedTeam}"
+  FontSize="15">
      <Picker.ItemDisplayBinding>
- <Binding Path="TeamNumber" StringFormat="Team {0}"/>
-     </Picker.ItemDisplayBinding>
+<Binding Path="TeamNumber" StringFormat="Team {0}"/>
+              </Picker.ItemDisplayBinding>
    </Picker>
+         </Border>
 
-            <!-- View History Button (shown when team is selected) -->
-<Button Text="View History"
-     Command="{Binding ViewHistoryCommand}"
-     IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}"
-      Margin="0,8,0,0"
-         Style="{StaticResource SecondaryButtonStyle}"/>
+             <!-- Selected Team Info Badge -->
+         <Border IsVisible="{Binding SelectedTeam, Converter={StaticResource IsNotNullConverter}}"
+   BackgroundColor="{AppThemeBinding Light=#DBEAFE, Dark=#1E3A8A}"
+      Padding="12,8"
+    HorizontalOptions="Start">
+    <Border.StrokeShape>
+          <RoundRectangle CornerRadius="10" />
+           </Border.StrokeShape>
+      <Border.StrokeThickness>0</Border.StrokeThickness>
+ <HorizontalStackLayout Spacing="8">
+        <Label Text="👥" FontSize="14" VerticalOptions="Center" />
+             <Label Text="{Binding SelectedTeam.TeamNumber, StringFormat='Team {0} Selected'}"
+  FontSize="13"
+   FontFamily="OpenSansSemibold"
+TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimaryLight}}" />
+  </HorizontalStackLayout>
+  </Border>
+         </VerticalStackLayout>
+   </Border>
 
  <!-- Status Message -->
-            <Label Text="{Binding StatusMessage}"
-       FontSize="14"
- TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-    HorizontalOptions="Center"
-     IsVisible="{Binding StatusMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}"/>
+       <Border IsVisible="{Binding StatusMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}"
+ BackgroundColor="{AppThemeBinding Light={StaticResource LightInfoBg}, Dark={StaticResource DarkInfoBg}}"
+             Stroke="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
+    StrokeThickness="1"
+         Padding="14,10">
+  <Border.StrokeShape>
+  <RoundRectangle CornerRadius="10" />
+ </Border.StrokeShape>
+        <HorizontalStackLayout Spacing="10">
+     <Label Text="ℹ️" FontSize="14" VerticalOptions="Center" />
+ <Label Text="{Binding StatusMessage}"
+     FontSize="13"
+   TextColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
+VerticalOptions="Center" />
+   </HorizontalStackLayout>
+   </Border>
 
-  <!--  Loading Indicator -->
+  <!-- Loading Indicator -->
+ <Border IsVisible="{Binding IsLoading}"
+  Style="{StaticResource CompactGlassCard}"
+Padding="20"
+    HorizontalOptions="Center">
+  <HorizontalStackLayout Spacing="12">
        <ActivityIndicator IsRunning="{Binding IsLoading}"
-    IsVisible="{Binding IsLoading}"
- Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
+              WidthRequest="24"
+   HeightRequest="24" />
+    <Label Text="Loading form..."
+        FontSize="14"
+      TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+        VerticalOptions="Center" />
+ </HorizontalStackLayout>
+    </Border>
+
+       <!-- Dynamic Form Container -->
+    <VerticalStackLayout Spacing="16" x:Name="FormContainer" />
 
  </VerticalStackLayout>
+ </ScrollView>
 
-   <!-- Scrollable Form Content -->
-<ScrollView Grid.Row="1" Margin="0,16,0,0">
-  <VerticalStackLayout Spacing="24" x:Name="FormContainer"/>
-        </ScrollView>
+<!-- ═══════════════════════════════════════════════════════════════
+        ACTION BUTTONS
+   ═══════════════════════════════════════════════════════════════ -->
+     <Border Grid.Row="2"
+            BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
+   Shadow="{StaticResource ShadowMd}"
+  Padding="16,12">
+  <Border.StrokeShape>
+     <RoundRectangle CornerRadius="20,20,0,0" />
+    </Border.StrokeShape>
+   <Border.StrokeThickness>0</Border.StrokeThickness>
 
-        <!-- Action Buttons -->
-        <Grid Grid.Row="2"
-   ColumnDefinitions="*,*"
-  ColumnSpacing="12"
-          Margin="0,16,0,0">
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <Button Grid.Column="0"
+       Text="Reset"
+   Command="{Binding ResetCommand}"
+ Style="{StaticResource SecondaryButton}"
+   HeightRequest="50" />
 
-          <Button Grid.Column="0"
-Text="Reset"
- Command="{Binding ResetCommand}"
-       Style="{StaticResource SecondaryButtonStyle}"/>
-
-   <Button Grid.Column="1"
-         Text="Submit"
-          Command="{Binding SubmitCommand}"
-Style="{StaticResource PrimaryButtonStyle}"/>
-
-        </Grid>
-
-    <!-- History Overlay -->
-    <Grid Grid.RowSpan="3"
-IsVisible="{Binding IsViewingHistory}"
-         BackgroundColor="{AppThemeBinding Light=#F0FFFFFF, Dark=#F0000000}">
-      
-          <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-    StrokeThickness="1"
-       Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-   Margin="16"
-      StrokeShape="RoundRectangle 16"
-    Padding="16">
-   <Border.Shadow>
-           <Shadow Brush="{AppThemeBinding Light=Black, Dark=Transparent}"
-    Opacity="0.2"
-     Radius="20"/>
-       </Border.Shadow>
-       
-        <Grid RowDefinitions="Auto,*,Auto">
-    
-    <!-- Header -->
-     <VerticalStackLayout Grid.Row="0" Spacing="8">
- <Label Text="Pit Scouting History"
-       FontSize="20"
-   FontAttributes="Bold"
-     HorizontalOptions="Center"/>
-  
- <Label Text="{Binding SelectedTeam.TeamNumber, StringFormat='Team {0}'}"
-       FontSize="16"
-         HorizontalOptions="Center"
-     Opacity="0.7"/>
-           </VerticalStackLayout>
-   
-        <!-- History List -->
-        <CollectionView Grid.Row="1"
-      ItemsSource="{Binding HistoryEntries}"
-        Margin="0,16,0,16">
-       <CollectionView.EmptyView>
-      <Label Text="No pit scouting data found for this team"
- HorizontalOptions="Center"
-        VerticalOptions="Center"
-       Opacity="0.6"/>
-      </CollectionView.EmptyView>
-      
-         <CollectionView.ItemTemplate>
-     <DataTemplate x:DataType="models:PitScoutingEntry">
-     <Border BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
-         StrokeThickness="0"
-           Padding="12"
-       Margin="0,4"
-     StrokeShape="RoundRectangle 8">
- <Border.GestureRecognizers>
-         <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PitScoutingViewModel}}, Path=EditEntryCommand}"
-     CommandParameter="{Binding .}"/>
-         </Border.GestureRecognizers>
-     
-   <Grid ColumnDefinitions="*,Auto">
-    <VerticalStackLayout Grid.Column="0" Spacing="4">
-                <Label Text="{Binding TeamName}"
-             FontSize="16"
-       FontAttributes="Bold"/>
-          
-             <Label Text="{Binding Timestamp, StringFormat='{0:g}'}"
-        FontSize="14"
-         Opacity="0.7"/>
- 
-              <Label Text="{Binding ScoutName, StringFormat='Scout: {0}'}"
-          FontSize="14"
-        Opacity="0.7"
-            IsVisible="{Binding ScoutName, Converter={StaticResource IsNotNullOrEmptyConverter}}"/>
-          </VerticalStackLayout>
-           
-       <Label Grid.Column="1"
-     Text="Edit >"
-            FontSize="14"
-   VerticalOptions="Center"
-                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
+  <Button Grid.Column="1"
+    Text="Submit"
+    Command="{Binding SubmitCommand}"
+    Style="{StaticResource PrimaryButton}"
+   HeightRequest="50" />
    </Grid>
-         </Border>
-                </DataTemplate>
-           </CollectionView.ItemTemplate>
-       </CollectionView>
-     
- <!-- Close Button -->
-             <Button Grid.Row="2"
-         Text="Close"
-         Command="{Binding CloseHistoryCommand}"
-     Style="{StaticResource SecondaryButtonStyle}"/>
-  
-       </Grid>
+ </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+       HISTORY OVERLAY
+  ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.RowSpan="3"
+  IsVisible="{Binding IsViewingHistory}"
+    BackgroundColor="{AppThemeBinding Light=#E6FFFFFF, Dark=#E6121212}">
+
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
+    Shadow="{StaticResource ShadowXl}"
+  Margin="20"
+Padding="0">
+     <Border.StrokeShape>
+       <RoundRectangle CornerRadius="20" />
+     </Border.StrokeShape>
+      <Border.StrokeThickness>0</Border.StrokeThickness>
+
+<Grid RowDefinitions="Auto,*,Auto">
+
+     <!-- History Header -->
+     <Border Grid.Row="0"
+     Padding="20">
+       <Border.Background>
+     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}" Offset="0.0" />
+  <GradientStop Color="{AppThemeBinding Light={StaticResource LightTertiary}, Dark={StaticResource DarkTertiary}}" Offset="1.0" />
+    </LinearGradientBrush>
+        </Border.Background>
+      <Border.StrokeShape>
+     <RoundRectangle CornerRadius="20,20,0,0" />
+       </Border.StrokeShape>
+<Border.StrokeThickness>0</Border.StrokeThickness>
+
+     <VerticalStackLayout Spacing="4">
+       <Label Text="Pit Scouting History"
+  FontSize="20"
+ FontFamily="OpenSansSemibold"
+    FontAttributes="Bold"
+   TextColor="White"
+     HorizontalTextAlignment="Center" />
+       <Label Text="{Binding SelectedTeam.TeamNumber, StringFormat='Team {0}'}"
+ FontSize="14"
+   TextColor="White"
+   Opacity="0.85"
+   HorizontalTextAlignment="Center" />
+          </VerticalStackLayout>
+      </Border>
+
+   <!-- History List -->
+<CollectionView Grid.Row="1"
+      ItemsSource="{Binding HistoryEntries}"
+      Margin="16,8,16,8">
+
+     <CollectionView.EmptyView>
+      <VerticalStackLayout Spacing="12"
+  Padding="40"
+     VerticalOptions="Center"
+    HorizontalOptions="Center">
+      <Label Text="📋"
+           FontSize="48"
+ Opacity="0.4"
+     HorizontalTextAlignment="Center" />
+      <Label Text="No pit scouting data found"
+ FontSize="15"
+ TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+  HorizontalTextAlignment="Center" />
+     </VerticalStackLayout>
+      </CollectionView.EmptyView>
+
+       <CollectionView.ItemTemplate>
+       <DataTemplate x:DataType="models:PitScoutingEntry">
+        <Border Style="{StaticResource CompactGlassCard}"
+         Padding="14"
+          Margin="0,0,0,10">
+   <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PitScoutingViewModel}}, Path=EditEntryCommand}"
+           CommandParameter="{Binding .}" />
+           </Border.GestureRecognizers>
+
+<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+     <VerticalStackLayout Grid.Column="0" Spacing="6">
+    <Label Text="{Binding TeamName}"
+     FontSize="15"
+     FontFamily="OpenSansSemibold"
+ FontAttributes="Bold"
+        TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+
+ <HorizontalStackLayout Spacing="8">
+       <Label Text="🕐" FontSize="11" VerticalOptions="Center" />
+  <Label Text="{Binding Timestamp, StringFormat='{0:g}'}"
+        FontSize="12"
+      TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+          </HorizontalStackLayout>
+
+<HorizontalStackLayout Spacing="8"
+      IsVisible="{Binding ScoutName, Converter={StaticResource IsNotNullOrEmptyConverter}}">
+  <Label Text="👤" FontSize="11" VerticalOptions="Center" />
+  <Label Text="{Binding ScoutName}"
+     FontSize="12"
+   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
+   </HorizontalStackLayout>
+</VerticalStackLayout>
+
+       <Border Grid.Column="1"
+    BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+    Padding="12,8"
+      VerticalOptions="Center">
+   <Border.StrokeShape>
+              <RoundRectangle CornerRadius="8" />
+      </Border.StrokeShape>
+          <Border.StrokeThickness>0</Border.StrokeThickness>
+    <Label Text="Edit"
+     FontSize="12"
+    FontFamily="OpenSansSemibold"
+TextColor="White" />
+       </Border>
+     </Grid>
         </Border>
+      </DataTemplate>
+     </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    <!-- Close Button -->
+ <Border Grid.Row="2"
+         BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
+     Padding="16">
+  <Border.StrokeShape>
+ <RoundRectangle CornerRadius="0,0,20,20" />
+   </Border.StrokeShape>
+   <Border.StrokeThickness>0</Border.StrokeThickness>
+
+   <Button Text="Close"
+ Command="{Binding CloseHistoryCommand}"
+  Style="{StaticResource SecondaryButton}"
+        HeightRequest="48" />
+ </Border>
+
+</Grid>
+            </Border>
         </Grid>
 
     </Grid>

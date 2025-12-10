@@ -70,9 +70,27 @@ public partial class ApiService : IApiService
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+          DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             Converters = { new FlexibleDateTimeConverter() }
         };
+    }
+
+    /// <summary>
+    /// Updates the HttpClient timeout from settings.
+    /// Call this when network timeout setting changes.
+    /// </summary>
+    public async Task UpdateHttpClientTimeoutAsync()
+    {
+   try
+        {
+            var timeoutSeconds = await _settings_service.GetNetworkTimeoutAsync();
+ _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        System.Diagnostics.Debug.WriteLine($"[ApiService] HttpClient timeout updated to {timeoutSeconds} seconds");
+        }
+        catch (Exception ex)
+        {
+  System.Diagnostics.Debug.WriteLine($"[ApiService] Failed to update HttpClient timeout: {ex.Message}");
+        }
     }
 
     // New helper: returns true when network calls should be attempted (offline mode disabled AND connectivity present)
@@ -2543,7 +2561,7 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
  }
  }
 
- public async Task<UsersListResponse> GetAdminUsersAsync(string? search = null, int limit =200, int offset =0)
+ public async Task<UsersListResponse> GetAdminUsersAsync(string? search = null, int limit =200, int offset = 0)
  {
  if (!await ShouldUseNetworkAsync())
  return new UsersListResponse { Success = false, Error = "Offline - cannot fetch users" };

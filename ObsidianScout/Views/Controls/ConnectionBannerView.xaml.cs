@@ -46,16 +46,37 @@ public partial class ConnectionBannerView : ContentView
 
     public ConnectionBannerView()
     {
-    InitializeComponent();
+    try
+        {
+            InitializeComponent();
+        }
+        catch (Exception ex)
+  {
+   System.Diagnostics.Debug.WriteLine($"[ConnectionBannerView] InitializeComponent error: {ex.Message}");
+        }
     }
 
     private void OnYesClicked(object? sender, EventArgs e)
     {
-        YesClicked?.Invoke(this, EventArgs.Empty);
+  try
+        {
+            YesClicked?.Invoke(this, EventArgs.Empty);
+}
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ConnectionBannerView] OnYesClicked error: {ex.Message}");
+        }
     }
 
     private void OnNoClicked(object? sender, EventArgs e)
     {
-        NoClicked?.Invoke(this, EventArgs.Empty);
+        try
+        {
+  NoClicked?.Invoke(this, EventArgs.Empty);
+        }
+     catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ConnectionBannerView] OnNoClicked error: {ex.Message}");
+        }
     }
 }

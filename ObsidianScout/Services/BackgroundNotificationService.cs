@@ -29,6 +29,7 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     private readonly SemaphoreSlim _pollLock = new SemaphoreSlim(1, 1);
     private int _consecutiveEmptyPolls = 0;
     private const int EMPTY_POLLS_BEFORE_SLOWDOWN = 3; // Slow down after 3 empty polls (instead of 5)
+    private bool _disposed = false;
     
     // Tracking data file path
     private readonly string _trackingFilePath;
@@ -40,199 +41,329 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     private const int NOTIFICATION_BUFFER_MINUTES = 5; // Show notifications 5 minutes before scheduled time
 
     public BackgroundNotificationService(
-        IApiService apiService, 
+     IApiService apiService, 
         ISettingsService settingsService,
-      ILocalNotificationService? localNotificationService = null)
+        ILocalNotificationService? localNotificationService = null)
     {
-  _apiService = apiService;
-        _settings_service = settingsService;
+        _apiService = apiService ?? throw new ArgumentNullException(nameof(apiService));
+        _settings_service = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
      _localNotificationService = localNotificationService;
      
-    // Set up tracking file path
-      var appDataPath = FileSystem.AppDataDirectory;
-        _trackingFilePath = Path.Combine(appDataPath, "notification_tracking.json");
+        // Set up tracking file path safely
+        try
+     {
+        var appDataPath = FileSystem.AppDataDirectory;
+            _trackingFilePath = Path.Combine(appDataPath, "notification_tracking.json");
+        }
+        catch (Exception ex)
+        {
+  System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to get app data path: {ex.Message}");
+         _trackingFilePath = "notification_tracking.json"; // Fallback
+        }
         
-        // Load existing tracking data
-        _ = LoadTrackingDataAsync();
+        // Load existing tracking data - fire and forget safely
+        _ = SafeLoadTrackingDataAsync();
+    }
+
+    private async Task SafeLoadTrackingDataAsync()
+    {
+        try
+     {
+   await LoadTrackingDataAsync();
+        }
+        catch (Exception ex)
+        {
+     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeLoadTrackingDataAsync error: {ex.Message}");
+            _trackingData = new NotificationTrackingData
+            {
+         LastPollTime = DateTime.UtcNow.AddHours(-CATCHUP_WINDOW_HOURS),
+  LastCleanupTime = DateTime.UtcNow
+ };
+    }
     }
 
     public async Task StartAsync()
     {
-        if (_running) return;
+        if (_running || _disposed) return;
 
         // Check user setting: if notifications disabled, do not start polling
-        try
-        {
-            var enabled = await _settings_service.GetNotificationsEnabledAsync();
-            if (!enabled)
-            {
-                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Notifications disabled by user - service will not start");
-                return;
-            }
+     try
+ {
+  var enabled = await _settings_service.GetNotificationsEnabledAsync();
+      if (!enabled)
+    {
+     System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Notifications disabled by user - service will not start");
+      return;
+    }
         }
-        catch (Exception ex)
+     catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting: {ex.Message}");
-            // proceed with start as a fallback
+ System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting: {ex.Message}");
         }
 
         _running = true;
         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Starting background notification service");
-   System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Power optimization: Adaptive polling enabled");
+        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Power optimization: Adaptive polling enabled");
  
-        // Load tracking data
-        await LoadTrackingDataAsync();
+   // Load tracking data
+   await SafeLoadTrackingDataAsync();
    
-      // Start timer - poll immediately then every interval
-        _timer = new Timer(async _ => await PollAsync(), null, TimeSpan.Zero, _currentPollInterval);
+   // Start timer - poll immediately then every interval
+        _timer = new Timer(async _ => await SafePollAsync(), null, TimeSpan.FromSeconds(5), _currentPollInterval); // Delay first poll by 5 seconds
  
         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Service started - polling every {_currentPollInterval.TotalSeconds} seconds");
     }
 
-public void Stop()
-  {
-        if (!_running) return;
-        
-        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Stopping background notification service");
-  
-        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
-        _timer?.Dispose();
-        _timer = null;
-        _running = false;
+    private async Task SafePollAsync()
+    {
+        try
+        {
+            await PollAsync();
+        }
+     catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafePollAsync error: {ex.Message}");
+        }
     }
+
+    public void Stop()
+    {
+        if (!_running) return;
+      
+      System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Stopping background notification service");
+
+        try
+        {
+   _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+        _timer?.Dispose();
+      _timer = null;
+        }
+ catch (Exception ex)
+        {
+     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error stopping timer: {ex.Message}");
+   }
+
+ _running = false;
+  }
 
     public async Task ForceCheckAsync()
     {
+        if (_disposed) return;
+
         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Force check requested - resetting to fast polling");
-  _consecutiveEmptyPolls = 0;
-     _currentPollInterval = _minPollInterval;
-   UpdateTimerInterval();
-        await PollAsync();
+     _consecutiveEmptyPolls = 0;
+        _currentPollInterval = _minPollInterval;
+  SafeUpdateTimerInterval();
+        await SafePollAsync();
     }
 
-    private async Task PollAsync()
+    private void SafeUpdateTimerInterval()
     {
-        // Before doing any work, check if notifications are enabled
-        try
+    try
         {
-            var enabled = await _settings_service.GetNotificationsEnabledAsync();
-            if (!enabled)
-            {
-                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Skipping poll because notifications are disabled");
-                return;
-            }
+        UpdateTimerInterval();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting during poll: {ex.Message}");
-            // continue as fallback
-        }
-
-        // Prevent concurrent polling
-      if (!await _pollLock.WaitAsync(0))
-  {
-            System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Poll already in progress, skipping");
-   return;
-        }
-
-        try
-   {
-         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] === POLL START ===");
-       System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Current interval: {_currentPollInterval.TotalSeconds}s");
-    var pollStartTime = DateTime.UtcNow;
-    
-   int notificationsFound = 0;
-  
-       // CRITICAL: Add small delay to prevent blocking UI thread
-        await Task.Delay(50);
-        
-        // Step 1: Check for missed notifications (catch-up) - run on background thread
-        notificationsFound += await Task.Run(async () => await CheckMissedNotificationsAsync());
-        
-  // Small delay between operations
-  await Task.Delay(50);
- 
-        // Step 2: Check scheduled notifications - run on background thread
-        notificationsFound += await Task.Run(async () => await CheckScheduledNotificationsAsync());
-        
-        // Small delay between operations
-        await Task.Delay(50);
-        
-        // Step 3: Check unread chat messages - run on background thread
-        notificationsFound += await Task.Run(async () => await CheckUnreadChatMessagesAsync());
-        
-        // Step 4: Update last poll time
-      _trackingData.LastPollTime = pollStartTime;
-  
-        // Step 5: Cleanup old records if needed (once per day)
- if ((pollStartTime - _trackingData.LastCleanupTime).TotalDays >= 1)
-     {
-       CleanupOldRecords();
-       _trackingData.LastCleanupTime = pollStartTime;
-        }
- 
-        // Step 6: Save tracking data - run on background thread
- await Task.Run(async () => await SaveTrackingDataAsync());
-        
-        // Step 7: Adaptive polling - adjust interval based on activity
-     AdjustPollingInterval(notificationsFound);
-        
-        var pollDuration = (DateTime.UtcNow - pollStartTime).TotalSeconds;
- System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] === POLL END ({pollDuration:F1}s) - Found {notificationsFound} notifications ===");
-    }
-    catch (Exception ex)
-    {
-  System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Poll error: {ex.Message}");
-    }
- finally
- {
-  _pollLock.Release();
-    }
-    }
-
-    private void AdjustPollingInterval(int notificationsFound)
-    {
-      if (notificationsFound > 0)
-        {
-            // Activity detected - poll more frequently
-            _consecutiveEmptyPolls = 0;
-   if (_currentPollInterval > _minPollInterval)
-  {
-      _currentPollInterval = _minPollInterval;
-    UpdateTimerInterval();
-    System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] ? Activity detected - increased polling to {_currentPollInterval.TotalSeconds}s");
-    }
-        }
-        else
-    {
-    // No activity - gradually slow down polling to save battery
-      _consecutiveEmptyPolls++;
-            
-        if (_consecutiveEmptyPolls >= EMPTY_POLLS_BEFORE_SLOWDOWN)
-     {
-                var newInterval = TimeSpan.FromSeconds(Math.Min(
-          _currentPollInterval.TotalSeconds * 1.5, // Increase by 50%
-            _maxPollInterval.TotalSeconds
-     ));
-      
-  if (newInterval != _currentPollInterval)
-        {
-        _currentPollInterval = newInterval;
-       UpdateTimerInterval();
-              System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] ? No activity - reduced polling to {_currentPollInterval.TotalSeconds}s (saves battery)");
-  }
-              
-  _consecutiveEmptyPolls = 0; // Reset counter after adjustment
-            }
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeUpdateTimerInterval error: {ex.Message}");
         }
     }
 
     private void UpdateTimerInterval()
     {
         if (_timer != null)
-  {
-          _timer.Change(_currentPollInterval, _currentPollInterval);
+{
+         _timer.Change(_currentPollInterval, _currentPollInterval);
+      }
+ }
+
+    private void AdjustPollingInterval(int notificationsFound)
+    {
+        try
+   {
+            if (notificationsFound > 0)
+     {
+        _consecutiveEmptyPolls = 0;
+  if (_currentPollInterval > _minPollInterval)
+      {
+                _currentPollInterval = _minPollInterval;
+              SafeUpdateTimerInterval();
+        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Activity detected - increased polling to {_currentPollInterval.TotalSeconds}s");
+          }
+       }
+            else
+            {
+                _consecutiveEmptyPolls++;
+     
+        if (_consecutiveEmptyPolls >= EMPTY_POLLS_BEFORE_SLOWDOWN)
+    {
+      var newInterval = TimeSpan.FromSeconds(Math.Min(
+            _currentPollInterval.TotalSeconds * 1.5,
+            _maxPollInterval.TotalSeconds
+           ));
+      
+         if (newInterval != _currentPollInterval)
+         {
+        _currentPollInterval = newInterval;
+   SafeUpdateTimerInterval();
+   System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] No activity - reduced polling to {_currentPollInterval.TotalSeconds}s (saves battery)");
+        }
+         
+    _consecutiveEmptyPolls = 0;
    }
+            }
+ }
+        catch (Exception ex)
+        {
+  System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] AdjustPollingInterval error: {ex.Message}");
+        }
+    }
+
+    private async Task PollAsync()
+  {
+        if (_disposed) return;
+
+        // Before doing any work, check if notifications are enabled
+        try
+ {
+    var enabled = await _settings_service.GetNotificationsEnabledAsync();
+            if (!enabled)
+    {
+                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Skipping poll because notifications are disabled");
+         return;
+    }
+        }
+  catch (Exception ex)
+        {
+          System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to read notifications setting during poll: {ex.Message}");
+        }
+
+ // Prevent concurrent polling with timeout
+ if (!await _pollLock.WaitAsync(100))
+        {
+     System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Poll already in progress, skipping");
+    return;
+   }
+
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] === POLL START ===");
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Current interval: {_currentPollInterval.TotalSeconds}s");
+   var pollStartTime = DateTime.UtcNow;
+    
+    int notificationsFound = 0;
+  
+await Task.Delay(50);
+ 
+      // Step 1: Check for missed notifications (catch-up) - run on background thread
+    notificationsFound += await SafeCheckMissedNotificationsAsync();
+  
+            // Small delay between operations
+  await Task.Delay(50);
+ 
+            // Step 2: Check scheduled notifications - run on background thread
+   notificationsFound += await SafeCheckScheduledNotificationsAsync();
+            
+       // Small delay between operations
+            await Task.Delay(50);
+            
+         // Step 3: Check unread chat messages - run on background thread
+      notificationsFound += await SafeCheckUnreadChatMessagesAsync();
+            
+      // Step 4: Update last poll time
+    _trackingData.LastPollTime = pollStartTime;
+  
+      // Step 5: Cleanup old records if needed (once per day)
+            if ((pollStartTime - _trackingData.LastCleanupTime).TotalDays >= 1)
+ {
+        SafeCleanupOldRecords();
+      _trackingData.LastCleanupTime = pollStartTime;
+    }
+ 
+         // Step 6: Save tracking data - run on background thread
+    await SafeSaveTrackingDataAsync();
+  
+            // Step 7: Adaptive polling - adjust interval based on activity
+            AdjustPollingInterval(notificationsFound);
+   
+ var pollDuration = (DateTime.UtcNow - pollStartTime).TotalSeconds;
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] === POLL END ({pollDuration:F1}s) - Found {notificationsFound} notifications ===");
+    }
+      catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Poll error: {ex.Message}");
+        }
+ finally
+  {
+            try
+ {
+      _pollLock.Release();
+            }
+   catch { }
+ }
+    }
+
+    private async Task<int> SafeCheckMissedNotificationsAsync()
+    {
+        try
+ {
+  return await Task.Run(async () => await CheckMissedNotificationsAsync());
+        }
+        catch (Exception ex)
+        {
+         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckMissedNotificationsAsync error: {ex.Message}");
+            return 0;
+   }
+    }
+
+  private async Task<int> SafeCheckScheduledNotificationsAsync()
+    {
+        try
+        {
+            return await Task.Run(async () => await CheckScheduledNotificationsAsync());
+        }
+        catch (Exception ex)
+ {
+       System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckScheduledNotificationsAsync error: {ex.Message}");
+            return 0;
+        }
+    }
+
+    private async Task<int> SafeCheckUnreadChatMessagesAsync()
+    {
+    try
+      {
+  return await Task.Run(async () => await CheckUnreadChatMessagesAsync());
+     }
+        catch (Exception ex)
+        {
+        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckUnreadChatMessagesAsync error: {ex.Message}");
+    return 0;
+        }
+    }
+
+    private void SafeCleanupOldRecords()
+    {
+    try
+        {
+ CleanupOldRecords();
+ }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCleanupOldRecords error: {ex.Message}");
+        }
+    }
+
+    private async Task SafeSaveTrackingDataAsync()
+    {
+      try
+   {
+  await Task.Run(async () => await SaveTrackingDataAsync());
+}
+        catch (Exception ex)
+        {
+     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeSaveTrackingDataAsync error: {ex.Message}");
+        }
     }
 
     private async Task<int> CheckMissedNotificationsAsync()
@@ -1162,8 +1293,16 @@ System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent not
 
     public void Dispose()
     {
+        if (_disposed) return;
+    _disposed = true;
+
         Stop();
-_pollLock?.Dispose();
+  
+        try
+{
+       _pollLock?.Dispose();
+        }
+        catch { }
     }
 
     // Helper: extract numeric team IDs from arbitrary alliance string (handles formats like "red(5454,5568)", "[5454,5568]", "5454,5568", etc.)

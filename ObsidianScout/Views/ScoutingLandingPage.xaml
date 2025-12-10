@@ -1,73 +1,318 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
- xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- x:Class="ObsidianScout.Views.ScoutingLandingPage"
- Title="Scouting">
+     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       x:Class="ObsidianScout.Views.ScoutingLandingPage"
+       Title="Scouting">
 
  <ScrollView>
- <VerticalStackLayout Padding="20" Spacing="20">
+        <VerticalStackLayout Padding="20" Spacing="24">
 
- <!-- Hero Card -->
- <Border Style="{StaticResource ElevatedGlassCard}">
- <VerticalStackLayout Spacing="12" Padding="16">
- <VerticalStackLayout Spacing="2">
- <Label Text="Scouting" Style="{StaticResource DisplayLabel}" />
- <Label Text="Quickly record match data with an adaptive scouting form." Style="{StaticResource BodyLabel}" />
- </VerticalStackLayout>
+  <!-- ???????????????????????????????????????????????????????????????
+              HERO CARD - Main call to action
+       ??????????????????????????????????????????????????????????????? -->
+    <Border Padding="24"
+      Shadow="{StaticResource ShadowXl}">
+       <Border.Background>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+              <GradientStop Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Offset="0.0" />
+      <GradientStop Color="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}" Offset="1.0" />
+   </LinearGradientBrush>
+        </Border.Background>
+    <Border.StrokeShape>
+         <RoundRectangle CornerRadius="20" />
+   </Border.StrokeShape>
+ <Border.StrokeThickness>0</Border.StrokeThickness>
 
- <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
- <Button x:Name="OpenFormButton" Style="{StaticResource PrimaryButton}" Text="Open Scouting Form" AutomationProperties.Name="Open Scouting Form" />
- <Button Text="Teams" Style="{StaticResource OutlineButton}" Command="{Binding NavigateToTeamsCommand}" AutomationProperties.Name="Open Teams" />
- </HorizontalStackLayout>
- </VerticalStackLayout>
+ <VerticalStackLayout Spacing="20">
+     <!-- Icon and Title -->
+   <HorizontalStackLayout Spacing="14" HorizontalOptions="Center">
+  <Border BackgroundColor="#1AFFFFFF"
+           WidthRequest="48"
+          HeightRequest="48">
+       <Border.StrokeShape>
+  <RoundRectangle CornerRadius="14" />
+       </Border.StrokeShape>
+       <Border.StrokeThickness>0</Border.StrokeThickness>
+        <Label Text="??"
+        FontSize="22"
+        HorizontalOptions="Center"
+VerticalOptions="Center" />
+          </Border>
+          <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+         <Label Text="Match Scouting"
+    FontSize="24"
+       FontFamily="OpenSansSemibold"
+           FontAttributes="Bold"
+        TextColor="White" />
+    <Label Text="Record live match performance data"
+ FontSize="13"
+     TextColor="White"
+ Opacity="0.85" />
+        </VerticalStackLayout>
+  </HorizontalStackLayout>
+
+                <!-- Action Buttons -->
+        <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+       <Button x:Name="OpenFormButton"
+ Text="Start Scouting"
+   TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimaryDark}}"
+        BackgroundColor="White"
+        FontFamily="OpenSansSemibold"
+          FontSize="15"
+    CornerRadius="12"
+      Padding="24,0"
+    HeightRequest="48"
+        Shadow="{StaticResource ShadowSm}"
+     AutomationProperties.Name="Open Scouting Form" />
+           <Button Text="Teams"
+           Command="{Binding NavigateToTeamsCommand}"
+         TextColor="White"
+         BackgroundColor="#20FFFFFF"
+FontFamily="OpenSansSemibold"
+           FontSize="15"
+  CornerRadius="12"
+          Padding="20,0"
+     HeightRequest="48"
+      AutomationProperties.Name="Open Teams" />
+   </HorizontalStackLayout>
+            </VerticalStackLayout>
+    </Border>
+
+      <!-- ???????????????????????????????????????????????????????????????
+   QUICK ACTIONS SECTION
+    ??????????????????????????????????????????????????????????????? -->
+      <VerticalStackLayout Spacing="16">
+      <Label Text="QUICK ACTIONS"
+Style="{StaticResource SectionHeader}"
+     Margin="4,0,0,0" />
+
+     <!-- 2x2 Grid of Action Cards -->
+<Grid RowDefinitions="Auto,Auto"
+   ColumnDefinitions="*,*"
+    RowSpacing="14"
+   ColumnSpacing="14">
+
+       <!-- Start Match Scouting Card -->
+  <Border Grid.Row="0" Grid.Column="0"
+            Style="{StaticResource GlassCard}"
+      Padding="18"
+          AutomationProperties.Name="Start Match Scouting">
+  <Border.GestureRecognizers>
+      <TapGestureRecognizer Command="{Binding StartMatchScoutingCommand}" />
+           </Border.GestureRecognizers>
+
+           <VerticalStackLayout Spacing="12">
+  <Border BackgroundColor="{AppThemeBinding Light=#DBEAFE, Dark=#1E3A8A}"
+      WidthRequest="44"
+  HeightRequest="44"
+      HorizontalOptions="Start">
+  <Border.StrokeShape>
+    <RoundRectangle CornerRadius="12" />
+      </Border.StrokeShape>
+       <Border.StrokeThickness>0</Border.StrokeThickness>
+       <Label Text="??"
+     FontSize="20"
+    HorizontalOptions="Center"
+        VerticalOptions="Center" />
+ </Border>
+      <VerticalStackLayout Spacing="4">
+           <Label Text="Start Match"
+      FontSize="15"
+  FontFamily="OpenSansSemibold"
+    FontAttributes="Bold"
+    TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+       <Label Text="Begin live scouting session"
+ FontSize="12"
+     TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+   LineBreakMode="WordWrap"
+           MaxLines="2" />
+      </VerticalStackLayout>
+          </VerticalStackLayout>
  </Border>
 
- <!-- Quick Actions -->
- <Label Text="Quick Actions" Style="{StaticResource SectionHeader}" />
+    <!-- Browse Teams Card -->
+     <Border Grid.Row="0" Grid.Column="1"
+        Style="{StaticResource GlassCard}"
+        Padding="18"
+AutomationProperties.Name="Browse Teams">
+ <Border.GestureRecognizers>
+      <TapGestureRecognizer Command="{Binding NavigateToTeamsCommand}" />
+   </Border.GestureRecognizers>
 
- <!-- Responsive flex layout (wraps to single column on narrow screens) -->
- <FlexLayout Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Start">
+      <VerticalStackLayout Spacing="12">
+      <Border BackgroundColor="{AppThemeBinding Light=#FCE7F3, Dark=#701A75}"
+    WidthRequest="44"
+ HeightRequest="44"
+ HorizontalOptions="Start">
+             <Border.StrokeShape>
+     <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+   <Border.StrokeThickness>0</Border.StrokeThickness>
+     <Label Text="??"
+    FontSize="20"
+         HorizontalOptions="Center"
+         VerticalOptions="Center" />
+    </Border>
+      <VerticalStackLayout Spacing="4">
+      <Label Text="Browse Teams"
+          FontSize="15"
+      FontFamily="OpenSansSemibold"
+   FontAttributes="Bold"
+            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+      <Label Text="View roster and team stats"
+      FontSize="12"
+           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+         LineBreakMode="WordWrap"
+  MaxLines="2" />
+      </VerticalStackLayout>
+    </VerticalStackLayout>
+   </Border>
 
- <!-- Card: Start Match Scouting -->
- <Border Style="{StaticResource GlassCard}" Padding="12" Margin="0,0,12,12" MinimumHeightRequest="96"
- FlexLayout.Basis="48%" AutomationProperties.Name="Start Match Scouting">
- <VerticalStackLayout Spacing="8" Padding="0" HorizontalOptions="FillAndExpand">
- <Label Text="Start Match Scouting" Style="{StaticResource SubheaderLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- <Label Text="Launch the live scouting UI for an active match." Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" MaxLines="2" />
+         <!-- Events Card -->
+        <Border Grid.Row="1" Grid.Column="0"
+         Style="{StaticResource GlassCard}"
+       Padding="18"
+    AutomationProperties.Name="Events">
+   <Border.GestureRecognizers>
+   <TapGestureRecognizer Command="{Binding NavigateToEventsCommand}" />
+      </Border.GestureRecognizers>
+
+              <VerticalStackLayout Spacing="12">
+           <Border BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
+       WidthRequest="44"
+      HeightRequest="44"
+           HorizontalOptions="Start">
+            <Border.StrokeShape>
+            <RoundRectangle CornerRadius="12" />
+     </Border.StrokeShape>
+ <Border.StrokeThickness>0</Border.StrokeThickness>
+           <Label Text="??"
+ FontSize="20"
+           HorizontalOptions="Center"
+     VerticalOptions="Center" />
+        </Border>
+         <VerticalStackLayout Spacing="4">
+        <Label Text="Events"
+         FontSize="15"
+      FontFamily="OpenSansSemibold"
+FontAttributes="Bold"
+    TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+       <Label Text="Match schedules and info"
+           FontSize="12"
+  TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+     LineBreakMode="WordWrap"
+ MaxLines="2" />
+   </VerticalStackLayout>
+  </VerticalStackLayout>
+     </Border>
+
+             <!-- Export Data Card -->
+       <Border Grid.Row="1" Grid.Column="1"
+ Style="{StaticResource GlassCard}"
+          Padding="18"
+      AutomationProperties.Name="Export Data">
+        <Border.GestureRecognizers>
+     <TapGestureRecognizer Command="{Binding ExportDataCommand}" />
+    </Border.GestureRecognizers>
+
+  <VerticalStackLayout Spacing="12">
+  <Border BackgroundColor="{AppThemeBinding Light=#FEF3C7, Dark=#78350F}"
+           WidthRequest="44"
+ HeightRequest="44"
+      HorizontalOptions="Start">
+   <Border.StrokeShape>
+        <RoundRectangle CornerRadius="12" />
+       </Border.StrokeShape>
+<Border.StrokeThickness>0</Border.StrokeThickness>
+   <Label Text="??"
+   FontSize="20"
+          HorizontalOptions="Center"
+    VerticalOptions="Center" />
+          </Border>
+          <VerticalStackLayout Spacing="4">
+        <Label Text="Export Data"
+  FontSize="15"
+        FontFamily="OpenSansSemibold"
+          FontAttributes="Bold"
+    TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+     <Label Text="Share via JSON or QR code"
+FontSize="12"
+TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+           LineBreakMode="WordWrap"
+   MaxLines="2" />
+       </VerticalStackLayout>
+     </VerticalStackLayout>
+      </Border>
+
+   </Grid>
+      </VerticalStackLayout>
+
+            <!-- ???????????????????????????????????????????????????????????????
+    STATS/INFO CARD
+    ??????????????????????????????????????????????????????????????? -->
+      <Border Style="{StaticResource CompactGlassCard}" Padding="18">
+ <Grid ColumnDefinitions="*,Auto,*,Auto,*" ColumnSpacing="8">
+  <!-- Scouts Today -->
+<VerticalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Center">
+ <Label Text="0"
+         FontSize="24"
+FontFamily="OpenSansSemibold"
+      FontAttributes="Bold"
+      TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+        HorizontalTextAlignment="Center" />
+  <Label Text="Scouted Today"
+   FontSize="11"
+        TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+   HorizontalTextAlignment="Center" />
+  </VerticalStackLayout>
+
+    <!-- Divider -->
+   <BoxView Grid.Column="1"
+    WidthRequest="1"
+  BackgroundColor="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}"
+       VerticalOptions="Fill"
+ Margin="0,4" />
+
+   <!-- Teams Scouted -->
+   <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="Center">
+           <Label Text="0"
+       FontSize="24"
+  FontFamily="OpenSansSemibold"
+           FontAttributes="Bold"
+  TextColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+     HorizontalTextAlignment="Center" />
+         <Label Text="Teams Data"
+          FontSize="11"
+     TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+HorizontalTextAlignment="Center" />
+       </VerticalStackLayout>
+
+   <!-- Divider -->
+   <BoxView Grid.Column="3"
+    WidthRequest="1"
+     BackgroundColor="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}"
+     VerticalOptions="Fill"
+      Margin="0,4" />
+
+       <!-- Pending Sync -->
+    <VerticalStackLayout Grid.Column="4" Spacing="4" HorizontalOptions="Center">
+          <Label Text="0"
+         FontSize="24"
+        FontFamily="OpenSansSemibold"
+           FontAttributes="Bold"
+        TextColor="{AppThemeBinding Light={StaticResource LightSuccess}, Dark={StaticResource DarkSuccess}}"
+   HorizontalTextAlignment="Center" />
+    <Label Text="Pending Sync"
+    FontSize="11"
+     TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+       HorizontalTextAlignment="Center" />
  </VerticalStackLayout>
+ </Grid>
  </Border>
 
- <!-- Card: Browse Teams -->
- <Border Style="{StaticResource GlassCard}" Padding="12" Margin="0,0,12,12" MinimumHeightRequest="96"
- FlexLayout.Basis="48%" AutomationProperties.Name="Browse Teams">
- <VerticalStackLayout Spacing="8" Padding="0" HorizontalOptions="FillAndExpand">
- <Label Text="Browse Teams" Style="{StaticResource SubheaderLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- <Label Text="Open the teams roster to view team details and history." Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- </VerticalStackLayout>
- </Border>
+  <!-- Bottom Spacing -->
+   <BoxView HeightRequest="24" BackgroundColor="Transparent" />
 
- <!-- Card: Events -->
- <Border Style="{StaticResource GlassCard}" Padding="12" Margin="0,0,12,12" MinimumHeightRequest="96"
- FlexLayout.Basis="48%" AutomationProperties.Name="Events">
- <VerticalStackLayout Spacing="8" Padding="0" HorizontalOptions="FillAndExpand">
- <Label Text="Events" Style="{StaticResource SubheaderLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- <Label Text="See upcoming events and match schedules." Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- </VerticalStackLayout>
- </Border>
-
- <!-- Card: Export Data -->
- <Border Style="{StaticResource GlassCard}" Padding="12" Margin="0,0,12,12" MinimumHeightRequest="96"
- FlexLayout.Basis="48%" AutomationProperties.Name="Export Data">
- <VerticalStackLayout Spacing="8" Padding="0" HorizontalOptions="FillAndExpand">
- <Label Text="Export Data" Style="{StaticResource SubheaderLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- <Label Text="Export scouting data to JSON or share via QR code." Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" MaxLines="2" />
- </VerticalStackLayout>
- </Border>
-
- </FlexLayout>
-
- <BoxView HeightRequest="24" BackgroundColor="Transparent" />
-
- </VerticalStackLayout>
- </ScrollView>
+        </VerticalStackLayout>
+    </ScrollView>
 
 </ContentPage>
