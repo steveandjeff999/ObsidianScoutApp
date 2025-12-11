@@ -13,6 +13,8 @@ public interface IBackgroundNotificationService
     Task StartAsync();
     void Stop();
     Task ForceCheckAsync();
+    void OnAppBackground();
+    void OnAppForeground();
 }
 
 public class BackgroundNotificationService : IBackgroundNotificationService, IDisposable
@@ -26,6 +28,7 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     private readonly TimeSpan _minPollInterval = TimeSpan.FromSeconds(60); // Minimum 1 minute
     private readonly TimeSpan _maxPollInterval = TimeSpan.FromSeconds(120); // Maximum 2 minutes
     private bool _running;
+    private bool _isInBackground;
     private readonly SemaphoreSlim _pollLock = new SemaphoreSlim(1, 1);
     private int _consecutiveEmptyPolls = 0;
     private const int EMPTY_POLLS_BEFORE_SLOWDOWN = 3; // Slow down after 3 empty polls (instead of 5)
@@ -151,10 +154,33 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
         if (_disposed) return;
 
         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Force check requested - resetting to fast polling");
-     _consecutiveEmptyPolls = 0;
+        _consecutiveEmptyPolls = 0;
         _currentPollInterval = _minPollInterval;
-  SafeUpdateTimerInterval();
+        SafeUpdateTimerInterval();
         await SafePollAsync();
+    }
+
+    public void OnAppBackground()
+    {
+        _isInBackground = true;
+        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] App entered background - optimizing for battery");
+    }
+
+    public void OnAppForeground()
+    {
+        _isInBackground = false;
+        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] App entered foreground - restoring normal polling");
+        
+        // Reset to fast polling immediately when returning to foreground
+        _consecutiveEmptyPolls = 0;
+        if (_currentPollInterval > _minPollInterval)
+        {
+            _currentPollInterval = _minPollInterval;
+            SafeUpdateTimerInterval();
+        }
+        
+        // Trigger an immediate check
+        Task.Run(async () => await SafePollAsync());
     }
 
     private void SafeUpdateTimerInterval()
@@ -180,42 +206,46 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     private void AdjustPollingInterval(int notificationsFound)
     {
         try
-   {
+        {
             if (notificationsFound > 0)
-     {
-        _consecutiveEmptyPolls = 0;
-  if (_currentPollInterval > _minPollInterval)
-      {
-                _currentPollInterval = _minPollInterval;
-              SafeUpdateTimerInterval();
-        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Activity detected - increased polling to {_currentPollInterval.TotalSeconds}s");
-          }
-       }
+            {
+                _consecutiveEmptyPolls = 0;
+                if (_currentPollInterval > _minPollInterval)
+                {
+                    _currentPollInterval = _minPollInterval;
+                    SafeUpdateTimerInterval();
+                    System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Activity detected - increased polling to {_currentPollInterval.TotalSeconds}s");
+                }
+            }
             else
             {
                 _consecutiveEmptyPolls++;
      
-        if (_consecutiveEmptyPolls >= EMPTY_POLLS_BEFORE_SLOWDOWN)
-    {
-      var newInterval = TimeSpan.FromSeconds(Math.Min(
-            _currentPollInterval.TotalSeconds * 1.5,
-            _maxPollInterval.TotalSeconds
-           ));
+                // If in background, allow slowing down more aggressively (up to 5 mins)
+                var maxInterval = _isInBackground ? TimeSpan.FromMinutes(5) : _maxPollInterval;
+                var slowdownThreshold = _isInBackground ? 1 : EMPTY_POLLS_BEFORE_SLOWDOWN;
+
+                if (_consecutiveEmptyPolls >= slowdownThreshold)
+                {
+                    var newInterval = TimeSpan.FromSeconds(Math.Min(
+                        _currentPollInterval.TotalSeconds * 1.5,
+                        maxInterval.TotalSeconds
+                    ));
       
-         if (newInterval != _currentPollInterval)
-         {
-        _currentPollInterval = newInterval;
-   SafeUpdateTimerInterval();
-   System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] No activity - reduced polling to {_currentPollInterval.TotalSeconds}s (saves battery)");
-        }
+                    if (newInterval != _currentPollInterval)
+                    {
+                        _currentPollInterval = newInterval;
+                        SafeUpdateTimerInterval();
+                        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] No activity - reduced polling to {_currentPollInterval.TotalSeconds}s (saves battery)");
+                    }
          
-    _consecutiveEmptyPolls = 0;
-   }
+                    _consecutiveEmptyPolls = 0;
+                }
             }
- }
+        }
         catch (Exception ex)
         {
-  System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] AdjustPollingInterval error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] AdjustPollingInterval error: {ex.Message}");
         }
     }
 
@@ -249,46 +279,40 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
         {
             System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] === POLL START ===");
             System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Current interval: {_currentPollInterval.TotalSeconds}s");
-   var pollStartTime = DateTime.UtcNow;
+            var pollStartTime = DateTime.UtcNow;
     
-    int notificationsFound = 0;
+            int notificationsFound = 0;
   
-await Task.Delay(50);
- 
-      // Step 1: Check for missed notifications (catch-up) - run on background thread
-    notificationsFound += await SafeCheckMissedNotificationsAsync();
+            // Parallel execution for efficiency - reduces radio active time
+            var missedTask = SafeCheckMissedNotificationsAsync();
+            var scheduledTask = SafeCheckScheduledNotificationsAsync();
+            var chatTask = SafeCheckUnreadChatMessagesAsync();
+
+            await Task.WhenAll(missedTask, scheduledTask, chatTask);
+
+            notificationsFound += await missedTask;
+            notificationsFound += await scheduledTask;
+            notificationsFound += await chatTask;
+            
+            // Step 4: Update last poll time
+            _trackingData.LastPollTime = pollStartTime;
   
-            // Small delay between operations
-  await Task.Delay(50);
- 
-            // Step 2: Check scheduled notifications - run on background thread
-   notificationsFound += await SafeCheckScheduledNotificationsAsync();
-            
-       // Small delay between operations
-            await Task.Delay(50);
-            
-         // Step 3: Check unread chat messages - run on background thread
-      notificationsFound += await SafeCheckUnreadChatMessagesAsync();
-            
-      // Step 4: Update last poll time
-    _trackingData.LastPollTime = pollStartTime;
-  
-      // Step 5: Cleanup old records if needed (once per day)
+            // Step 5: Cleanup old records if needed (once per day)
             if ((pollStartTime - _trackingData.LastCleanupTime).TotalDays >= 1)
- {
-        SafeCleanupOldRecords();
-      _trackingData.LastCleanupTime = pollStartTime;
-    }
+            {
+                SafeCleanupOldRecords();
+                _trackingData.LastCleanupTime = pollStartTime;
+            }
  
-         // Step 6: Save tracking data - run on background thread
-    await SafeSaveTrackingDataAsync();
+            // Step 6: Save tracking data - run on background thread
+            await SafeSaveTrackingDataAsync();
   
             // Step 7: Adaptive polling - adjust interval based on activity
             AdjustPollingInterval(notificationsFound);
    
- var pollDuration = (DateTime.UtcNow - pollStartTime).TotalSeconds;
+            var pollDuration = (DateTime.UtcNow - pollStartTime).TotalSeconds;
             System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] === POLL END ({pollDuration:F1}s) - Found {notificationsFound} notifications ===");
-    }
+        }
       catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Poll error: {ex.Message}");

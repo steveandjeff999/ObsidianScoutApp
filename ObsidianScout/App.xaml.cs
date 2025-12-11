@@ -490,13 +490,16 @@ try
     }
 
         protected override async void OnResume()
-     {
-     base.OnResume();
+        {
+            base.OnResume();
             System.Diagnostics.Debug.WriteLine("[App] OnResume called");
 
+            // Notify polling service about foreground state
+            _notificationPollingService?.OnAppForeground();
+
             // Check for pending notification navigation when app resumes
- try
- {
+            try
+            {
           await Task.Delay(200); // Small delay for app to be ready
        
       // Try the centralized navigation service first
@@ -560,10 +563,13 @@ catch (Exception ex)
 #endif
    }
 
-   protected override void OnSleep()
-  {
+        protected override void OnSleep()
+        {
             base.OnSleep();
             System.Diagnostics.Debug.WriteLine("[App] App going to sleep");
+            
+            // Notify polling service about background state
+            _notificationPollingService?.OnAppBackground();
         }
     }
 }

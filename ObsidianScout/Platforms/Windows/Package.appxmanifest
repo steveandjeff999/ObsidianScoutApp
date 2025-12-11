@@ -40,7 +40,9 @@
         <uap:SplashScreen Image="Resources\Square150x150Logo.png" />
         <uap:InitialRotationPreference>
           <uap:Rotation Preference="landscape"/>
-          <uap:Rotation Preference="portrait"/></uap:InitialRotationPreference>
+          <uap:Rotation Preference="portrait"/>
+          <uap:Rotation Preference="landscapeFlipped"/>
+          <uap:Rotation Preference="portraitFlipped"/></uap:InitialRotationPreference>
         <uap:LockScreen BadgeLogo="Resources\Square44x44Logo.png" Notification="badgeAndTileText"/>
       </uap:VisualElements>
     </Application>

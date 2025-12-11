@@ -120,13 +120,38 @@ public partial class ApiService : IApiService
         return $"{serverUrl.TrimEnd('/')}/api/mobile";
     }
 
-    private async Task AddAuthHeaderAsync()
+    private async Task<HttpRequestMessage> CreateRequestMessageAsync(HttpMethod method, string url)
     {
+        var request = new HttpRequestMessage(method, url);
         var token = await _settings_service.GetTokenAsync();
         if (!string.IsNullOrEmpty(token))
         {
-            _httpClient.DefaultRequestHeaders.Authorization = 
-                new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+        return request;
+    }
+
+    private async Task AddAuthHeaderAsync()
+    {
+        // Deprecated: Do not modify DefaultRequestHeaders as it is not thread-safe.
+        // Use CreateRequestMessageAsync instead.
+        // await Task.CompletedTask;
+
+        try
+        {
+            var token = await _settings_service.GetTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+            else
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ApiService] AddAuthHeaderAsync error: {ex.Message}");
         }
     }
 
@@ -502,9 +527,11 @@ var errorContent = await response.Content.ReadAsStringAsync();
         
         try
         {
-            await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
-            var response = await _httpClient.GetAsync($"{baseUrl}/events");
+            var url = $"{baseUrl}/events";
+            
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -602,7 +629,6 @@ var errorContent = await response.Content.ReadAsStringAsync();
         
         try
         {
-            await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
             var url = $"{baseUrl}/matches?event_id={eventId}";
             
@@ -612,7 +638,8 @@ var errorContent = await response.Content.ReadAsStringAsync();
             if (teamNumber.HasValue)
                 url += $"&team_number={teamNumber.Value}";
 
-            var response = await _httpClient.GetAsync(url);
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -1386,25 +1413,26 @@ var errorContent = await response.Content.ReadAsStringAsync();
             return new ScheduledNotificationsResponse { Success = false, Error = "Offline - cannot fetch scheduled notifications" };
         }
 
-    try
+        try
         {
-    await AddAuthHeaderAsync();
-    var baseUrl = await GetBaseUrlAsync();
+            var baseUrl = await GetBaseUrlAsync();
             var url = $"{baseUrl}/notifications/scheduled?limit={limit}&offset={offset}";
-   var response = await _httpClient.GetAsync(url);
+            
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
 
-   if (response.IsSuccessStatusCode)
-        {
-     var result = await response.Content.ReadFromJsonAsync<ScheduledNotificationsResponse>(_jsonOptions);
-  return result ?? new ScheduledNotificationsResponse { Success = false, Error = "Invalid response" };
-     }
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ScheduledNotificationsResponse>(_jsonOptions);
+                return result ?? new ScheduledNotificationsResponse { Success = false, Error = "Invalid response" };
+            }
 
-   var err = await response.Content.ReadAsStringAsync();
-     return new ScheduledNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+            var err = await response.Content.ReadAsStringAsync();
+            return new ScheduledNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
-      {
-         return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
+        {
+            return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
         }
     }
 
@@ -1412,27 +1440,28 @@ var errorContent = await response.Content.ReadAsStringAsync();
     {
         if (!await ShouldUseNetworkAsync())
         {
- return new PastNotificationsResponse { Success = false, Error = "Offline - cannot fetch past notifications" };
+            return new PastNotificationsResponse { Success = false, Error = "Offline - cannot fetch past notifications" };
         }
 
         try
-   {
-  await AddAuthHeaderAsync();
-     var baseUrl = await GetBaseUrlAsync();
+        {
+            var baseUrl = await GetBaseUrlAsync();
             var url = $"{baseUrl}/notifications/past?limit={limit}&offset={offset}";
-            var response = await _httpClient.GetAsync(url);
+            
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
-        {
- var result = await response.Content.ReadFromJsonAsync<PastNotificationsResponse>(_jsonOptions);
-        return result ?? new PastNotificationsResponse { Success = false, Error = "Invalid response" };
-          }
+            {
+                var result = await response.Content.ReadFromJsonAsync<PastNotificationsResponse>(_jsonOptions);
+                return result ?? new PastNotificationsResponse { Success = false, Error = "Invalid response" };
+            }
 
             var err = await response.Content.ReadAsStringAsync();
             return new PastNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
-    catch (Exception ex)
-      {
+        catch (Exception ex)
+        {
             return new PastNotificationsResponse { Success = false, Error = ex.Message };
         }
     }
@@ -1503,7 +1532,6 @@ var errorContent = await response.Content.ReadAsStringAsync();
 
         try
         {
-            await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
 
             // Build URL conditionally: omit type when caller passes null or empty so server can infer by group param
@@ -1517,7 +1545,8 @@ var errorContent = await response.Content.ReadAsStringAsync();
 
             System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync GET {url}");
 
-            var response = await _httpClient.GetAsync(url);
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
             var responseContent = await response.Content.ReadAsStringAsync();
             System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync Status: {(int)response.StatusCode} {response.StatusCode}");
             System.Diagnostics.Debug.WriteLine($"[API] GetChatMessagesAsync Response: {responseContent}");
@@ -1885,35 +1914,35 @@ var errorContent = await response.Content.ReadAsStringAsync();
     {
         if (!await ShouldUseNetworkAsync())
         {
-         return new ChatStateResponse { Success = false, Error = "Offline - cannot fetch chat state" };
- }
+            return new ChatStateResponse { Success = false, Error = "Offline - cannot fetch chat state" };
+        }
 
-  try
+        try
         {
-  await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
-  var url = $"{baseUrl}/chat/state";
+            var url = $"{baseUrl}/chat/state";
    
-   System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync GET {url}");
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync GET {url}");
       
-        var response = await _httpClient.GetAsync(url);
+            var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
+            var response = await _httpClient.SendAsync(request);
             var content = await response.Content.ReadAsStringAsync();
  
-      System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Status: {(int)response.StatusCode} {response.StatusCode}");
-  System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Response: {content}");
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Status: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync Response: {content}");
 
             if (response.IsSuccessStatusCode)
-    {
-   var result = System.Text.Json.JsonSerializer.Deserialize<ChatStateResponse>(content, _jsonOptions);
-        return result ?? new ChatStateResponse { Success = false, Error = "Invalid response" };
-       }
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatStateResponse>(content, _jsonOptions);
+                return result ?? new ChatStateResponse { Success = false, Error = "Invalid response" };
+            }
 
             return new ChatStateResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
         }
         catch (Exception ex)
-       {
-       System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync failed: {ex.Message}");
-   return new ChatStateResponse { Success = false, Error = ex.Message };
+        {
+            System.Diagnostics.Debug.WriteLine($"[API] GetChatStateAsync failed: {ex.Message}");
+            return new ChatStateResponse { Success = false, Error = ex.Message };
         }
     }
 

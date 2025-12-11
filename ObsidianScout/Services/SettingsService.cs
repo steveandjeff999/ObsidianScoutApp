@@ -59,26 +59,58 @@ public class SettingsService : ISettingsService
     private const string DefaultTheme = "Light";
     private const int DefaultNetworkTimeout = 8; // 8 seconds default
 
+    // Cache fields
+    private string? _serverUrl;
+    private string? _protocol;
+    private string? _serverAddress;
+    private string? _serverPort;
+    
+    private string? _token;
+    private bool _tokenLoaded;
+    
+    private DateTime? _tokenExpiration;
+    private bool _tokenExpirationLoaded;
+    
+    private string? _username;
+    private bool _usernameLoaded;
+    
+    private List<string>? _userRoles;
+    
+    private int? _teamNumber;
+    private bool _teamNumberLoaded;
+    
+    private string? _theme;
+    
+    private string? _email;
+    private bool _emailLoaded;
+    
+    private bool? _offlineMode;
+    private bool? _notificationsEnabled;
+    private int? _networkTimeout;
+
     public event EventHandler<bool>? OfflineModeChanged;
 
     public async Task<string> GetProtocolAsync()
     {
+        if (_protocol != null) return _protocol;
         try
         {
-            return await SecureStorage.GetAsync(ProtocolKey) ?? DefaultProtocol;
+            _protocol = await SecureStorage.GetAsync(ProtocolKey) ?? DefaultProtocol;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetProtocolAsync error: {ex.Message}");
-            return DefaultProtocol;
+            _protocol = DefaultProtocol;
         }
+        return _protocol;
     }
 
     public async Task SetProtocolAsync(string protocol)
     {
+        _protocol = protocol ?? DefaultProtocol;
         try
         {
-            await SecureStorage.SetAsync(ProtocolKey, protocol ?? DefaultProtocol);
+            await SecureStorage.SetAsync(ProtocolKey, _protocol);
             await UpdateServerUrlAsync();
         }
         catch (Exception ex)
@@ -89,22 +121,25 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetServerAddressAsync()
     {
+        if (_serverAddress != null) return _serverAddress;
         try
         {
-            return await SecureStorage.GetAsync(ServerAddressKey) ?? DefaultServerAddress;
+            _serverAddress = await SecureStorage.GetAsync(ServerAddressKey) ?? DefaultServerAddress;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetServerAddressAsync error: {ex.Message}");
-            return DefaultServerAddress;
+            _serverAddress = DefaultServerAddress;
         }
+        return _serverAddress;
     }
 
     public async Task SetServerAddressAsync(string address)
     {
+        _serverAddress = address ?? DefaultServerAddress;
         try
         {
-            await SecureStorage.SetAsync(ServerAddressKey, address ?? DefaultServerAddress);
+            await SecureStorage.SetAsync(ServerAddressKey, _serverAddress);
             await UpdateServerUrlAsync();
         }
         catch (Exception ex)
@@ -115,15 +150,17 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetServerPortAsync()
     {
+        if (_serverPort != null) return _serverPort;
         try
         {
-            return await SecureStorage.GetAsync(ServerPortKey) ?? DefaultServerPort;
+            _serverPort = await SecureStorage.GetAsync(ServerPortKey) ?? DefaultServerPort;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetServerPortAsync error: {ex.Message}");
-            return DefaultServerPort;
+            _serverPort = DefaultServerPort;
         }
+        return _serverPort;
     }
 
     public async Task SetServerPortAsync(string port)
@@ -132,10 +169,12 @@ public class SettingsService : ISettingsService
         {
             if (string.IsNullOrWhiteSpace(port))
             {
+                _serverPort = DefaultServerPort;
                 SecureStorage.Remove(ServerPortKey);
             }
             else
             {
+                _serverPort = port;
                 await SecureStorage.SetAsync(ServerPortKey, port);
             }
             await UpdateServerUrlAsync();
@@ -163,6 +202,8 @@ public class SettingsService : ISettingsService
             {
                 url = $"{protocol}://{address}:{port}";
             }
+            
+            _serverUrl = url;
             await SecureStorage.SetAsync(ServerUrlKey, url);
         }
         catch (Exception ex)
@@ -173,79 +214,98 @@ public class SettingsService : ISettingsService
 
     public async Task<string> GetServerUrlAsync()
     {
+        if (_serverUrl != null) return _serverUrl;
         try
         {
             var url = await SecureStorage.GetAsync(ServerUrlKey);
             if (string.IsNullOrEmpty(url))
             {
                 await UpdateServerUrlAsync();
+                // UpdateServerUrlAsync sets _serverUrl
+                if (_serverUrl != null) return _serverUrl;
+                
                 url = await SecureStorage.GetAsync(ServerUrlKey);
             }
-            return url ?? $"{DefaultProtocol}://{DefaultServerAddress}";
+            _serverUrl = url ?? $"{DefaultProtocol}://{DefaultServerAddress}";
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetServerUrlAsync error: {ex.Message}");
-            return $"{DefaultProtocol}://{DefaultServerAddress}";
-      }
+            _serverUrl = $"{DefaultProtocol}://{DefaultServerAddress}";
+        }
+        return _serverUrl;
     }
 
     public async Task SetServerUrlAsync(string url)
     {
         try
- {
-     await SecureStorage.SetAsync(ServerUrlKey, url ?? $"{DefaultProtocol}://{DefaultServerAddress}");
+        {
+            var newUrl = url ?? $"{DefaultProtocol}://{DefaultServerAddress}";
+            _serverUrl = newUrl;
+            await SecureStorage.SetAsync(ServerUrlKey, newUrl);
             
-   try
+            try
             {
-       var uri = new Uri(url);
-  await SecureStorage.SetAsync(ProtocolKey, uri.Scheme);
-   await SecureStorage.SetAsync(ServerAddressKey, uri.Host);
-          if (uri.IsDefaultPort)
-     {
-        SecureStorage.Remove(ServerPortKey);
-         }
-             else
-    {
- await SecureStorage.SetAsync(ServerPortKey, uri.Port.ToString());
-      }
-         }
-       catch
-    {
-     // Invalid URI format - just store the raw URL
-      }
-   }
+                var uri = new Uri(newUrl);
+                
+                _protocol = uri.Scheme;
+                await SecureStorage.SetAsync(ProtocolKey, uri.Scheme);
+                
+                _serverAddress = uri.Host;
+                await SecureStorage.SetAsync(ServerAddressKey, uri.Host);
+                
+                if (uri.IsDefaultPort)
+                {
+                    _serverPort = DefaultServerPort;
+                    SecureStorage.Remove(ServerPortKey);
+                }
+                else
+                {
+                    _serverPort = uri.Port.ToString();
+                    await SecureStorage.SetAsync(ServerPortKey, _serverPort);
+                }
+            }
+            catch
+            {
+                // Invalid URI format - just store the raw URL
+            }
+        }
         catch (Exception ex)
         {
-      System.Diagnostics.Debug.WriteLine($"[SettingsService] SetServerUrlAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SetServerUrlAsync error: {ex.Message}");
         }
- }
+    }
 
     public async Task<string?> GetTokenAsync()
     {
+        if (_tokenLoaded) return _token;
         try
-  {
-  return await SecureStorage.GetAsync(TokenKey);
+        {
+            _token = await SecureStorage.GetAsync(TokenKey);
+            _tokenLoaded = true;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetTokenAsync error: {ex.Message}");
-return null;
-  }
+            _token = null;
+        }
+        return _token;
     }
 
     public async Task SetTokenAsync(string? token)
     {
+        _token = token;
+        _tokenLoaded = true;
         try
-      {
-         if (string.IsNullOrEmpty(token))
-     {
-        SecureStorage.Remove(TokenKey);
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                SecureStorage.Remove(TokenKey);
             }
             else
-  {
+            {
                 await SecureStorage.SetAsync(TokenKey, token);
-        }
+            }
         }
         catch (Exception ex)
         {
@@ -255,152 +315,187 @@ return null;
 
     public async Task<DateTime?> GetTokenExpirationAsync()
     {
+        if (_tokenExpirationLoaded) return _tokenExpiration;
         try
-   {
- var expirationStr = await SecureStorage.GetAsync(TokenExpirationKey);
-   if (string.IsNullOrEmpty(expirationStr))
- return null;
-
-if (DateTime.TryParse(expirationStr, out var expiration))
-   return expiration;
-
-  return null;
+        {
+            var expirationStr = await SecureStorage.GetAsync(TokenExpirationKey);
+            if (string.IsNullOrEmpty(expirationStr))
+            {
+                _tokenExpiration = null;
+            }
+            else if (DateTime.TryParse(expirationStr, out var expiration))
+            {
+                _tokenExpiration = expiration;
+            }
+            else
+            {
+                _tokenExpiration = null;
+            }
+            _tokenExpirationLoaded = true;
         }
         catch (Exception ex)
-  {
-   System.Diagnostics.Debug.WriteLine($"[SettingsService] GetTokenExpirationAsync error: {ex.Message}");
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetTokenExpirationAsync error: {ex.Message}");
             return null;
         }
+        return _tokenExpiration;
     }
 
     public async Task SetTokenExpirationAsync(DateTime? expiration)
     {
-     try
+        _tokenExpiration = expiration;
+        _tokenExpirationLoaded = true;
+        try
         {
-        if (expiration == null)
-         {
-           SecureStorage.Remove(TokenExpirationKey);
-      }
-    else
-    {
-   await SecureStorage.SetAsync(TokenExpirationKey, expiration.Value.ToString("O"));
+            if (expiration == null)
+            {
+                SecureStorage.Remove(TokenExpirationKey);
+            }
+            else
+            {
+                await SecureStorage.SetAsync(TokenExpirationKey, expiration.Value.ToString("O"));
             }
         }
-      catch (Exception ex)
-  {
+        catch (Exception ex)
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetTokenExpirationAsync error: {ex.Message}");
-     }
-}
+        }
+    }
 
     public async Task<string?> GetUsernameAsync()
     {
+        if (_usernameLoaded) return _username;
         try
         {
- return await SecureStorage.GetAsync(UsernameKey);
- }
-   catch (Exception ex)
-   {
+            _username = await SecureStorage.GetAsync(UsernameKey);
+            _usernameLoaded = true;
+        }
+        catch (Exception ex)
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetUsernameAsync error: {ex.Message}");
- return null;
-     }
+            return null;
+        }
+        return _username;
     }
 
     public async Task SetUsernameAsync(string? username)
     {
+        _username = username;
+        _usernameLoaded = true;
         try
         {
             if (string.IsNullOrEmpty(username))
-   {
-  SecureStorage.Remove(UsernameKey);
-            }
-   else
             {
-      await SecureStorage.SetAsync(UsernameKey, username);
-     }
+                SecureStorage.Remove(UsernameKey);
+            }
+            else
+            {
+                await SecureStorage.SetAsync(UsernameKey, username);
+            }
         }
-    catch (Exception ex)
-      {
+        catch (Exception ex)
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetUsernameAsync error: {ex.Message}");
         }
     }
 
- public async Task<List<string>> GetUserRolesAsync()
+    public async Task<List<string>> GetUserRolesAsync()
     {
+        if (_userRoles != null) return _userRoles;
         try
-   {
+        {
             var rolesJson = await SecureStorage.GetAsync(UserRolesKey);
-    if (string.IsNullOrEmpty(rolesJson))
-  return new List<string>();
-
-            try
-  {
-                var roles = System.Text.Json.JsonSerializer.Deserialize<List<string>>(rolesJson);
-                return roles ?? new List<string>();
+            if (string.IsNullOrEmpty(rolesJson))
+            {
+                _userRoles = new List<string>();
             }
-   catch
-  {
-           return new List<string>();
-         }
+            else
+            {
+                try
+                {
+                    _userRoles = System.Text.Json.JsonSerializer.Deserialize<List<string>>(rolesJson) ?? new List<string>();
+                }
+                catch
+                {
+                    _userRoles = new List<string>();
+                }
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetUserRolesAsync error: {ex.Message}");
             return new List<string>();
-  }
+        }
+        return _userRoles;
     }
 
     public async Task SetUserRolesAsync(List<string> roles)
     {
+        _userRoles = roles ?? new List<string>();
         try
         {
             if (roles == null || roles.Count == 0)
-   {
-     SecureStorage.Remove(UserRolesKey);
-         }
-        else
             {
-   var rolesJson = System.Text.Json.JsonSerializer.Serialize(roles);
-await SecureStorage.SetAsync(UserRolesKey, rolesJson);
-         }
-    }
+                SecureStorage.Remove(UserRolesKey);
+            }
+            else
+            {
+                var rolesJson = System.Text.Json.JsonSerializer.Serialize(roles);
+                await SecureStorage.SetAsync(UserRolesKey, rolesJson);
+            }
+        }
         catch (Exception ex)
-{
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetUserRolesAsync error: {ex.Message}");
         }
     }
 
-  public async Task<int?> GetTeamNumberAsync()
+    public async Task<int?> GetTeamNumberAsync()
     {
+        if (_teamNumberLoaded) return _teamNumber;
         try
- {
-          var val = await SecureStorage.GetAsync(TeamNumberKey);
-    if (string.IsNullOrEmpty(val)) return null;
-            if (int.TryParse(val, out var n)) return n;
-       return null;
+        {
+            var val = await SecureStorage.GetAsync(TeamNumberKey);
+            if (string.IsNullOrEmpty(val)) 
+            {
+                _teamNumber = null;
+            }
+            else if (int.TryParse(val, out var n)) 
+            {
+                _teamNumber = n;
+            }
+            else
+            {
+                _teamNumber = null;
+            }
+            _teamNumberLoaded = true;
         }
         catch (Exception ex)
-      {
-       System.Diagnostics.Debug.WriteLine($"[SettingsService] GetTeamNumberAsync error: {ex.Message}");
-  return null;
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetTeamNumberAsync error: {ex.Message}");
+            return null;
         }
+        return _teamNumber;
     }
 
     public async Task SetTeamNumberAsync(int? teamNumber)
     {
+        _teamNumber = teamNumber;
+        _teamNumberLoaded = true;
         try
-     {
+        {
             if (teamNumber == null)
             {
-    SecureStorage.Remove(TeamNumberKey);
-      }
-  else
-          {
-       await SecureStorage.SetAsync(TeamNumberKey, teamNumber.Value.ToString());
-    }
+                SecureStorage.Remove(TeamNumberKey);
+            }
+            else
+            {
+                await SecureStorage.SetAsync(TeamNumberKey, teamNumber.Value.ToString());
+            }
         }
         catch (Exception ex)
-      {
-       System.Diagnostics.Debug.WriteLine($"[SettingsService] SetTeamNumberAsync error: {ex.Message}");
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SetTeamNumberAsync error: {ex.Message}");
         }
     }
 
@@ -410,171 +505,224 @@ await SecureStorage.SetAsync(UserRolesKey, rolesJson);
         {
             SecureStorage.Remove(TokenKey);
             SecureStorage.Remove(TokenExpirationKey);
-    SecureStorage.Remove(UsernameKey);
-  SecureStorage.Remove(UserRolesKey);
-        SecureStorage.Remove(TeamNumberKey);
-       SecureStorage.Remove(EmailKey);
+            SecureStorage.Remove(UsernameKey);
+            SecureStorage.Remove(UserRolesKey);
+            SecureStorage.Remove(TeamNumberKey);
+            SecureStorage.Remove(EmailKey);
+            
+            // Clear cache
+            _token = null;
+            _tokenLoaded = true;
+            
+            _tokenExpiration = null;
+            _tokenExpirationLoaded = true;
+            
+            _username = null;
+            _usernameLoaded = true;
+            
+            _userRoles = null;
+            
+            _teamNumber = null;
+            _teamNumberLoaded = true;
+            
+            _email = null;
+            _emailLoaded = true;
         }
         catch (Exception ex)
         {
-  System.Diagnostics.Debug.WriteLine($"[SettingsService] ClearAuthDataAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] ClearAuthDataAsync error: {ex.Message}");
         }
 
-    await Task.CompletedTask;
+        await Task.CompletedTask;
     }
 
     public async Task<string> GetThemeAsync()
     {
-    try
+        if (_theme != null) return _theme;
+        try
         {
-            return await SecureStorage.GetAsync(ThemeKey) ?? DefaultTheme;
-      }
-        catch (Exception ex)
- {
-        System.Diagnostics.Debug.WriteLine($"[SettingsService] GetThemeAsync error: {ex.Message}");
- return DefaultTheme;
+            _theme = await SecureStorage.GetAsync(ThemeKey) ?? DefaultTheme;
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetThemeAsync error: {ex.Message}");
+            _theme = DefaultTheme;
+        }
+        return _theme;
     }
 
     public async Task SetThemeAsync(string theme)
     {
-     try
+        _theme = theme ?? DefaultTheme;
+        try
         {
-         await SecureStorage.SetAsync(ThemeKey, theme ?? DefaultTheme);
+            await SecureStorage.SetAsync(ThemeKey, _theme);
         }
         catch (Exception ex)
         {
-    System.Diagnostics.Debug.WriteLine($"[SettingsService] SetThemeAsync error: {ex.Message}");
-  }
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SetThemeAsync error: {ex.Message}");
+        }
     }
 
     public async Task<string?> GetEmailAsync()
     {
-      try
-   {
-          return await SecureStorage.GetAsync(EmailKey);
-      }
-        catch (Exception ex)
-     {
-       System.Diagnostics.Debug.WriteLine($"[SettingsService] GetEmailAsync error: {ex.Message}");
-   return null;
+        if (_emailLoaded) return _email;
+        try
+        {
+            _email = await SecureStorage.GetAsync(EmailKey);
+            _emailLoaded = true;
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetEmailAsync error: {ex.Message}");
+            return null;
+        }
+        return _email;
     }
 
     public async Task SetEmailAsync(string? email)
     {
+        _email = email;
+        _emailLoaded = true;
         try
-{
-   if (string.IsNullOrEmpty(email))
-         {
-SecureStorage.Remove(EmailKey);
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                SecureStorage.Remove(EmailKey);
             }
             else
-      {
-             await SecureStorage.SetAsync(EmailKey, email);
+            {
+                await SecureStorage.SetAsync(EmailKey, email);
             }
         }
         catch (Exception ex)
-   {
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetEmailAsync error: {ex.Message}");
         }
     }
 
     public async Task<bool> GetOfflineModeAsync()
     {
+        if (_offlineMode.HasValue) return _offlineMode.Value;
         try
         {
- var val = await SecureStorage.GetAsync(OfflineModeKey);
-      if (string.IsNullOrEmpty(val)) return false;
-            return bool.TryParse(val, out var b) && b;
+            var val = await SecureStorage.GetAsync(OfflineModeKey);
+            if (string.IsNullOrEmpty(val)) 
+            {
+                _offlineMode = false;
+            }
+            else
+            {
+                _offlineMode = bool.TryParse(val, out var b) && b;
+            }
         }
-      catch (Exception ex)
+        catch (Exception ex)
         {
-       System.Diagnostics.Debug.WriteLine($"[SettingsService] GetOfflineModeAsync error: {ex.Message}");
-      return false;
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetOfflineModeAsync error: {ex.Message}");
+            return false;
         }
+        return _offlineMode.Value;
     }
 
     public async Task SetOfflineModeAsync(bool enabled)
     {
+        _offlineMode = enabled;
         try
- {
-       await SecureStorage.SetAsync(OfflineModeKey, enabled ? "true" : "false");
+        {
+            await SecureStorage.SetAsync(OfflineModeKey, enabled ? "true" : "false");
 
-    // Notify subscribers that offline mode changed
+            // Notify subscribers that offline mode changed
             try
             {
-         OfflineModeChanged?.Invoke(this, enabled);
-  }
-       catch (Exception ex)
-   {
-         System.Diagnostics.Debug.WriteLine($"[SettingsService] OfflineModeChanged handler threw: {ex.Message}");
-}
+                OfflineModeChanged?.Invoke(this, enabled);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsService] OfflineModeChanged handler threw: {ex.Message}");
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetOfflineModeAsync error: {ex.Message}");
         }
-}
+    }
 
     public async Task<bool> GetNotificationsEnabledAsync()
     {
+        if (_notificationsEnabled.HasValue) return _notificationsEnabled.Value;
         try
         {
-          var v = await SecureStorage.GetAsync(NotificationsEnabledKey);
-            if (string.IsNullOrEmpty(v)) return true; // default enabled
-      return v == "1";
+            var v = await SecureStorage.GetAsync(NotificationsEnabledKey);
+            if (string.IsNullOrEmpty(v)) 
+            {
+                _notificationsEnabled = true; // default enabled
+            }
+            else
+            {
+                _notificationsEnabled = v == "1";
+            }
         }
         catch (Exception ex)
-      {
-  System.Diagnostics.Debug.WriteLine($"[SettingsService] GetNotificationsEnabledAsync error: {ex.Message}");
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetNotificationsEnabledAsync error: {ex.Message}");
             return true;
- }
+        }
+        return _notificationsEnabled.Value;
     }
 
-  public async Task SetNotificationsEnabledAsync(bool enabled)
+    public async Task SetNotificationsEnabledAsync(bool enabled)
     {
+        _notificationsEnabled = enabled;
         try
         {
-         await SecureStorage.SetAsync(NotificationsEnabledKey, enabled ? "1" : "0");
-    }
-  catch (Exception ex)
-  {
+            await SecureStorage.SetAsync(NotificationsEnabledKey, enabled ? "1" : "0");
+        }
+        catch (Exception ex)
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetNotificationsEnabledAsync error: {ex.Message}");
-    }
+        }
     }
 
     public async Task<int> GetNetworkTimeoutAsync()
     {
-   try
+        if (_networkTimeout.HasValue) return _networkTimeout.Value;
+        try
         {
             var val = await SecureStorage.GetAsync(NetworkTimeoutKey);
-     if (string.IsNullOrEmpty(val)) return DefaultNetworkTimeout;
- if (int.TryParse(val, out var timeout))
+            if (string.IsNullOrEmpty(val)) 
+            {
+                _networkTimeout = DefaultNetworkTimeout;
+            }
+            else if (int.TryParse(val, out var timeout))
             {
                 // Clamp between 5 and 60 seconds for safety
-   return Math.Clamp(timeout, 5, 60);
- }
- return DefaultNetworkTimeout;
+                _networkTimeout = Math.Clamp(timeout, 5, 60);
+            }
+            else
+            {
+                _networkTimeout = DefaultNetworkTimeout;
+            }
         }
-     catch (Exception ex)
- {
+        catch (Exception ex)
+        {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] GetNetworkTimeoutAsync error: {ex.Message}");
             return DefaultNetworkTimeout;
         }
+        return _networkTimeout.Value;
     }
 
     public async Task SetNetworkTimeoutAsync(int timeoutSeconds)
     {
-    try
+        // Clamp between 5 and 60 seconds for safety
+        var clamped = Math.Clamp(timeoutSeconds, 5, 60);
+        _networkTimeout = clamped;
+        try
         {
-            // Clamp between 5 and 60 seconds for safety
-       var clamped = Math.Clamp(timeoutSeconds, 5, 60);
-  await SecureStorage.SetAsync(NetworkTimeoutKey, clamped.ToString());
+            await SecureStorage.SetAsync(NetworkTimeoutKey, clamped.ToString());
         }
         catch (Exception ex)
         {
- System.Diagnostics.Debug.WriteLine($"[SettingsService] SetNetworkTimeoutAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SetNetworkTimeoutAsync error: {ex.Message}");
         }
     }
 }
