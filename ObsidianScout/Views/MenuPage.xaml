@@ -55,37 +55,37 @@ Style="{StaticResource OutlineButton}"
    <!-- ═══════════════════════════════════════════════════════════════
        OFFLINE MODE TOGGLE
           ═══════════════════════════════════════════════════════════════ -->
-        <Border Style="{StaticResource CompactGlassCard}" Padding="16">
-     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+      <Border Style="{StaticResource CompactGlassCard}" Padding="16">
+  <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
  <Border Grid.Column="0"
   BackgroundColor="{AppThemeBinding Light=#DBEAFE, Dark=#1E3A5F}"
    WidthRequest="40"
-             HeightRequest="40"
+HeightRequest="40"
    VerticalOptions="Center">
-      <Border.StrokeShape>
+   <Border.StrokeShape>
  <RoundRectangle CornerRadius="10" />
        </Border.StrokeShape>
-         <Border.StrokeThickness>0</Border.StrokeThickness>
+   <Border.StrokeThickness>0</Border.StrokeThickness>
    <Label Text="📶"
   FontSize="18"
-            HorizontalOptions="Center"
+   HorizontalOptions="Center"
  VerticalOptions="Center" />
        </Border>
 
-     <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-       <Label Text="Offline Mode"
+  <Label Grid.Column="1"
+     Text="Offline Mode"
   FontSize="15"
-       FontFamily="OpenSansSemibold"
-        TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-    <Label Text="Work without server connection"
-     FontSize="12"
-  TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-    </VerticalStackLayout>
+    FontFamily="OpenSansSemibold"
+          TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
+      VerticalOptions="Center"
+      HorizontalOptions="Start" />
 
-       <Switch Grid.Column="2"
+<Switch Grid.Column="2"
       x:Name="OfflineModeSwitch"
-          Toggled="OnOfflineModeToggled"
+     Toggled="OnOfflineModeToggled"
+       HorizontalOptions="End"
        VerticalOptions="Center" />
+
     </Grid>
         </Border>
 

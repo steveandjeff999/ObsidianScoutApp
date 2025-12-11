@@ -17,6 +17,7 @@ namespace ObsidianScout
 		private bool _isLoggedIn;
 		private bool _hasAnalyticsAccess;
 		private bool _hasManagementAccess;
+		private bool _hasAdminAccess;
 		private bool _isOfflineMode;
 		private ImageSource? _profilePictureSource;
 		private string _userInitials = "?";
@@ -70,6 +71,16 @@ namespace ObsidianScout
 			set
 			{
 				_hasManagementAccess = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public bool HasAdminAccess
+		{
+			get => _hasAdminAccess;
+			set
+			{
+				_hasAdminAccess = value;
 				OnPropertyChanged();
 			}
 		}
@@ -326,12 +337,17 @@ namespace ObsidianScout
 							r?.Equals("superadmin", StringComparison.OrdinalIgnoreCase) == true ||
 							r?.Equals("management", StringComparison.OrdinalIgnoreCase) == true ||
 							r?.Equals("manager", StringComparison.OrdinalIgnoreCase) == true);
+
+						HasAdminAccess = roles.Any(r =>
+							r?.Equals("admin", StringComparison.OrdinalIgnoreCase) == true ||
+							r?.Equals("superadmin", StringComparison.OrdinalIgnoreCase) == true);
 					}
 					catch (Exception ex)
 					{
 						System.Diagnostics.Debug.WriteLine($"[AppShell] Error loading roles: {ex.Message}");
 						HasAnalyticsAccess = false;
 						HasManagementAccess = false;
+						HasAdminAccess = false;
 					}
 
 					await SafeLoadCurrentUserInfoAsync();
@@ -738,10 +754,15 @@ namespace ObsidianScout
 						r?.Equals("management", StringComparison.OrdinalIgnoreCase) == true ||
 						r?.Equals("manager", StringComparison.OrdinalIgnoreCase) == true);
 
+					HasAdminAccess = roles.Any(r =>
+						r?.Equals("admin", StringComparison.OrdinalIgnoreCase) == true ||
+						r?.Equals("superadmin", StringComparison.OrdinalIgnoreCase) == true);
+
 					await LoadCurrentUserInfoAsync();
 
 					OnPropertyChanged(nameof(HasAnalyticsAccess));
 					OnPropertyChanged(nameof(HasManagementAccess));
+					OnPropertyChanged(nameof(HasAdminAccess));
 
 #if ANDROID || IOS
 					// Switch to main TabBar after login
@@ -760,6 +781,7 @@ namespace ObsidianScout
 				{
 					HasAnalyticsAccess = false;
 					HasManagementAccess = false;
+					HasAdminAccess = false;
 					CurrentUsername = string.Empty;
 					CurrentTeamInfo = string.Empty;
 					UserInitials = "?";

@@ -158,21 +158,24 @@ Source="{Binding ProfilePictureSource}"
          Grid.Row="1"
         BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
      StrokeThickness="0"
-         Padding="12,10">
-         <Border.StrokeShape>
-            <RoundRectangle CornerRadius="10" />
+   Padding="12,10">
+ <Border.StrokeShape>
+         <RoundRectangle CornerRadius="10" />
    </Border.StrokeShape>
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-        <Label 
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+      <Label 
  Text="Offline Mode" 
     FontSize="14" 
     TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" 
-     VerticalOptions="Center" />
-           <Switch 
-              IsToggled="{Binding IsOfflineMode, Mode=TwoWay}" 
+    VerticalOptions="Center"
+    HorizontalOptions="Start" />
+      <Switch 
+    Grid.Column="1"
+  IsToggled="{Binding IsOfflineMode, Mode=TwoWay}" 
  Toggled="OnOfflineModeToggled" 
+    HorizontalOptions="End"
      VerticalOptions="Center" />
-          </Grid>
+      </Grid>
     </Border>
          </Grid>
 

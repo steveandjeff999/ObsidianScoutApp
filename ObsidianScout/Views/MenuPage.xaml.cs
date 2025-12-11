@@ -28,7 +28,7 @@ namespace ObsidianScout.Views
 				if (Shell.Current?.BindingContext is AppShell shell)
 				{
 					ManagementButton.IsVisible = shell.HasManagementAccess;
-					ManageUsersButton.IsVisible = shell.HasManagementAccess;
+					ManageUsersButton.IsVisible = shell.HasAdminAccess;
 					
 					// Update user info display
 					UsernameLabel.Text = !string.IsNullOrEmpty(shell.CurrentUsername) ? shell.CurrentUsername : "User";
