@@ -23,7 +23,8 @@ namespace ObsidianScout
     [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable })]
     public class MainActivity : MauiAppCompatActivity
     {
-    private bool _isDestroying = false;
+    private volatile bool _isDestroying = false;
+    private volatile bool _isCreated = false;
         
  // Store pending navigation from notification intent
  private static string? _pendingNavigationUri = null;
@@ -52,6 +53,7 @@ namespace ObsidianScout
       try
    {
    System.Diagnostics.Debug.WriteLine("[MainActivity] OnCreate called");
+   _isCreated = true;
              
     // ========================================
         // Set status bar and navigation bar colors (NO edge-to-edge)
@@ -254,6 +256,8 @@ var nm = (global::Android.App.NotificationManager?)context.GetSystemService(glob
    {
       base.OnNewIntent(intent);
             
+      if (_isDestroying || !_isCreated) return;
+
  // CRITICAL: Update the Intent property so it's available to the activity
          Intent = intent;
 
@@ -417,10 +421,14 @@ return "//MainPage";
   /// </summary>
         private void TriggerImmediateNavigation(Dictionary<string, string> navData)
    {
+      if (_isDestroying || !_isCreated) return;
+      
       try
             {
                 MainThread.BeginInvokeOnMainThread(async () =>
 {
+      if (_isDestroying) return; // Double-check after switching to main thread
+      
       try
     {
         // Small delay to ensure app is ready
@@ -489,10 +497,12 @@ public static string? GetPendingNavigationUri()
 
         protected override void OnDestroy()
         {
+    _isDestroying = true;
+    _isCreated = false;
+    
     try
         {
-     _isDestroying = true;
-    System.Diagnostics.Debug.WriteLine("[MainActivity] OnDestroy called - activity is being destroyed");
+     System.Diagnostics.Debug.WriteLine("[MainActivity] OnDestroy called - activity is being destroyed");
 
         // Don't stop foreground service - it should continue running
     // The service lifecycle is separate from activity lifecycle
@@ -560,6 +570,8 @@ public static string? GetPendingNavigationUri()
         public override void OnTrimMemory([GeneratedEnum] TrimMemory level)
     {
     base.OnTrimMemory(level);
+    
+    if (_isDestroying) return; // Don't try to GC during destruction
             
   try
    {

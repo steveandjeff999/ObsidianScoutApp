@@ -54,10 +54,13 @@ public class SettingsService : ISettingsService
     private const string NetworkTimeoutKey = "network_timeout";
 
     private const string DefaultProtocol = "https";
-    private const string DefaultServerAddress = "your-server.com";
+    private static readonly string DefaultServerAddress = "beta.obsidianscout.com";
     private const string DefaultServerPort = "";
     private const string DefaultTheme = "Light";
     private const int DefaultNetworkTimeout = 8; // 8 seconds default
+
+    // Thread-safety lock for cache operations
+    private readonly object _cacheLock = new object();
 
     // Cache fields
     private string? _serverUrl;
@@ -503,30 +506,33 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            SecureStorage.Remove(TokenKey);
-            SecureStorage.Remove(TokenExpirationKey);
-            SecureStorage.Remove(UsernameKey);
-            SecureStorage.Remove(UserRolesKey);
-            SecureStorage.Remove(TeamNumberKey);
-            SecureStorage.Remove(EmailKey);
+            SafeRemoveSecureStorage(TokenKey);
+            SafeRemoveSecureStorage(TokenExpirationKey);
+            SafeRemoveSecureStorage(UsernameKey);
+            SafeRemoveSecureStorage(UserRolesKey);
+            SafeRemoveSecureStorage(TeamNumberKey);
+            SafeRemoveSecureStorage(EmailKey);
             
-            // Clear cache
-            _token = null;
-            _tokenLoaded = true;
-            
-            _tokenExpiration = null;
-            _tokenExpirationLoaded = true;
-            
-            _username = null;
-            _usernameLoaded = true;
-            
-            _userRoles = null;
-            
-            _teamNumber = null;
-            _teamNumberLoaded = true;
-            
-            _email = null;
-            _emailLoaded = true;
+            // Clear cache thread-safely
+            lock (_cacheLock)
+            {
+                _token = null;
+                _tokenLoaded = true;
+                
+                _tokenExpiration = null;
+                _tokenExpirationLoaded = true;
+                
+                _username = null;
+                _usernameLoaded = true;
+                
+                _userRoles = null;
+                
+                _teamNumber = null;
+                _teamNumberLoaded = true;
+                
+                _email = null;
+                _emailLoaded = true;
+            }
         }
         catch (Exception ex)
         {
@@ -534,6 +540,19 @@ public class SettingsService : ISettingsService
         }
 
         await Task.CompletedTask;
+    }
+
+    // Helper method to safely remove a key from SecureStorage
+    private static void SafeRemoveSecureStorage(string key)
+    {
+        try
+        {
+            SecureStorage.Remove(key);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SafeRemoveSecureStorage({key}) error: {ex.Message}");
+        }
     }
 
     public async Task<string> GetThemeAsync()

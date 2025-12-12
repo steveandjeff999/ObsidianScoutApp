@@ -1037,6 +1037,14 @@ _viewModel.StatusMessage = "Position QR code within frame";
  }
 #endif
 
+#if !ANDROID && !WINDOWS
+ // Stub handler for platforms without camera support (iOS, MacCatalyst)
+ private void OnCameraSelectionChanged(object? sender, EventArgs e)
+ {
+ Debug.WriteLine("QRCodeScannerPage: Camera selection not supported on this platform");
+ }
+#endif
+
  private async void OnUploadScannedDataClicked(object? sender, EventArgs e)
  {
  try

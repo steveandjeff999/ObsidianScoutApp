@@ -171,14 +171,17 @@
  TextColor="{StaticResource TextSecondary}"
  LineBreakMode="NoWrap" />
  <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
- StrokeThickness="0">
+ StrokeThickness="0"
+ Padding="10,0">
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
  <Picker SelectedItem="{Binding Protocol}"
  Title="Select Protocol"
  Style="{StaticResource GlassPicker}"
- BackgroundColor="Transparent">
+ BackgroundColor="Transparent"
+ HeightRequest="80"
+ Margin="0">
  <Picker.Items>
  <x:String>http</x:String>
  <x:String>https</x:String>
@@ -236,15 +239,11 @@
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
- <Label LineBreakMode="WordWrap" MaxLines="3">
+ <Label LineBreakMode="WordWrap" MaxLines="3" Text="{Binding PreviewUrl}">
  <Label.FormattedText>
  <FormattedString>
  <Span Text="🌐 " FontSize="16" />
- <Span Text="{Binding Protocol}" FontSize="14" TextColor="{StaticResource TextSecondary}" />
- <Span Text="://" FontSize="14" TextColor="{StaticResource TextSecondary}" />
- <Span Text="{Binding ServerAddress}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
- <Span Text=":" FontSize="14" TextColor="{StaticResource TextSecondary}" />
- <Span Text="{Binding ServerPort}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+ <Span Text="{Binding PreviewUrl}" FontSize="14" TextColor="{StaticResource TextPrimary}" />
  </FormattedString>
  </Label.FormattedText>
  </Label>

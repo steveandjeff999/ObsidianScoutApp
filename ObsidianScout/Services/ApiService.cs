@@ -98,6 +98,13 @@ public partial class ApiService : IApiService
     {
         try
         {
+            // First check connectivity service state
+            if (_connectivity_service == null || !_connectivity_service.IsConnected)
+            {
+                System.Diagnostics.Debug.WriteLine("[API] No connectivity - using cache");
+                return false;
+            }
+
             var offlineMode = await _settings_service.GetOfflineModeAsync();
             if (offlineMode)
             {
@@ -107,11 +114,12 @@ public partial class ApiService : IApiService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[API] Failed to read offline mode setting: {ex.Message}");
-            // Fall through and rely on connectivity service
+            System.Diagnostics.Debug.WriteLine($"[API] Failed to check network/offline mode: {ex.Message}");
+            // Default to trying network if we can't determine state
+            return _connectivity_service?.IsConnected ?? false;
         }
 
-        return _connectivity_service.IsConnected;
+        return true;
     }
 
     private async Task<string> GetBaseUrlAsync()
@@ -122,11 +130,24 @@ public partial class ApiService : IApiService
 
     private async Task<HttpRequestMessage> CreateRequestMessageAsync(HttpMethod method, string url)
     {
-        var request = new HttpRequestMessage(method, url);
-        var token = await _settings_service.GetTokenAsync();
-        if (!string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(url))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            throw new ArgumentNullException(nameof(url), "URL cannot be null or empty");
+        }
+
+        var request = new HttpRequestMessage(method, url);
+        try
+        {
+            var token = await _settings_service.GetTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ApiService] CreateRequestMessageAsync token error: {ex.Message}");
+            // Continue without auth header
         }
         return request;
     }
@@ -139,6 +160,12 @@ public partial class ApiService : IApiService
 
         try
         {
+            if (_httpClient == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[ApiService] AddAuthHeaderAsync: HttpClient is null");
+                return;
+            }
+
             var token = await _settings_service.GetTokenAsync();
             if (!string.IsNullOrEmpty(token))
             {
@@ -148,6 +175,11 @@ public partial class ApiService : IApiService
             {
                 _httpClient.DefaultRequestHeaders.Authorization = null;
             }
+        }
+        catch (InvalidOperationException opEx)
+        {
+            // Can happen if headers are being accessed from another thread
+            System.Diagnostics.Debug.WriteLine($"[ApiService] AddAuthHeaderAsync InvalidOperationException: {opEx.Message}");
         }
         catch (Exception ex)
         {

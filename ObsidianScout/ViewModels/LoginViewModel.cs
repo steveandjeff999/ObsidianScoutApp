@@ -23,7 +23,7 @@ public partial class LoginViewModel : ObservableObject
     private string protocol = "https";
 
     [ObservableProperty]
-    private string serverAddress = "obsidianscout.com";
+    private string serverAddress = "beta.obsidianscout.com";
 
     [ObservableProperty]
     private string serverPort = string.Empty;
@@ -46,6 +46,25 @@ public partial class LoginViewModel : ObservableObject
         LoadServerConfiguration();
     }
 
+    public string PreviewUrl => string.IsNullOrWhiteSpace(ServerPort)
+        ? $"{Protocol}://{ServerAddress}"
+        : $"{Protocol}://{ServerAddress}:{ServerPort}";
+
+    partial void OnProtocolChanged(string value)
+    {
+        OnPropertyChanged(nameof(PreviewUrl));
+    }
+
+    partial void OnServerAddressChanged(string value)
+    {
+        OnPropertyChanged(nameof(PreviewUrl));
+    }
+
+    partial void OnServerPortChanged(string value)
+    {
+        OnPropertyChanged(nameof(PreviewUrl));
+    }
+
     private async void LoadServerConfiguration()
     {
         try
@@ -54,16 +73,16 @@ public partial class LoginViewModel : ObservableObject
             var loadedAddress = await _settingsService.GetServerAddressAsync();
             var loadedPort = await _settingsService.GetServerPortAsync();
 
-            // Use saved values if present; otherwise keep sane defaults (https, obsidianscout.com)
+            // Use saved values if present; otherwise default to beta.obsidianscout.com
             Protocol = string.IsNullOrWhiteSpace(loadedProtocol) ? "https" : loadedProtocol;
-            ServerAddress = string.IsNullOrWhiteSpace(loadedAddress) ? "obsidianscout.com" : loadedAddress;
+            ServerAddress = string.IsNullOrWhiteSpace(loadedAddress) ? "beta.obsidianscout.com" : loadedAddress;
             ServerPort = string.IsNullOrWhiteSpace(loadedPort) ? string.Empty : loadedPort;
         }
         catch
         {
             // Ignore and keep defaults
             Protocol = "https";
-            ServerAddress = "obsidianscout.com";
+            ServerAddress = "beta.obsidianscout.com";
             ServerPort = string.Empty;
         }
     }

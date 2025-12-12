@@ -24,15 +24,16 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     private readonly ILocalNotificationService? _localNotificationService;
   
     private Timer? _timer;
+    private readonly object _timerLock = new object(); // Thread-safety for timer operations
     private TimeSpan _currentPollInterval = TimeSpan.FromSeconds(60); // Start with 60 seconds (1 min)
     private readonly TimeSpan _minPollInterval = TimeSpan.FromSeconds(60); // Minimum 1 minute
     private readonly TimeSpan _maxPollInterval = TimeSpan.FromSeconds(120); // Maximum 2 minutes
-    private bool _running;
-    private bool _isInBackground;
+    private volatile bool _running; // volatile for thread-safe reads
+    private volatile bool _isInBackground;
     private readonly SemaphoreSlim _pollLock = new SemaphoreSlim(1, 1);
     private int _consecutiveEmptyPolls = 0;
     private const int EMPTY_POLLS_BEFORE_SLOWDOWN = 3; // Slow down after 3 empty polls (instead of 5)
-    private bool _disposed = false;
+    private volatile bool _disposed = false;
     
     // Tracking data file path
     private readonly string _trackingFilePath;
@@ -108,11 +109,15 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Starting background notification service");
         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Power optimization: Adaptive polling enabled");
  
-   // Load tracking data
-   await SafeLoadTrackingDataAsync();
+        // Load tracking data
+        await SafeLoadTrackingDataAsync();
    
-   // Start timer - poll immediately then every interval
-        _timer = new Timer(async _ => await SafePollAsync(), null, TimeSpan.FromSeconds(5), _currentPollInterval); // Delay first poll by 5 seconds
+        // Start timer - poll immediately then every interval
+        lock (_timerLock)
+        {
+            if (_disposed) return; // Check disposed state under lock
+            _timer = new Timer(async _ => await SafePollAsync(), null, TimeSpan.FromSeconds(5), _currentPollInterval); // Delay first poll by 5 seconds
+        }
  
         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Service started - polling every {_currentPollInterval.TotalSeconds} seconds");
     }
@@ -133,21 +138,24 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     {
         if (!_running) return;
       
-      System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Stopping background notification service");
+        System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Stopping background notification service");
 
-        try
+        lock (_timerLock)
         {
-   _timer?.Change(Timeout.Infinite, Timeout.Infinite);
-        _timer?.Dispose();
-      _timer = null;
+            try
+            {
+                _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+                _timer?.Dispose();
+                _timer = null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error stopping timer: {ex.Message}");
+            }
         }
- catch (Exception ex)
-        {
-     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error stopping timer: {ex.Message}");
-   }
 
- _running = false;
-  }
+        _running = false;
+    }
 
     public async Task ForceCheckAsync()
     {
@@ -197,11 +205,22 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
 
     private void UpdateTimerInterval()
     {
-        if (_timer != null)
-{
-         _timer.Change(_currentPollInterval, _currentPollInterval);
-      }
- }
+        lock (_timerLock)
+        {
+            if (_timer != null && !_disposed)
+            {
+                try
+                {
+                    _timer.Change(_currentPollInterval, _currentPollInterval);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Timer was disposed, ignore
+                    System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Timer already disposed during interval update");
+                }
+            }
+        }
+    }
 
     private void AdjustPollingInterval(int notificationsFound)
     {
@@ -1318,15 +1337,18 @@ System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent not
     public void Dispose()
     {
         if (_disposed) return;
-    _disposed = true;
+        _disposed = true;
 
         Stop();
   
         try
-{
-       _pollLock?.Dispose();
+        {
+            _pollLock?.Dispose();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Dispose error: {ex.Message}");
+        }
     }
 
     // Helper: extract numeric team IDs from arbitrary alliance string (handles formats like "red(5454,5568)", "[5454,5568]", "5454,5568", etc.)

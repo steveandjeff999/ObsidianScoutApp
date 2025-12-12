@@ -18,6 +18,8 @@ public interface INotificationPollingService
 public class NotificationPollingService : INotificationPollingService, IDisposable
 {
     private readonly IBackgroundNotificationService _backgroundNotificationService;
+    private volatile bool _disposed = false;
+    private volatile bool _started = false;
 
     public NotificationPollingService(IApiService apiService, ISettingsService settingsService, ILocalNotificationService? localNotificationService = null)
     {
@@ -26,41 +28,113 @@ public class NotificationPollingService : INotificationPollingService, IDisposab
 
     public async Task StartAsync()
     {
+        if (_disposed || _started) return;
+        _started = true;
+        
         System.Diagnostics.Debug.WriteLine("[NotificationPolling] Starting notification polling service");
-        await _backgroundNotificationService.StartAsync();
-        System.Diagnostics.Debug.WriteLine("[NotificationPolling] Notification polling service started");
+        try
+        {
+            await _backgroundNotificationService.StartAsync();
+            System.Diagnostics.Debug.WriteLine("[NotificationPolling] Notification polling service started");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] Start failed: {ex.Message}");
+            _started = false;
+        }
     }
 
     public void Start()
     {
-        Task.Run(async () => await StartAsync());
+        if (_disposed || _started) return;
+        Task.Run(async () => 
+        {
+            try
+            {
+                await StartAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[NotificationPolling] Start task failed: {ex.Message}");
+            }
+        });
     }
 
     public void Stop()
     {
+        if (_disposed) return;
+        
         System.Diagnostics.Debug.WriteLine("[NotificationPolling] Stopping notification polling service");
-        _backgroundNotificationService.Stop();
-        System.Diagnostics.Debug.WriteLine("[NotificationPolling] Notification polling service stopped");
+        try
+        {
+            _backgroundNotificationService.Stop();
+            _started = false;
+            System.Diagnostics.Debug.WriteLine("[NotificationPolling] Notification polling service stopped");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] Stop error: {ex.Message}");
+        }
     }
 
     public async Task ForceCheckAsync()
     {
+        if (_disposed) return;
+        
         System.Diagnostics.Debug.WriteLine("[NotificationPolling] Force check requested");
-        await _backgroundNotificationService.ForceCheckAsync();
+        try
+        {
+            await _backgroundNotificationService.ForceCheckAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] ForceCheck error: {ex.Message}");
+        }
     }
 
     public void OnAppBackground()
     {
-        _backgroundNotificationService.OnAppBackground();
+        if (_disposed) return;
+        try
+        {
+            _backgroundNotificationService.OnAppBackground();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] OnAppBackground error: {ex.Message}");
+        }
     }
 
     public void OnAppForeground()
     {
-        _backgroundNotificationService.OnAppForeground();
+        if (_disposed) return;
+        try
+        {
+            _backgroundNotificationService.OnAppForeground();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] OnAppForeground error: {ex.Message}");
+        }
     }
 
     public void Dispose()
     {
-        Stop();
+        if (_disposed) return;
+        _disposed = true;
+        
+        try
+        {
+            Stop();
+            
+            if (_backgroundNotificationService is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[NotificationPolling] Dispose error: {ex.Message}");
+        }
     }
 }

@@ -327,9 +327,20 @@ if (_bannerOverlay == null) return;
   return;
     }
 
-     // Check if user is logged in
-    var token = await _settingsService.GetTokenAsync();
-  var expiration = await _settingsService.GetTokenExpirationAsync();
+     // Check if user is logged in - with error handling for SecureStorage issues
+    string? token = null;
+    DateTime? expiration = null;
+    
+    try
+    {
+        token = await _settingsService.GetTokenAsync();
+        expiration = await _settingsService.GetTokenExpirationAsync();
+    }
+    catch (Exception settingsEx)
+    {
+        System.Diagnostics.Debug.WriteLine($"[App] Error reading auth settings: {settingsEx.Message}");
+        // Continue with null token - will show login
+    }
 
                 if (string.IsNullOrEmpty(token) || expiration == null || expiration < DateTime.UtcNow)
  {
@@ -338,16 +349,21 @@ if (_bannerOverlay == null) return;
          System.Diagnostics.Debug.WriteLine("[App] User not logged in - Shell should show login state");
 
   // Only navigate if Shell is ready and has the route registered
-try
-     {
-  // Try relative navigation first (safer)
-  await shellCurrent.GoToAsync("LoginPage");
-    }
-     catch (Exception navEx)
-  {
-       System.Diagnostics.Debug.WriteLine($"[App] Navigation to LoginPage failed: {navEx.Message}");
-     // Don't crash - the Shell's default state should handle this
-     }
+  try
+       {
+    // Try relative navigation first (safer)
+    await shellCurrent.GoToAsync("LoginPage");
+      }
+       catch (InvalidOperationException navInvalidEx)
+    {
+         System.Diagnostics.Debug.WriteLine($"[App] Route not registered: {navInvalidEx.Message}");
+       // Don't crash - the Shell's default state should handle this
+       }
+       catch (Exception navEx)
+    {
+         System.Diagnostics.Debug.WriteLine($"[App] Navigation to LoginPage failed: {navEx.Message}");
+       // Don't crash - the Shell's default state should handle this
+       }
        }
      else
       {
@@ -480,7 +496,18 @@ try
       var shellCurrent = Shell.Current;
  if (shellCurrent != null)
          {
-     await shellCurrent.GoToAsync("MainPage");
+     try
+     {
+         await shellCurrent.GoToAsync("MainPage");
+     }
+     catch (InvalidOperationException routeEx)
+     {
+         System.Diagnostics.Debug.WriteLine($"[App] MainPage route not registered: {routeEx.Message}");
+     }
+   }
+   else
+   {
+       System.Diagnostics.Debug.WriteLine("[App] Shell.Current is null in SafeNavigateToMainPageAsync");
    }
     }
    catch (Exception navEx)

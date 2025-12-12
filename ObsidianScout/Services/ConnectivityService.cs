@@ -12,8 +12,11 @@ namespace ObsidianScout.Services
     public class ConnectivityService : IConnectivityService, IDisposable
     {
         private System.Timers.Timer? _timer;
-    private bool _disposed = false;
-private bool _lastKnownState = true; // Assume connected initially
+        private bool _disposed = false;
+        private bool _lastKnownState = true; // Assume connected initially
+        private readonly object _stateLock = new object(); // Thread-safe state access
+        private DateTime _lastLogTime = DateTime.MinValue;
+        private const int LOG_THROTTLE_SECONDS = 30; // Only log every 30 seconds to reduce noise
 
         public event EventHandler<bool>? ConnectivityChanged;
 
@@ -61,7 +64,10 @@ private bool _lastKnownState = true; // Assume connected initially
         var isOnline = e?.NetworkAccess == NetworkAccess.Internet;
        System.Diagnostics.Debug.WriteLine($"[ConnectivityService] MAUI connectivity changed: {e?.NetworkAccess} (IsOnline={isOnline})");
              
-                _lastKnownState = isOnline;
+                lock (_stateLock)
+                {
+                    _lastKnownState = isOnline;
+                }
      
            // Invoke event safely
            SafeInvokeConnectivityChanged(isOnline);
@@ -77,12 +83,19 @@ System.Diagnostics.Debug.WriteLine($"[ConnectivityService] OnMauiConnectivityCha
      try
             {
      var current = CheckNetworkAccess();
-       var previous = _lastKnownState;
+       bool previous;
+       lock (_stateLock)
+       {
+           previous = _lastKnownState;
+       }
                 
                 if (previous != current)
         {
    System.Diagnostics.Debug.WriteLine($"[ConnectivityService] Connectivity changed via timer: {previous} ? {current}");
-   _lastKnownState = current;
+   lock (_stateLock)
+   {
+       _lastKnownState = current;
+   }
              SafeInvokeConnectivityChanged(current);
      }
        }
@@ -112,7 +125,10 @@ System.Diagnostics.Debug.WriteLine($"[ConnectivityService] OnMauiConnectivityCha
            if (connectivity == null)
        {
            System.Diagnostics.Debug.WriteLine("[ConnectivityService] Connectivity.Current is null");
-           return _lastKnownState; // Return last known state
+           lock (_stateLock)
+           {
+               return _lastKnownState; // Return last known state
+           }
    }
       
            return connectivity.NetworkAccess == NetworkAccess.Internet;
@@ -120,7 +136,10 @@ System.Diagnostics.Debug.WriteLine($"[ConnectivityService] OnMauiConnectivityCha
             catch (Exception ex)
             {
         System.Diagnostics.Debug.WriteLine($"[ConnectivityService] CheckNetworkAccess error: {ex.Message}");
-  return _lastKnownState; // Return last known state on error
+  lock (_stateLock)
+  {
+      return _lastKnownState; // Return last known state on error
+  }
          }
         }
 
@@ -134,23 +153,36 @@ System.Diagnostics.Debug.WriteLine($"[ConnectivityService] OnMauiConnectivityCha
                 var connectivity = Connectivity.Current;
           if (connectivity == null)
                     {
-    System.Diagnostics.Debug.WriteLine("[ConnectivityService] IsConnected: Connectivity.Current is null, returning last known state");
-           return _lastKnownState;
+    // Only log occasionally to reduce noise
+    if ((DateTime.Now - _lastLogTime).TotalSeconds > LOG_THROTTLE_SECONDS)
+    {
+        System.Diagnostics.Debug.WriteLine("[ConnectivityService] IsConnected: Connectivity.Current is null, returning last known state");
+        _lastLogTime = DateTime.Now;
+    }
+    lock (_stateLock)
+    {
+        return _lastKnownState;
+    }
       }
          
         var networkAccess = connectivity.NetworkAccess;
          var isConnected = networkAccess == NetworkAccess.Internet;
         
-             // Update last known state
-  _lastKnownState = isConnected;
+             // Update last known state thread-safely
+    lock (_stateLock)
+    {
+        _lastKnownState = isConnected;
+    }
            
-      System.Diagnostics.Debug.WriteLine($"[ConnectivityService] IsConnected called: NetworkAccess={networkAccess}, Result={isConnected}");
-   return isConnected;
+      return isConnected;
       }
    catch (Exception ex)
      {
     System.Diagnostics.Debug.WriteLine($"[ConnectivityService] IsConnected check failed: {ex.Message}");
-          return _lastKnownState; // Return last known state on error
+          lock (_stateLock)
+          {
+              return _lastKnownState; // Return last known state on error
+          }
           }
      }
         }
