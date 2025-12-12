@@ -7,7 +7,7 @@
              x:DataType="viewmodels:TeamsViewModel"
              Title="Teams">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         
         <!-- Header Card -->
         <Border Grid.Row="0"
@@ -32,8 +32,15 @@
             </Grid>
         </Border>
 
+        <!-- Search Bar -->
+        <SearchBar Grid.Row="1"
+                   Placeholder="Search teams..."
+                   Text="{Binding SearchText}"
+                   Margin="20,0,20,10"
+                   BackgroundColor="Transparent" />
+
         <!-- Content -->
-        <RefreshView Grid.Row="1"
+        <RefreshView Grid.Row="2"
                      IsRefreshing="{Binding IsRefreshing}"
                      Command="{Binding RefreshCommand}">
             

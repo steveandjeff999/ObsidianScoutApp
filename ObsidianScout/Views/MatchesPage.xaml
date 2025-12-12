@@ -7,7 +7,7 @@
            x:DataType="viewmodels:MatchesViewModel"
      Title="Matches">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         
         <!-- Header Card -->
       <Border Grid.Row="0"
@@ -34,8 +34,15 @@
           </Grid>
         </Border>
 
+        <!-- Search Bar -->
+        <SearchBar Grid.Row="1"
+                   Placeholder="Search matches..."
+                   Text="{Binding SearchText}"
+                   Margin="20,0,20,10"
+                   BackgroundColor="Transparent" />
+
       <!-- Content -->
-        <RefreshView Grid.Row="1"
+        <RefreshView Grid.Row="2"
        IsRefreshing="{Binding IsRefreshing}"
               Command="{Binding RefreshCommand}">
     
@@ -277,7 +284,7 @@ Style="{StaticResource ErrorBadge}"
       </RefreshView>
 
  <!-- Back Button (Floating) -->
-        <Button Grid.Row="1"
+        <Button Grid.Row="2"
      Text="←"
           Style="{StaticResource FAB}"
            Command="{Binding GoBackCommand}"

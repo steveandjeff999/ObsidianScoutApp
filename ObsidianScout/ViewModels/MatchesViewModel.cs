@@ -11,6 +11,7 @@ namespace ObsidianScout.ViewModels;
 public partial class MatchesViewModel : ObservableObject
 {
     private readonly IApiService _apiService;
+    private List<Match> _allMatchesList = new();
 
     [ObservableProperty]
   private int eventId;
@@ -33,6 +34,9 @@ public partial class MatchesViewModel : ObservableObject
     [ObservableProperty]
     private bool isOfflineMode;
 
+    [ObservableProperty]
+    private string searchText = string.Empty;
+
     public MatchesViewModel(IApiService apiService)
     {
       _apiService = apiService;
@@ -44,6 +48,11 @@ public partial class MatchesViewModel : ObservableObject
   {
    _ = LoadMatchesAsync();
         }
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        ApplyFilter();
     }
 
     public async Task InitializeAsync()
@@ -104,57 +113,74 @@ await LoadMatchesAsync();
         if (IsLoading)
             return;
 
-  IsLoading = true;
+        IsLoading = true;
         ErrorMessage = string.Empty;
         IsOfflineMode = false;
 
-     try
+        try
         {
             System.Diagnostics.Debug.WriteLine($"=== LOADING MATCHES FOR EVENT {EventId} ===");
 
- var result = await _apiService.GetMatchesAsync(EventId);
+            var result = await _apiService.GetMatchesAsync(EventId);
 
-if (result.Success && result.Matches != null)
-   {
-        Matches.Clear();
-        
-            // Sort by match type order first, then by match number
-     var sortedMatches = result.Matches
-     .OrderBy(m => m.MatchTypeOrder)
-        .ThenBy(m => m.MatchNumber)
-               .ToList();
+            if (result.Success && result.Matches != null)
+            {
+                // Sort by match type order first, then by match number
+                _allMatchesList = result.Matches
+                    .OrderBy(m => m.MatchTypeOrder)
+                    .ThenBy(m => m.MatchNumber)
+                    .ToList();
 
-            foreach (var match in sortedMatches)
-       {
-     Matches.Add(match);
-         }
+                ApplyFilter();
 
-         // Check if we're in offline mode (using cached data)
-       if (!string.IsNullOrEmpty(result.Error) && result.Error.Contains("offline"))
-          {
-        IsOfflineMode = true;
-             ErrorMessage = "?? Offline Mode - Using cached data";
-       }
+                // Check if we're in offline mode (using cached data)
+                if (!string.IsNullOrEmpty(result.Error) && result.Error.Contains("offline"))
+                {
+                    IsOfflineMode = true;
+                    ErrorMessage = "?? Offline Mode - Using cached data";
+                }
 
-           System.Diagnostics.Debug.WriteLine($"? Loaded {Matches.Count} matches (sorted by type and number)");
-     }
+                System.Diagnostics.Debug.WriteLine($"? Loaded {Matches.Count} matches (sorted by type and number)");
+            }
             else
-         {
-        ErrorMessage = result.Error ?? "Failed to load matches";
-    IsOfflineMode = true;
-     System.Diagnostics.Debug.WriteLine($"? Failed to load matches: {ErrorMessage}");
-  }
+            {
+                ErrorMessage = result.Error ?? "Failed to load matches";
+                IsOfflineMode = true;
+                System.Diagnostics.Debug.WriteLine($"? Failed to load matches: {ErrorMessage}");
+            }
         }
         catch (Exception ex)
-     {
-    ErrorMessage = $"Error: {ex.Message}";
-     IsOfflineMode = true;
-       System.Diagnostics.Debug.WriteLine($"? Exception loading matches: {ex.Message}");
-        }
-   finally
         {
-          IsLoading = false;
-    IsRefreshing = false;
+            ErrorMessage = $"Error: {ex.Message}";
+            IsOfflineMode = true;
+            System.Diagnostics.Debug.WriteLine($"? Exception loading matches: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+            IsRefreshing = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        if (_allMatchesList == null) return;
+
+        var processedMatches = _allMatchesList.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            processedMatches = processedMatches.Where(m => 
+                m.MatchNumber.ToString().Contains(SearchText) || 
+                (m.MatchType != null && m.MatchType.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (m.RedAlliance != null && m.RedAlliance.Contains(SearchText)) ||
+                (m.BlueAlliance != null && m.BlueAlliance.Contains(SearchText)));
+        }
+
+        Matches.Clear();
+        foreach (var match in processedMatches)
+        {
+            Matches.Add(match);
         }
     }
 

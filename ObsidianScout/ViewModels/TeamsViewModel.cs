@@ -9,6 +9,7 @@ namespace ObsidianScout.ViewModels;
 public partial class TeamsViewModel : ObservableObject
 {
     private readonly IApiService _apiService;
+    private List<Team> _allTeamsList = new();
 
     [ObservableProperty]
     private ObservableCollection<Team> teams = new();
@@ -25,9 +26,17 @@ public partial class TeamsViewModel : ObservableObject
     [ObservableProperty]
     private bool isOfflineMode;
 
+    [ObservableProperty]
+    private string searchText = string.Empty;
+
     public TeamsViewModel(IApiService apiService)
     {
         _apiService = apiService;
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        ApplyFilterAndSort();
     }
 
     public async Task InitializeAsync()
@@ -51,11 +60,8 @@ public partial class TeamsViewModel : ObservableObject
 
             if (result.Success)
             {
-                Teams.Clear();
-                foreach (var team in result.Teams)
-                {
-                    Teams.Add(team);
-                }
+                _allTeamsList = result.Teams;
+                ApplyFilterAndSort();
 
                 // Check if we're in offline mode (using cached data)
                 if (!string.IsNullOrEmpty(result.Error) && result.Error.Contains("offline"))
@@ -79,6 +85,34 @@ public partial class TeamsViewModel : ObservableObject
         {
             IsLoading = false;
             IsRefreshing = false;
+        }
+    }
+
+    private void ApplyFilterAndSort()
+    {
+        if (_allTeamsList == null) return;
+
+        // 1. Merge duplicate teams (DistinctBy TeamNumber)
+        // 2. Sort by TeamNumber (smallest to greatest)
+        var processedTeams = _allTeamsList
+            .GroupBy(t => t.TeamNumber)
+            .Select(g => g.First())
+            .OrderBy(t => t.TeamNumber)
+            .AsEnumerable();
+
+        // 3. Filter by SearchText
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            processedTeams = processedTeams.Where(t => 
+                t.TeamNumber.ToString().Contains(SearchText) || 
+                (t.TeamName != null && t.TeamName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (t.Location != null && t.Location.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        Teams.Clear();
+        foreach (var team in processedTeams)
+        {
+            Teams.Add(team);
         }
     }
 
