@@ -49,6 +49,7 @@
                     <Picker Title="Choose an event"
                             ItemsSource="{Binding Events}"
                             SelectedItem="{Binding SelectedEvent}"
+                            Style="{StaticResource ModernPicker}"
                             TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
                         <Picker.ItemDisplayBinding>
                             <Binding Path="Name" />
@@ -68,6 +69,7 @@
                     <Picker Title="Choose a metric"
                             ItemsSource="{Binding AvailableMetrics}"
                             SelectedItem="{Binding SelectedMetric}"
+                            Style="{StaticResource ModernPicker}"
                             TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
                         <Picker.ItemDisplayBinding>
                             <Binding Path="Name" />

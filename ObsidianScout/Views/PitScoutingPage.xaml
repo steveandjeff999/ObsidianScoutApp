@@ -123,7 +123,7 @@ Stroke="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResourc
    <Picker Title="Select Team"
     ItemsSource="{Binding Teams}"
          SelectedItem="{Binding SelectedTeam}"
-  FontSize="15">
+         Style="{StaticResource ModernPicker}">
      <Picker.ItemDisplayBinding>
 <Binding Path="TeamNumber" StringFormat="Team {0}"/>
               </Picker.ItemDisplayBinding>

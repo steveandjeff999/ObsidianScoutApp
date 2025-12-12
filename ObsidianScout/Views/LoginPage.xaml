@@ -178,9 +178,8 @@
  </Border.StrokeShape>
  <Picker SelectedItem="{Binding Protocol}"
  Title="Select Protocol"
- Style="{StaticResource GlassPicker}"
+ Style="{StaticResource ModernPicker}"
  BackgroundColor="Transparent"
- HeightRequest="80"
  Margin="0">
  <Picker.Items>
  <x:String>http</x:String>

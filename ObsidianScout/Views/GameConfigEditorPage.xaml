@@ -112,6 +112,7 @@
         <Picker SelectedItem="{Binding CurrentConfig.PreferredApiSource}" 
     ItemsSource="{Binding ApiSourceOptions}"
       Title="Select API Source"
+      Style="{StaticResource ModernPicker}"
  BackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
       TitleColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />

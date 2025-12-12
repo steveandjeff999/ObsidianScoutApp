@@ -549,48 +549,48 @@
     <Style x:Key="ModernPicker" TargetType="Picker">
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
         <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
-     <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontSize">
-          <Setter.Value>
-          <OnPlatform x:TypeArguments="x:Double">
-         <On Platform="WinUI" Value="20" />
-             <On Platform="Android" Value="16" />
-      <On Platform="iOS" Value="16" />
-  <On Platform="MacCatalyst" Value="16" />
+            <Setter.Value>
+                <OnPlatform x:TypeArguments="x:Double">
+                    <On Platform="WinUI" Value="20" />
+                    <On Platform="Android" Value="16" />
+                    <On Platform="iOS" Value="16" />
+                    <On Platform="MacCatalyst" Value="16" />
                 </OnPlatform>
-   </Setter.Value>
+            </Setter.Value>
         </Setter>
         <Setter Property="HeightRequest">
             <Setter.Value>
-           <OnPlatform x:TypeArguments="x:Double">
-      <On Platform="WinUI" Value="56" />
-            <On Platform="Android" Value="52" />
-       <On Platform="iOS" Value="52" />
-   <On Platform="MacCatalyst" Value="52" />
-   </OnPlatform>
+                <OnPlatform x:TypeArguments="x:Double">
+                    <On Platform="WinUI" Value="96" />
+                    <On Platform="Android" Value="52" />
+                    <On Platform="iOS" Value="52" />
+                    <On Platform="MacCatalyst" Value="52" />
+                </OnPlatform>
             </Setter.Value>
         </Setter>
-      <Setter Property="MinimumHeightRequest">
-     <Setter.Value>
-        <OnPlatform x:TypeArguments="x:Double">
-          <On Platform="WinUI" Value="56" />
-          <On Platform="Android" Value="52" />
-  <On Platform="iOS" Value="52" />
-         <On Platform="MacCatalyst" Value="52" />
-      </OnPlatform>
- </Setter.Value>
-      </Setter>
-        <Setter Property="VerticalOptions" Value="Center" />
-      <Setter Property="FontFamily" Value="OpenSansRegular" />
-    <Setter Property="Margin">
+        <Setter Property="MinimumHeightRequest">
             <Setter.Value>
-  <OnPlatform x:TypeArguments="Thickness">
-        <On Platform="WinUI" Value="12,8" />
-  <On Platform="Android" Value="8,6" />
-<On Platform="iOS" Value="8,6" />
-      <On Platform="MacCatalyst" Value="8,6" />
-     </OnPlatform>
-     </Setter.Value>
+                <OnPlatform x:TypeArguments="x:Double">
+                    <On Platform="WinUI" Value="96" />
+                    <On Platform="Android" Value="52" />
+                    <On Platform="iOS" Value="52" />
+                    <On Platform="MacCatalyst" Value="52" />
+                </OnPlatform>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="Margin">
+            <Setter.Value>
+                <OnPlatform x:TypeArguments="Thickness">
+                    <On Platform="WinUI" Value="12,8" />
+                    <On Platform="Android" Value="8,6" />
+                    <On Platform="iOS" Value="8,6" />
+                    <On Platform="MacCatalyst" Value="8,6" />
+                </OnPlatform>
+            </Setter.Value>
         </Setter>
     </Style>
     

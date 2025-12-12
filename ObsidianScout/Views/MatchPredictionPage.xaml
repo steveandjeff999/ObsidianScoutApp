@@ -38,7 +38,7 @@
                             ItemDisplayBinding="{Binding Name}"
                             Title="Select Event"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark=White}"
-                            Style="{StaticResource GlassPickerStyle}" />
+                            Style="{StaticResource ModernPicker}" />
                 </VerticalStackLayout>
             </Border>
 
@@ -56,7 +56,7 @@
                             SelectedItem="{Binding SelectedMatch}"
                             Title="Select Match"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark=White}"
-                            Style="{StaticResource GlassPickerStyle}">
+                            Style="{StaticResource ModernPicker}">
                         <Picker.ItemDisplayBinding>
                             <MultiBinding StringFormat="{}{0} Match {1}">
                                 <Binding Path="MatchType" />

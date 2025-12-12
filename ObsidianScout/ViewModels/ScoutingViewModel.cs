@@ -414,7 +414,12 @@ public partial class ScoutingViewModel : ObservableObject
             if (response.Success && response.Teams != null && response.Teams.Count > 0)
             {
                 Teams.Clear();
-                foreach (var team in response.Teams.OrderBy(t => t.TeamNumber))
+                // Deduplicate teams by TeamNumber (like TeamsPage does)
+                var uniqueTeams = response.Teams
+                    .GroupBy(t => t.TeamNumber)
+                    .Select(g => g.First())
+                    .OrderBy(t => t.TeamNumber);
+                foreach (var team in uniqueTeams)
                 {
                     Teams.Add(team);
                 }

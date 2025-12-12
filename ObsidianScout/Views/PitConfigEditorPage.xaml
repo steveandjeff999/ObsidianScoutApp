@@ -143,7 +143,7 @@ Style="{StaticResource LiquidGlassPage}">
                </Grid.ColumnDefinitions>
 
                   <Entry Grid.Column="0" Text="{Binding Name}" Placeholder="Field Name" />
-<Picker Grid.Column="1" ItemsSource="{Binding AvailableTypes}" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}" WidthRequest="140" />
+<Picker Grid.Column="1" ItemsSource="{Binding AvailableTypes}" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}" Style="{StaticResource ModernPicker}" WidthRequest="140" />
 
         <StackLayout Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalOptions="Center">
   <CheckBox IsChecked="{Binding Required}" />

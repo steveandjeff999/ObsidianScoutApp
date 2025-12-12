@@ -287,17 +287,25 @@ public partial class GraphsViewModel : ObservableObject
     [RelayCommand]
     private void ChangeDataView(string dataView)
     {
-        SelectedDataView = dataView;
-        System.Diagnostics.Debug.WriteLine($"Data view changed to: {dataView}");
+        System.Diagnostics.Debug.WriteLine($"=== CHANGE DATA VIEW ===");
+        System.Diagnostics.Debug.WriteLine($"From: {SelectedDataView} → To: {dataView}");
         
-        if (HasGraphData && ComparisonData != null)
+        SelectedDataView = dataView;
+        
+        System.Diagnostics.Debug.WriteLine($"SelectedDataView now set to: {SelectedDataView}");
+        
+        if (HasGraphData)
         {
             // Clear old chart and regenerate with new view
             CurrentChart = null;
-            System.Diagnostics.Debug.WriteLine("Cleared chart for data view change");
+            System.Diagnostics.Debug.WriteLine("Cleared chart for data view change, calling GenerateGraphsAsync");
             
             // Regenerate graphs with new data view
             _ = GenerateGraphsAsync();
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("HasGraphData is false, not regenerating");
         }
     }
 
@@ -346,20 +354,51 @@ public partial class GraphsViewModel : ObservableObject
                 try
                 {
                     StatusMessage = "Requesting server-generated graph image...";
+                    
+                    System.Diagnostics.Debug.WriteLine($"=== BUILDING REQUEST ===");
+                    System.Diagnostics.Debug.WriteLine($"Current SelectedDataView: '{SelectedDataView}'");
+                    System.Diagnostics.Debug.WriteLine($"Current SelectedGraphType: '{SelectedGraphType}'");
 
                     var request = new GraphImageRequest
                     {
                         TeamNumbers = SelectedTeams.Select(t => t.TeamNumber).ToList(),
                         EventId = SelectedEvent.Id,
                         Metric = SelectedMetric.Id,
-                        GraphTypes = new List<string> { SelectedGraphType },
-                        DataView = SelectedDataView == "match_by_match" ? "matches" : SelectedDataView
+                        GraphType = SelectedGraphType,  // Use singular graph_type
+                        Mode = SelectedDataView == "match_by_match" ? "match_by_match" : "averages"  // Use 'mode' to match Python script
                     };
+                    
+                    System.Diagnostics.Debug.WriteLine($"📊 REQUEST BUILT:");
+                    System.Diagnostics.Debug.WriteLine($"  teams: [{string.Join(",", request.TeamNumbers)}]");
+                    System.Diagnostics.Debug.WriteLine($"  event: {request.EventId}");
+                    System.Diagnostics.Debug.WriteLine($"  metric: {request.Metric}");
+                    System.Diagnostics.Debug.WriteLine($"  graph_type: {request.GraphType}");
+                    System.Diagnostics.Debug.WriteLine($"  mode: {request.Mode}");
 
                     var bytes = await _apiService.GetGraphsImageAsync(request);
                     if (bytes != null && bytes.Length >0)
                     {
-                        ServerGraphImage = ImageSource.FromStream(() => new MemoryStream(bytes));
+                        // Force clear old image first to prevent caching issues
+                        ServerGraphImage = null;
+                        UseServerImage = false;
+                        OnPropertyChanged(nameof(ServerGraphImage));
+                        OnPropertyChanged(nameof(UseServerImage));
+                        
+                        // Small delay to ensure UI clears the old image
+                        await Task.Delay(100);
+                        
+                        // Create a copy of bytes to ensure it's truly unique
+                        var bytesCopy = new byte[bytes.Length];
+                        Array.Copy(bytes, bytesCopy, bytes.Length);
+                        
+                        // Create new image from stream with fresh data
+                        // Use StreamImageSource to avoid caching issues
+                        var imageSource = new StreamImageSource
+                        {
+                            Stream = cancellationToken => Task.FromResult<Stream>(new MemoryStream(bytesCopy))
+                        };
+                        
+                        ServerGraphImage = imageSource;
                         UseServerImage = true;
                         ShowMicrocharts = false;
                         HasGraphData = true;
@@ -370,6 +409,8 @@ public partial class GraphsViewModel : ObservableObject
                         OnPropertyChanged(nameof(UseServerImage));
                         OnPropertyChanged(nameof(ShowMicrocharts));
                         OnPropertyChanged(nameof(HasGraphData));
+                        
+                        System.Diagnostics.Debug.WriteLine($"Server image updated: {bytes.Length} bytes, first 4 bytes: {bytes[0]} {bytes[1]} {bytes[2]} {bytes[3]}");
 
                         return; // done
                     }
@@ -1026,11 +1067,18 @@ public partial class GraphsViewModel : ObservableObject
             
             if (response.Success && response.Teams != null)
             {
-                // Sort teams by team number
-                var sortedTeams = response.Teams.OrderBy(t => t.TeamNumber).ToList();
-                Teams = new ObservableCollection<Team>(sortedTeams);
+                // Deduplicate by team number (keep first occurrence) and sort by team number
+                var deduplicatedTeams = response.Teams
+                    .GroupBy(t => t.TeamNumber)
+                    .Select(g => g.First())
+                    .OrderBy(t => t.TeamNumber)
+                    .ToList();
+                
+                Teams = new ObservableCollection<Team>(deduplicatedTeams);
                 UpdateAvailableTeams();
                 StatusMessage = $"{Teams.Count} teams loaded";
+                
+                System.Diagnostics.Debug.WriteLine($"Loaded {response.Teams.Count} teams, deduplicated to {Teams.Count} unique teams");
             }
             else
             {
@@ -1138,22 +1186,15 @@ public partial class GraphsViewModel : ObservableObject
         
         SelectedGraphType = graphType;
         
-        if (HasGraphData && ComparisonData != null)
+        if (HasGraphData)
         {
             // Force clear the chart
             CurrentChart = null;
             OnPropertyChanged(nameof(CurrentChart));
             System.Diagnostics.Debug.WriteLine("Cleared old chart with OnPropertyChanged");
             
-            // Small delay to ensure UI clears
-            Task.Delay(50).ContinueWith(_ =>
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    GenerateChart();
-                    System.Diagnostics.Debug.WriteLine($"Generated new {graphType} chart");
-                });
-            });
+            // Regenerate graphs (fetches new server image or regenerates local chart)
+            _ = GenerateGraphsAsync();
         }
     }
     

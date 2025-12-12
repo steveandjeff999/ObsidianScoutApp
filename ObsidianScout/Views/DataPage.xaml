@@ -259,7 +259,6 @@ BackgroundColor="Transparent" />
  <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
  StrokeThickness="0"
  Padding="0"
- HeightRequest="44"
  VerticalOptions="Center">
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
@@ -270,8 +269,6 @@ BackgroundColor="Transparent" />
  Style="{StaticResource ModernPicker}"
  BackgroundColor="Transparent"
  Title="Filter by Event"
- HeightRequest="40"
- FontSize="14"
  HorizontalOptions="FillAndExpand"
  VerticalOptions="Center" />
  </Border>

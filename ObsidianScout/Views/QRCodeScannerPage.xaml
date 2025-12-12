@@ -77,7 +77,7 @@
  Title="Camera"
  SelectedIndexChanged="OnCameraSelectionChanged"
  HorizontalOptions="FillAndExpand"
- FontSize="14" />
+ Style="{StaticResource ModernPicker}" />
  </HorizontalStackLayout>
  </Border>
 
