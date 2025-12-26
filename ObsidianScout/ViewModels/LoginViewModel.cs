@@ -145,8 +145,8 @@ public partial class LoginViewModel : ObservableObject
             }
             else
             {
-                // Instruct user to verify server configuration when login fails
-                ErrorMessage = "login failed verify server configuration";
+                // Inform user to verify server configuration and network when login fails
+                ErrorMessage = "Login failed. Please check your server configuration and network connection.";
             }
         }
         catch (Exception ex)
