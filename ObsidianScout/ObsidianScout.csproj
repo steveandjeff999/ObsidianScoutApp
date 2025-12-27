@@ -245,6 +245,9 @@
 	 <MauiXaml Update="Resources\Styles\IconFonts.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Views\AlliancesPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Views\ChatPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>

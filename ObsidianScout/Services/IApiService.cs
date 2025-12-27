@@ -69,6 +69,14 @@ public interface IApiService
     Task<UserDetailResponse> UpdateAdminUserAsync(int userId, UpdateUserRequest request);
     Task<ApiResponse<bool>> DeleteAdminUserAsync(int userId);
     
+    // Alliances (scouting alliances)
+    Task<AlliancesResponse> GetAlliancesAsync();
+    Task<CreateAllianceResponse> CreateAllianceAsync(CreateAllianceRequest request);
+    Task<ApiResponse<bool>> InviteToAllianceAsync(int allianceId, InviteRequest request);
+    Task<ApiResponse<bool>> RespondToInvitationAsync(int invitationId, RespondInvitationRequest request);
+    Task<ToggleAllianceResponse> ToggleAllianceAsync(int allianceId, ToggleAllianceRequest request);
+    Task<ApiResponse<bool>> LeaveAllianceAsync(int allianceId);
+
     // Network configuration
     Task UpdateHttpClientTimeoutAsync();
 }

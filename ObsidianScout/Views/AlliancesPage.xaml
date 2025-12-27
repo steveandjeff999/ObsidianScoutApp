@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ObsidianScout.Views.AlliancesPage"
+             Title="Scouting Alliances">
+    <ContentPage.Content>
+        <ScrollView>
+            <VerticalStackLayout Padding="12" Spacing="12">
+                <Label Text="My Alliances" FontAttributes="Bold" FontSize="18" />
+
+                <CollectionView ItemsSource="{Binding MyAlliances}" SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame CornerRadius="8" Padding="10" Margin="4" HasShadow="True">
+                                <VerticalStackLayout>
+                                    <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Description}" FontSize="13" />
+                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                        <Label Text="Active" IsVisible="{Binding IsActive}" TextColor="Green" VerticalOptions="Center" />
+                                        <Button Text="Toggle" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleAllianceActionCommand}" CommandParameter="{Binding .}" />
+                                        <Button Text="Invite" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.InviteCommand}" CommandParameter="{Binding .}" />
+                                        <Button Text="Leave" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.LeaveAllianceCommand}" CommandParameter="{Binding .}" BackgroundColor="#D9534F" TextColor="White" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="Pending Invitations" FontAttributes="Bold" FontSize="18" />
+                <CollectionView ItemsSource="{Binding PendingInvitations}" SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame CornerRadius="8" Padding="10" Margin="4" HasShadow="True">
+                                <HorizontalStackLayout VerticalOptions="CenterAndExpand" Spacing="8">
+                                    <Label Text="{Binding AllianceName}" VerticalOptions="Center" />
+                                    <Label Text="{Binding FromTeam, StringFormat='From team {0}'}" VerticalOptions="Center" />
+                                    <Button Text="Accept" Clicked="OnAccept" />
+                                    <Button Text="Decline" Clicked="OnDecline" BackgroundColor="#D9534F" TextColor="White" />
+                                </HorizontalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="Sent Invitations" FontAttributes="Bold" FontSize="18" />
+                <CollectionView ItemsSource="{Binding SentInvitations}" SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame CornerRadius="8" Padding="10" Margin="4" HasShadow="True">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{Binding AllianceName}" />
+                                    <Label Text="{Binding ToTeam, StringFormat='To team {0}'}" />
+                                </HorizontalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Button Text="Create Alliance" Command="{Binding CreateAllianceCommand}" />
+                <Button Text="Refresh" Command="{Binding RefreshCommand}" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

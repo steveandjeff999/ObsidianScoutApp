@@ -1807,13 +1807,6 @@ var errorContent = await response.Content.ReadAsStringAsync();
             }
 
             var err = await response.Content.ReadAsStringAsync();
-            try
-            {
-                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatCreateGroupResponse>(err, _jsonOptions);
-                if (parsed != null) return parsed;
-            }
-            catch { }
-
             return new ChatCreateGroupResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
@@ -2151,7 +2144,7 @@ var cachedConfig2 = await _cache_service.GetCachedPitConfigAsync();
     {
     System.Diagnostics.Debug.WriteLine($"[API] Pit config request failed: {ex.Message}");
 
-         // Try to load from cache on exception
+         // Try to load from cache on failure
             var cachedConfig3 = await _cache_service.GetCachedPitConfigAsync();
           if (cachedConfig3 != null)
             {
@@ -2296,8 +2289,8 @@ finally
     {
         if (!await ShouldUseNetworkAsync())
         {
-       return new PitScoutingListResponse { Success = false, Error = "Offline - no cached pit scouting data available" };
-      }
+            return new PitScoutingListResponse { Success = false, Error = "Offline - no cached pit scouting data available" };
+        }
         
         try
    {
@@ -2752,4 +2745,157 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
  return new ApiResponse<bool> { Success = false, Error = ex.Message };
  }
  }
+
+    public async Task<AlliancesResponse> GetAlliancesAsync()
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new AlliancesResponse { Success = false, Error = "Offline - cannot fetch alliances" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/alliances";
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<AlliancesResponse>(content, _jsonOptions);
+                return result ?? new AlliancesResponse { Success = false };
+            }
+
+            return new AlliancesResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new AlliancesResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<CreateAllianceResponse> CreateAllianceAsync(CreateAllianceRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new CreateAllianceResponse { Success = false, Error = "Offline - cannot create alliance" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/alliances";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<CreateAllianceResponse>(content, _jsonOptions);
+                return result ?? new CreateAllianceResponse { Success = false };
+            }
+
+            return new CreateAllianceResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new CreateAllianceResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ApiResponse<bool>> InviteToAllianceAsync(int allianceId, InviteRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new ApiResponse<bool> { Success = false, Error = "Offline - cannot send invite" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/alliances/{allianceId}/invite";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                return new ApiResponse<bool> { Success = true };
+            }
+
+            return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<bool> { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ApiResponse<bool>> RespondToInvitationAsync(int invitationId, RespondInvitationRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new ApiResponse<bool> { Success = false, Error = "Offline - cannot respond to invitation" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/invitations/{invitationId}/respond";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                return new ApiResponse<bool> { Success = true };
+            }
+
+            return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<bool> { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ToggleAllianceResponse> ToggleAllianceAsync(int allianceId, ToggleAllianceRequest request)
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new ToggleAllianceResponse { Success = false, Error = "Offline - cannot toggle alliance" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/alliances/{allianceId}/toggle";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                var result = System.Text.Json.JsonSerializer.Deserialize<ToggleAllianceResponse>(content, _jsonOptions);
+                return result ?? new ToggleAllianceResponse { Success = false };
+            }
+
+            return new ToggleAllianceResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new ToggleAllianceResponse { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<ApiResponse<bool>> LeaveAllianceAsync(int allianceId)
+    {
+        if (!await ShouldUseNetworkAsync())
+            return new ApiResponse<bool> { Success = false, Error = "Offline - cannot leave alliance" };
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/alliances/{allianceId}/leave";
+            var response = await _httpClient.PostAsync(endpoint, null);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                return new ApiResponse<bool> { Success = true };
+            }
+
+            return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<bool> { Success = false, Error = ex.Message };
+        }
+    }
 }

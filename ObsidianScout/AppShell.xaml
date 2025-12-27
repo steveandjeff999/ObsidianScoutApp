@@ -284,6 +284,11 @@ Source="{Binding ProfilePictureSource}"
         <ShellContent ContentTemplate="{DataTemplate views:ManageUsersPage}" />
     </FlyoutItem>
 
+    <!-- Scouting Alliances (admin only) -->
+    <FlyoutItem Title="Alliances" IsVisible="{Binding HasAdminAccess}" Route="AlliancesPage">
+        <ShellContent ContentTemplate="{DataTemplate views:AlliancesPage}" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
         <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
     </FlyoutItem>

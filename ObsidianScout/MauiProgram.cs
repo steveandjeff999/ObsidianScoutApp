@@ -156,6 +156,7 @@ namespace ObsidianScout
  builder.Services.AddTransient<QRCodeScannerViewModel>();
  builder.Services.AddTransient<ManageUsersViewModel>();
  builder.Services.AddTransient<ManageUserEditViewModel>();
+ builder.Services.AddTransient<AlliancesViewModel>();
  
  // Register Pages
  builder.Services.AddTransient<LoginPage>();
@@ -181,6 +182,7 @@ namespace ObsidianScout
  builder.Services.AddTransient<QRCodeScannerPage>(); // Register QRCodeScannerPage
  builder.Services.AddTransient<ManageUsersPage>();
  builder.Services.AddTransient<ManageUserEditPage>();
+ builder.Services.AddTransient<AlliancesPage>();
 
  var app = builder.Build();
 

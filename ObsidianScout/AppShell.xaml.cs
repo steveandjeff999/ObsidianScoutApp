@@ -228,6 +228,7 @@ namespace ObsidianScout
 				Routing.RegisterRoute("QRCodeScannerPage", typeof(QRCodeScannerPage));
 				Routing.RegisterRoute("ManageUsersPage", typeof(ManageUsersPage));
 				Routing.RegisterRoute("MenuPage", typeof(Views.MenuPage));
+				Routing.RegisterRoute("AlliancesPage", typeof(AlliancesPage));
 				Routing.RegisterRoute("LoginPage", typeof(LoginPage));
 				Routing.RegisterRoute("DataPage", typeof(DataPage));
 				Routing.RegisterRoute("Chat", typeof(ChatPage));
