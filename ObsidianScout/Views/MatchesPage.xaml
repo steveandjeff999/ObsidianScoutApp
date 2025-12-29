@@ -27,10 +27,13 @@
          </VerticalStackLayout>
          
    <Button Grid.Column="1"
-        Text="↻"
-             Style="{StaticResource IconButton}"
+        Style="{StaticResource IconButton}"
      Command="{Binding RefreshCommand}"
-          IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+          IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+       <Button.ImageSource>
+         <FontImageSource FontFamily="FA" Glyph="&#xF021;" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" Size="20" />
+       </Button.ImageSource>
+   </Button>
           </Grid>
         </Border>
 
@@ -271,11 +274,7 @@ Style="{StaticResource ErrorBadge}"
     </VerticalStackLayout>
 
                     <!-- Chevron -->
-          <Label Grid.Column="2"
-           Text="›"
-          FontSize="24"
-         TextColor="{StaticResource TextTertiary}"
-           VerticalOptions="Center" />
+          <Image Grid.Column="2" Source="{StaticResource IconChevron}" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" Aspect="AspectFit" />
          </Grid>
          </Border>
    </DataTemplate>

@@ -22,6 +22,36 @@ namespace ObsidianScout
      // Set up global exception handlers FIRST before anything else
             SetupGlobalExceptionHandlers();
 
+            // Check that required icon font exists in Resources/Fonts and warn in debug output if missing
+            try
+            {
+                var baseDir = AppContext.BaseDirectory;
+                var possiblePaths = new[]
+                {
+                    Path.Combine(baseDir, "Resources", "Fonts", "fa-solid-900.ttf"),
+                    Path.Combine(baseDir, "..", "Resources", "Fonts", "fa-solid-900.ttf"),
+                    Path.Combine(baseDir, "..", "..", "Resources", "Fonts", "fa-solid-900.ttf")
+                };
+                bool found = false;
+                foreach (var p in possiblePaths)
+                {
+                    if (File.Exists(p))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    System.Diagnostics.Debug.WriteLine("[MauiProgram] Warning: Icon font 'fa-solid-900.ttf' not found under Resources/Fonts. Add the file to Resources/Fonts so icons render correctly. See Resources/Fonts/README.md");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MauiProgram] Failed to check for icon font: {ex.Message}");
+            }
+
       var builder = MauiApp.CreateBuilder();
      builder
         .UseMauiApp<App>()

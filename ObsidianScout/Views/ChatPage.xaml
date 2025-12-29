@@ -241,13 +241,13 @@ FontSize="12"
 
         <!-- Send Button -->
        <Button Grid.Column="1"
-     Text="📤"
    Command="{Binding SendMessageCommand}"
       IsEnabled="{Binding IsSendEnabled}"
 Style="{StaticResource IconButton}"
              BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
   TextColor="White"
-         ToolTipProperties.Text="Send Message" />
+         ToolTipProperties.Text="Send Message"
+         ImageSource="{StaticResource IconSend}" />
       </Grid>
         </Border>
 

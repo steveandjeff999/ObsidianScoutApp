@@ -16,10 +16,7 @@
        <Border.StrokeShape>
         <RoundRectangle CornerRadius="20" />
     </Border.StrokeShape>
-          <Border.Stroke>
-  <AppThemeBinding Light="{StaticResource LightPrimaryDark}" Dark="{StaticResource DarkPrimaryLight}" />
-    </Border.Stroke>
-   <Border.StrokeThickness>1</Border.StrokeThickness>
+    
 
         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
 
@@ -64,7 +61,7 @@
           Padding="16,12"
             HorizontalOptions="Center"
  IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
- <Border.StrokeShape>
+        <Border.StrokeShape>
          <RoundRectangle CornerRadius="24" />
         </Border.StrokeShape>
           <Border.StrokeThickness>0</Border.StrokeThickness>
@@ -78,10 +75,7 @@
  <RoundRectangle CornerRadius="18" />
              </Border.StrokeShape>
         <Border.StrokeThickness>0</Border.StrokeThickness>
-         <Label Text="👋"
- FontSize="16"
-    HorizontalOptions="Center"
-             VerticalOptions="Center" />
+         <Image Source="{StaticResource IconUser}" WidthRequest="16" HeightRequest="16" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
           </Border>
           <VerticalStackLayout Spacing="2">
       <Label Text="{Binding WelcomeMessage}"
@@ -196,8 +190,8 @@ Padding="12,10">
         <TapGestureRecognizer Command="{Binding NavigateToScoutingCommand}" />
         </Border.GestureRecognizers>
 
-                <VerticalStackLayout Spacing="12">
-    <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+        <VerticalStackLayout Spacing="12">
+    <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimaryDark}, Dark={StaticResource DarkPrimaryDark}}"
             WidthRequest="48"
                HeightRequest="48"
         HorizontalOptions="Start">
@@ -205,10 +199,7 @@ Padding="12,10">
           <RoundRectangle CornerRadius="12" />
        </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="📋"
-    FontSize="22"
-    HorizontalOptions="Center"
-        VerticalOptions="Center" />
+        <Image Source="{StaticResource IconClipboard}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
          </Border>
          <VerticalStackLayout Spacing="4">
      <Label Text="Scout Match"
@@ -238,10 +229,7 @@ Padding="12,10">
 <RoundRectangle CornerRadius="12" />
         </Border.StrokeShape>
              <Border.StrokeThickness>0</Border.StrokeThickness>
-           <Label Text="👥"
-     FontSize="22"
-         HorizontalOptions="Center"
-           VerticalOptions="Center" />
+           <Image Source="{StaticResource IconTeams}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
      </Border>
        <VerticalStackLayout Spacing="4">
       <Label Text="Teams"
@@ -271,10 +259,7 @@ Padding="12,10">
  <RoundRectangle CornerRadius="12" />
           </Border.StrokeShape>
            <Border.StrokeThickness>0</Border.StrokeThickness>
-   <Label Text="📅"
-            FontSize="22"
-    HorizontalOptions="Center"
-   VerticalOptions="Center" />
+   <Image Source="{StaticResource IconEvents}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
   </Border>
      <VerticalStackLayout Spacing="4" VerticalOptions="Center">
    <Label Text="Events"
@@ -295,7 +280,7 @@ Style="{StaticResource CompactGlassCard}"
            Stroke="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
      StrokeThickness="1">
                 <HorizontalStackLayout Spacing="12">
-          <Border 
+      <Border 
  BackgroundColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
         WidthRequest="36"
        HeightRequest="36"
@@ -304,20 +289,20 @@ Style="{StaticResource CompactGlassCard}"
     <RoundRectangle CornerRadius="10" />
          </Border.StrokeShape>
          <Border.StrokeThickness>0</Border.StrokeThickness>
-      <Label Text="💡"
-          FontSize="18"
-           HorizontalOptions="Center"
-     VerticalOptions="Center" />
+      <Image Source="{StaticResource IconLightbulb}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
        </Border>
              <VerticalStackLayout Spacing="4" VerticalOptions="Center">
     <Label Text="Navigation Tip"
       FontSize="14"
            FontFamily="OpenSansSemibold"
       TextColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}" />
-                <Label Text="Use the menu icon (☰) in the top left to access all features"
-          FontSize="13"
-     TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-    LineBreakMode="WordWrap" />
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                  <Image Source="{StaticResource IconMenu}" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" Aspect="AspectFit" />
+                  <Label Text="Use the menu in the top left to access all features"
+                         FontSize="13"
+                         TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                         LineBreakMode="WordWrap" />
+                </HorizontalStackLayout>
                     </VerticalStackLayout>
  </HorizontalStackLayout>
             </Border>

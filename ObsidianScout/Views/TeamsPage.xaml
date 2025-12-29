@@ -25,10 +25,10 @@
                        VerticalOptions="Center" />
                 
                 <Button Grid.Column="1"
-                        Text="↻"
                         Style="{StaticResource IconButton}"
                         Command="{Binding RefreshCommand}"
-                        IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                        ImageSource="{StaticResource IconRefresh}" />
             </Grid>
         </Border>
 
@@ -142,11 +142,7 @@
                                                FontFamily="OpenSansSemibold" />
                                     </Border>
 
-                                    <Label Text="›"
-                                           FontSize="24"
-                                           TextColor="{StaticResource TextTertiary}"
-                                           VerticalOptions="Center"
-                                           IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}, ConverterParameter=Invert}" />
+                                    <Image Source="{StaticResource IconChevron}" WidthRequest="20" HeightRequest="20" VerticalOptions="Center" IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}, ConverterParameter=Invert}" Aspect="AspectFit" />
                                 </Grid>
                             </Grid>
                         </Border>

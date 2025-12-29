@@ -33,10 +33,12 @@
      <RoundRectangle CornerRadius="14" />
     </Border.StrokeShape>
   <Border.StrokeThickness>0</Border.StrokeThickness>
-      <Label Text="⚙️"
- FontSize="22"
- HorizontalOptions="Center"
- VerticalOptions="Center" />
+      <Image Source="{StaticResource IconManagement}"
+             WidthRequest="22"
+             HeightRequest="22"
+             HorizontalOptions="Center"
+             VerticalOptions="Center"
+             Aspect="AspectFit" />
      </Border>
    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
      <Label Text="Settings"
@@ -77,7 +79,7 @@ Style="{StaticResource SectionHeader}"
    <RoundRectangle CornerRadius="10" />
          </Border.StrokeShape>
    <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="🔔" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+       <Image Source="{StaticResource IconBell}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
      </Border>
      <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
          <Label Text="Notifications"
@@ -109,7 +111,7 @@ Style="{StaticResource SectionHeader}"
      <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
         <Border.StrokeThickness>0</Border.StrokeThickness>
-    <Label Text="🌙" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+    <Image Source="{StaticResource IconMoon}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
   </Border>
 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
        <Label Text="Dark Mode"
@@ -141,7 +143,7 @@ Style="{StaticResource SectionHeader}"
           <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
  <Border.StrokeThickness>0</Border.StrokeThickness>
-    <Label Text="📶" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+    <Image Source="{StaticResource IconOffline}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
       </Border>
    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
  <Label Text="Offline Mode"
@@ -173,7 +175,7 @@ Style="{StaticResource SectionHeader}"
      <RoundRectangle CornerRadius="10" />
      </Border.StrokeShape>
    <Border.StrokeThickness>0</Border.StrokeThickness>
-            <Label Text="⏱️" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+            <Image Source="{StaticResource IconTimer}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
          </Border>
      
          <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="2" VerticalOptions="Center">
@@ -240,7 +242,7 @@ Text="Lower values fail faster on slow networks"
  <RoundRectangle CornerRadius="10" />
  </Border.StrokeShape>
   <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="💾" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+       <Image Source="{StaticResource IconSave}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
       </Border>
      <VerticalStackLayout Spacing="2" VerticalOptions="Center">
  <Label Text="Cache Status"
@@ -331,7 +333,7 @@ Style="{StaticResource SectionHeader}"
    <RoundRectangle CornerRadius="10" />
          </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-     <Label Text="🔐" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+     <Image Source="{StaticResource IconLock}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
       </Border>
          <VerticalStackLayout Spacing="2" VerticalOptions="Center">
  <Label Text="Configuration Management"
@@ -390,7 +392,7 @@ Padding="8,0" />
      <RoundRectangle CornerRadius="10" />
     </Border.StrokeShape>
      <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="🧪" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+       <Image Source="{StaticResource IconTestTube}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
          </Border>
   <VerticalStackLayout Spacing="2" VerticalOptions="Center">
           <Label Text="Notification Testing"

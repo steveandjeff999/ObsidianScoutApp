@@ -38,10 +38,11 @@
     <RoundRectangle CornerRadius="12" />
       </Border.StrokeShape>
      <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="🔧"
-       FontSize="20"
+       <Image Source="{StaticResource IconManagement}"
+       WidthRequest="20"
   HorizontalOptions="Center"
-         VerticalOptions="Center" />
+         VerticalOptions="Center"
+         Aspect="AspectFit" />
    </Border>
 
         <!-- Title and Description -->
@@ -73,11 +74,12 @@ BackgroundColor="#20FFFFFF"
    <Border.GestureRecognizers>
 <TapGestureRecognizer Command="{Binding ViewHistoryCommand}" />
             </Border.GestureRecognizers>
- <Label Text="📜"
-     FontSize="18"
-      TextColor="White"
-          HorizontalOptions="Center"
- VerticalOptions="Center" />
+ <Image Source="{StaticResource IconScroll}"
+     WidthRequest="18"
+      HeightRequest="18"
+      HorizontalOptions="Center"
+  VerticalOptions="Center"
+  Aspect="AspectFit" />
            </Border>
          </Grid>
    </Border>
@@ -274,10 +276,7 @@ Padding="0">
   Padding="40"
      VerticalOptions="Center"
     HorizontalOptions="Center">
-      <Label Text="📋"
-           FontSize="48"
- Opacity="0.4"
-     HorizontalTextAlignment="Center" />
+      <Image Source="{StaticResource IconClipboard}" WidthRequest="48" HeightRequest="48" Opacity="0.4" HorizontalOptions="Center" Aspect="AspectFit" />
       <Label Text="No pit scouting data found"
  FontSize="15"
  TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
@@ -303,8 +302,8 @@ Padding="0">
  FontAttributes="Bold"
         TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
 
- <HorizontalStackLayout Spacing="8">
-       <Label Text="🕐" FontSize="11" VerticalOptions="Center" />
+      <HorizontalStackLayout Spacing="8">
+       <Image Source="{StaticResource IconClock}" WidthRequest="11" HeightRequest="11" VerticalOptions="Center" Aspect="AspectFit" />
   <Label Text="{Binding Timestamp, StringFormat='{0:g}'}"
         FontSize="12"
       TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
@@ -312,7 +311,7 @@ Padding="0">
 
 <HorizontalStackLayout Spacing="8"
       IsVisible="{Binding ScoutName, Converter={StaticResource IsNotNullOrEmptyConverter}}">
-  <Label Text="👤" FontSize="11" VerticalOptions="Center" />
+  <Image Source="{StaticResource IconUser}" WidthRequest="11" HeightRequest="11" VerticalOptions="Center" Aspect="AspectFit" />
   <Label Text="{Binding ScoutName}"
      FontSize="12"
    TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />

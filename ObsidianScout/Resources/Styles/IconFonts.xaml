@@ -7,17 +7,42 @@
         into Resources/Fonts and ensure MauiProgram registers it as alias 'FA'.
     -->
 
-    <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
-    <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
-    <FontImageSource x:Key="IconEvents" FontFamily="FA" Glyph="&#xF073;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
-    <FontImageSource x:Key="IconGraphs" FontFamily="FA" Glyph="&#xF080;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
-    <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
-    <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="28" />
+    <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{StaticResource Black}" Size="28" />
+    <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{StaticResource Black}" Size="28" />
+    <FontImageSource x:Key="IconEvents" FontFamily="FA" Glyph="&#xF073;" Color="{StaticResource Black}" Size="28" />
+    <FontImageSource x:Key="IconGraphs" FontFamily="FA" Glyph="&#xF080;" Color="{StaticResource Black}" Size="28" />
+    <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{StaticResource Black}" Size="28" />
+    <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{StaticResource Black}" Size="28" />
+
+    <!-- Additional icons used in MenuPage to replace emoji with monochrome glyphs -->
+    <FontImageSource x:Key="IconUser" FontFamily="FA" Glyph="&#xF007;" Color="{StaticResource Black}" Size="22" />
+    <FontImageSource x:Key="IconHome" FontFamily="FA" Glyph="&#xF015;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconOffline" FontFamily="FA" Glyph="&#xF012;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconCamera" FontFamily="FA" Glyph="&#xF030;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconChat" FontFamily="FA" Glyph="&#xF075;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconSave" FontFamily="FA" Glyph="&#xF0C7;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconMatches" FontFamily="FA" Glyph="&#xF091;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconAlliances" FontFamily="FA" Glyph="&#xF2B5;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconManagement" FontFamily="FA" Glyph="&#xF013;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconBell" FontFamily="FA" Glyph="&#xF0F3;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconMoon" FontFamily="FA" Glyph="&#xF186;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconTimer" FontFamily="FA" Glyph="&#xF2F2;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconClipboard" FontFamily="FA" Glyph="&#xF328;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconClock" FontFamily="FA" Glyph="&#xF017;" Color="{StaticResource Black}" Size="14" />
+    <FontImageSource x:Key="IconScroll" FontFamily="FA" Glyph="&#xF70E;" Color="{StaticResource Black}" Size="22" />
 
     <!-- Toolbar / utility icons -->
-    <FontImageSource x:Key="IconSearch" FontFamily="FA" Glyph="&#xF002;" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" Size="24" />
-    <FontImageSource x:Key="IconAdd" FontFamily="FA" Glyph="&#xF067;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
-    <FontImageSource x:Key="IconSettings" FontFamily="FA" Glyph="&#xF013;" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" Size="24" />
-    <FontImageSource x:Key="IconMenu" FontFamily="FA" Glyph="&#xF0C9;" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" Size="26" />
+    <FontImageSource x:Key="IconSearch" FontFamily="FA" Glyph="&#xF002;" Color="{StaticResource Black}" Size="24" />
+    <FontImageSource x:Key="IconAdd" FontFamily="FA" Glyph="&#xF067;" Color="{StaticResource Black}" Size="24" />
+    <FontImageSource x:Key="IconSettings" FontFamily="FA" Glyph="&#xF013;" Color="{StaticResource Black}" Size="24" />
+    <FontImageSource x:Key="IconMenu" FontFamily="FA" Glyph="&#xF0C9;" Color="{StaticResource Black}" Size="26" />
+    <FontImageSource x:Key="IconRefresh" FontFamily="FA" Glyph="&#xF021;" Color="{StaticResource Black}" Size="20" />
+    <FontImageSource x:Key="IconChevron" FontFamily="FA" Glyph="&#xF054;" Color="{StaticResource Black}" Size="20" />
+    <FontImageSource x:Key="IconSend" FontFamily="FA" Glyph="&#xF1D8;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconGlobe" FontFamily="FA" Glyph="&#xF0AC;" Color="{StaticResource Black}" Size="16" />
+    <FontImageSource x:Key="IconLightbulb" FontFamily="FA" Glyph="&#xF0EB;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconMapMarker" FontFamily="FA" Glyph="&#xF041;" Color="{StaticResource Black}" Size="12" />
+    <FontImageSource x:Key="IconLock" FontFamily="FA" Glyph="&#xF023;" Color="{StaticResource Black}" Size="18" />
+    <FontImageSource x:Key="IconTestTube" FontFamily="FA" Glyph="&#xF0C3;" Color="{StaticResource Black}" Size="18" />
 
 </ResourceDictionary>

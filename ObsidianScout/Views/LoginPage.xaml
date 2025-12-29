@@ -238,14 +238,10 @@
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
- <Label LineBreakMode="WordWrap" MaxLines="3" Text="{Binding PreviewUrl}">
- <Label.FormattedText>
- <FormattedString>
- <Span Text="🌐 " FontSize="16" />
- <Span Text="{Binding PreviewUrl}" FontSize="14" TextColor="{StaticResource TextPrimary}" />
- </FormattedString>
- </Label.FormattedText>
- </Label>
+ <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+   <Image Source="{StaticResource IconGlobe}" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" Aspect="AspectFit" />
+   <Label LineBreakMode="WordWrap" MaxLines="3" Text="{Binding PreviewUrl}" FontSize="14" TextColor="{StaticResource TextPrimary}" VerticalOptions="Center" />
+ </HorizontalStackLayout>
  </Border>
 
  <!-- Action Buttons -->

@@ -32,10 +32,7 @@
   <RoundRectangle CornerRadius="14" />
        </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="??"
-        FontSize="22"
-        HorizontalOptions="Center"
-VerticalOptions="Center" />
+        <Label Text="" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
           </Border>
           <VerticalStackLayout Spacing="2" VerticalOptions="Center">
          <Label Text="Match Scouting"
@@ -109,10 +106,7 @@ Style="{StaticResource SectionHeader}"
     <RoundRectangle CornerRadius="12" />
       </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="??"
-     FontSize="20"
-    HorizontalOptions="Center"
-        VerticalOptions="Center" />
+       <Image Source="{StaticResource IconMatches}" WidthRequest="20" HeightRequest="20" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
  </Border>
       <VerticalStackLayout Spacing="4">
            <Label Text="Start Match"
@@ -147,10 +141,7 @@ AutomationProperties.Name="Browse Teams">
      <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
    <Border.StrokeThickness>0</Border.StrokeThickness>
-     <Label Text="??"
-    FontSize="20"
-         HorizontalOptions="Center"
-         VerticalOptions="Center" />
+     <Image Source="{StaticResource IconTeams}" WidthRequest="20" HeightRequest="20" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
     </Border>
       <VerticalStackLayout Spacing="4">
       <Label Text="Browse Teams"
@@ -177,7 +168,7 @@ AutomationProperties.Name="Browse Teams">
       </Border.GestureRecognizers>
 
               <VerticalStackLayout Spacing="12">
-           <Border BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
+            <Border BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
        WidthRequest="44"
       HeightRequest="44"
            HorizontalOptions="Start">
@@ -185,10 +176,7 @@ AutomationProperties.Name="Browse Teams">
             <RoundRectangle CornerRadius="12" />
      </Border.StrokeShape>
  <Border.StrokeThickness>0</Border.StrokeThickness>
-           <Label Text="??"
- FontSize="20"
-           HorizontalOptions="Center"
-     VerticalOptions="Center" />
+           <Image Source="{StaticResource IconEvents}" WidthRequest="20" HeightRequest="20" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
         </Border>
          <VerticalStackLayout Spacing="4">
         <Label Text="Events"
@@ -215,7 +203,7 @@ FontAttributes="Bold"
     </Border.GestureRecognizers>
 
   <VerticalStackLayout Spacing="12">
-  <Border BackgroundColor="{AppThemeBinding Light=#FEF3C7, Dark=#78350F}"
+   <Border BackgroundColor="{AppThemeBinding Light=#FEF3C7, Dark=#78350F}"
            WidthRequest="44"
  HeightRequest="44"
       HorizontalOptions="Start">
@@ -223,10 +211,7 @@ FontAttributes="Bold"
         <RoundRectangle CornerRadius="12" />
        </Border.StrokeShape>
 <Border.StrokeThickness>0</Border.StrokeThickness>
-   <Label Text="??"
-   FontSize="20"
-          HorizontalOptions="Center"
-    VerticalOptions="Center" />
+   <Image Source="{StaticResource IconSave}" WidthRequest="20" HeightRequest="20" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
           </Border>
           <VerticalStackLayout Spacing="4">
         <Label Text="Export Data"

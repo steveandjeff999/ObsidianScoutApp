@@ -2,6 +2,7 @@ using Microsoft.Maui.Controls;
 using System;
 using ObsidianScout.Services;
 using Microsoft.Extensions.DependencyInjection;
+using ObsidianScout.ViewModels;
 
 namespace ObsidianScout.Views
 {
@@ -29,10 +30,39 @@ namespace ObsidianScout.Views
 				{
 					ManagementButton.IsVisible = shell.HasManagementAccess;
 					ManageUsersButton.IsVisible = shell.HasAdminAccess;
+                    var alliancesBtn = this.FindByName<Border>("AlliancesButton");
+                    if (alliancesBtn != null)
+                        alliancesBtn.IsVisible = shell.HasAdminAccess; // show alliances to admins
 					
 					// Update user info display
-					UsernameLabel.Text = !string.IsNullOrEmpty(shell.CurrentUsername) ? shell.CurrentUsername : "User";
-					TeamLabel.Text = !string.IsNullOrEmpty(shell.CurrentTeamInfo) ? shell.CurrentTeamInfo : "";
+			UsernameLabel.Text = !string.IsNullOrEmpty(shell.CurrentUsername) ? shell.CurrentUsername : "User";
+			TeamLabel.Text = !string.IsNullOrEmpty(shell.CurrentTeamInfo) ? shell.CurrentTeamInfo : "";
+
+			// Update avatar: if AppShell has a ProfilePictureSource, show it; otherwise show initials
+			try
+			{
+				var avatarImage = this.FindByName<Image>("MenuAvatarImage");
+				var avatarInitials = this.FindByName<Label>("MenuAvatarInitials");
+				if (avatarImage != null && avatarInitials != null)
+				{
+					if (shell.ProfilePictureSource != null)
+					{
+						avatarImage.Source = shell.ProfilePictureSource;
+						avatarImage.IsVisible = true;
+						avatarInitials.IsVisible = false;
+					}
+					else
+					{
+						avatarImage.IsVisible = false;
+						avatarInitials.Text = string.IsNullOrEmpty(shell.UserInitials) ? "?" : shell.UserInitials;
+						avatarInitials.IsVisible = true;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[MenuPage] Update avatar failed: {ex.Message}");
+			}
 					
 					// Load offline mode state
 					if (_settingsService != null)
@@ -165,6 +195,11 @@ namespace ObsidianScout.Views
 				System.Diagnostics.Debug.WriteLine($"[MenuPage] Logout error: {ex.Message}");
 				await DisplayAlert("Error", "Failed to logout. Please try again.", "OK");
 			}
+		}
+
+		private async void OnAlliancesClicked(object sender, EventArgs e)
+		{
+			await SafeNavigateAsync("AlliancesPage");
 		}
 
 		/// <summary>

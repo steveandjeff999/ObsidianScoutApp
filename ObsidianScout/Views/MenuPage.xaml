@@ -1,31 +1,45 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-      xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-     x:Class="ObsidianScout.Views.MenuPage"
-Title="Menu">
- <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="20">
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ObsidianScout.Views.MenuPage"
+             Title="Menu">
+  <ScrollView>
+    <VerticalStackLayout Padding="20" Spacing="20">
 
      <!-- ═══════════════════════════════════════════════════════════════
       USER PROFILE HEADER
        ═══════════════════════════════════════════════════════════════ -->
  <Border Style="{StaticResource ElevatedGlassCard}" Padding="20">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-   <!-- Avatar Circle -->
-     <Border Grid.Column="0"
-         BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
-            WidthRequest="52"
-    HeightRequest="52"
-     VerticalOptions="Center">
-       <Border.StrokeShape>
-   <RoundRectangle CornerRadius="26" />
-     </Border.StrokeShape>
-            <Border.StrokeThickness>0</Border.StrokeThickness>
-          <Label Text="👤"
-      FontSize="22"
-        HorizontalOptions="Center"
-        VerticalOptions="Center" />
- </Border>
+   <!-- Avatar Circle (shows profile picture or initials) -->
+     <Grid Grid.Column="0" WidthRequest="52" HeightRequest="52" VerticalOptions="Center">
+       <Ellipse Fill="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+                WidthRequest="52" HeightRequest="52"
+                Stroke="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}"
+                StrokeThickness="1" />
+
+       <Image x:Name="MenuAvatarImage"
+              Source="{StaticResource IconUser}"
+              Aspect="AspectFill"
+              IsVisible="False"
+              WidthRequest="52" HeightRequest="52"
+              HorizontalOptions="Center" VerticalOptions="Center">
+         <Image.Clip>
+           <EllipseGeometry Center="26,26" RadiusX="26" RadiusY="26" />
+         </Image.Clip>
+       </Image>
+
+       <Label x:Name="MenuAvatarInitials"
+              Text="?"
+              HorizontalTextAlignment="Center"
+              VerticalTextAlignment="Center"
+              FontSize="18"
+              FontAttributes="Bold"
+              TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+              IsVisible="True"
+              WidthRequest="52" HeightRequest="52"
+              HorizontalOptions="Center" VerticalOptions="Center" />
+     </Grid>
 
    <!-- User Info -->
   <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
@@ -66,10 +80,12 @@ HeightRequest="40"
  <RoundRectangle CornerRadius="10" />
        </Border.StrokeShape>
    <Border.StrokeThickness>0</Border.StrokeThickness>
-   <Label Text="📶"
-  FontSize="18"
-   HorizontalOptions="Center"
- VerticalOptions="Center" />
+   <Image Source="{StaticResource IconOffline}"
+         WidthRequest="18"
+         HeightRequest="18"
+         HorizontalOptions="Center"
+         VerticalOptions="Center"
+         Aspect="AspectFit" />
        </Border>
 
   <Label Grid.Column="1"
@@ -116,7 +132,7 @@ HeightRequest="40"
        <RoundRectangle CornerRadius="8" />
      </Border.StrokeShape>
          <Border.StrokeThickness>0</Border.StrokeThickness>
-          <Label Text="🏠" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+          <Image Source="{StaticResource IconHome}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
              </Border>
    <Label Grid.Column="1"
              Text="Home"
@@ -148,7 +164,7 @@ HeightRequest="40"
 <RoundRectangle CornerRadius="8" />
         </Border.StrokeShape>
         <Border.StrokeThickness>0</Border.StrokeThickness>
-      <Label Text="👥" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+      <Image Source="{StaticResource IconTeams}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
     </Border>
   <Label Grid.Column="1"
      Text="Teams"
@@ -180,7 +196,7 @@ HeightRequest="40"
                <RoundRectangle CornerRadius="8" />
       </Border.StrokeShape>
  <Border.StrokeThickness>0</Border.StrokeThickness>
-         <Label Text="📅" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+         <Image Source="{StaticResource IconEvents}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
   </Border>
   <Label Grid.Column="1"
     Text="Events"
@@ -212,7 +228,7 @@ FontSize="15"
        <RoundRectangle CornerRadius="8" />
    </Border.StrokeShape>
           <Border.StrokeThickness>0</Border.StrokeThickness>
-       <Label Text="🏆" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+       <Image Source="{StaticResource IconMatches}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
     </Border>
         <Label Grid.Column="1"
        Text="Matches"
@@ -253,7 +269,7 @@ FontFamily="OpenSansSemibold"
              <RoundRectangle CornerRadius="8" />
          </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-  <Label Text="📷" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+  <Image Source="{StaticResource IconCamera}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
      </Border>
    <Label Grid.Column="1"
       Text="QR Scanner"
@@ -285,7 +301,7 @@ FontFamily="OpenSansSemibold"
          <RoundRectangle CornerRadius="8" />
  </Border.StrokeShape>
 <Border.StrokeThickness>0</Border.StrokeThickness>
-     <Label Text="📊" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+     <Image Source="{StaticResource IconGraphs}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
         </Border>
      <Label Grid.Column="1"
       Text="Analytics"
@@ -317,7 +333,7 @@ FontFamily="OpenSansSemibold"
          <RoundRectangle CornerRadius="8" />
         </Border.StrokeShape>
              <Border.StrokeThickness>0</Border.StrokeThickness>
-           <Label Text="🎯" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+           <Image Source="{StaticResource IconPredictions}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
          </Border>
        <Label Grid.Column="1"
       Text="Match Prediction"
@@ -349,7 +365,7 @@ FontSize="15"
            <RoundRectangle CornerRadius="8" />
      </Border.StrokeShape>
       <Border.StrokeThickness>0</Border.StrokeThickness>
-     <Label Text="💾" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+     <Image Source="{StaticResource IconSave}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
          </Border>
   <Label Grid.Column="1"
          Text="Server Data"
@@ -381,7 +397,7 @@ FontSize="15"
             <RoundRectangle CornerRadius="8" />
            </Border.StrokeShape>
            <Border.StrokeThickness>0</Border.StrokeThickness>
- <Label Text="💬" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+ <Image Source="{StaticResource IconChat}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
   </Border>
          <Label Grid.Column="1"
      Text="Chat"
@@ -402,107 +418,104 @@ FontSize="15"
  Style="{StaticResource SectionHeader}"
     Margin="4,8,0,0" />
 
-      <Border Style="{StaticResource GlassCard}" Padding="8">
+    <!-- Admin actions: management, users, settings, alliances -->
+    <Border Style="{StaticResource GlassCard}" Padding="8">
       <VerticalStackLayout Spacing="4">
-    <!-- Management -->
+        <!-- Management -->
         <Border x:Name="ManagementButton" Padding="14,12" BackgroundColor="Transparent">
- <Border.StrokeShape>
-         <RoundRectangle CornerRadius="10" />
-           </Border.StrokeShape>
-   <Border.GestureRecognizers>
-   <TapGestureRecognizer Tapped="OnManagementClicked" />
- </Border.GestureRecognizers>
-    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-    <Border Grid.Column="0"
-  BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"
-            WidthRequest="36"
-          HeightRequest="36"
-VerticalOptions="Center">
-        <Border.StrokeShape>
-            <RoundRectangle CornerRadius="8" />
-     </Border.StrokeShape>
-        <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="⚙️" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
-    </Border>
-            <Label Grid.Column="1"
-    Text="Management"
-     FontSize="15"
-FontFamily="OpenSansSemibold"
-          TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-   VerticalOptions="Center" />
-<Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
-  </Grid>
-      </Border>
-
-       <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
-
- <!-- Manage Users -->
-    <Border x:Name="ManageUsersButton" Padding="14,12" BackgroundColor="Transparent">
-<Border.StrokeShape>
-         <RoundRectangle CornerRadius="10" />
-             </Border.StrokeShape>
-      <Border.GestureRecognizers>
-      <TapGestureRecognizer Tapped="OnManageUsersClicked" />
-        </Border.GestureRecognizers>
-   <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-    <Border Grid.Column="0"
- BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"
-          WidthRequest="36"
-            HeightRequest="36"
-            VerticalOptions="Center">
-        <Border.StrokeShape>
-     <RoundRectangle CornerRadius="8" />
-        </Border.StrokeShape>
-        <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="👤" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
-  </Border>
-        <Label Grid.Column="1"
-       Text="Manage Users"
-     FontSize="15"
-        FontFamily="OpenSansSemibold"
-         TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-    VerticalOptions="Center" />
-    <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
-    </Grid>
-       </Border>
-
-          <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
-
-<!-- Settings -->
-     <Border Padding="14,12" BackgroundColor="Transparent">
-         <Border.StrokeShape>
-     <RoundRectangle CornerRadius="10" />
-         </Border.StrokeShape>
-          <Border.GestureRecognizers>
-          <TapGestureRecognizer Tapped="OnSettingsClicked" />
-    </Border.GestureRecognizers>
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-        <Border Grid.Column="0"
-       BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"
-       WidthRequest="36"
-             HeightRequest="36"
-           VerticalOptions="Center">
           <Border.StrokeShape>
-            <RoundRectangle CornerRadius="8" />
-         </Border.StrokeShape>
-             <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="🔧" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
-       </Border>
-  <Label Grid.Column="1"
-      Text="Settings"
-  FontSize="15"
-     FontFamily="OpenSansSemibold"
-     TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}"
-        VerticalOptions="Center" />
-        <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
+            <RoundRectangle CornerRadius="10" />
+          </Border.StrokeShape>
+          <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnManagementClicked" />
+          </Border.GestureRecognizers>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
+              <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+              </Border.StrokeShape>
+              <Border.StrokeThickness>0</Border.StrokeThickness>
+              <Image Source="{StaticResource IconManagement}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+            </Border>
+            <Label Grid.Column="1" Text="Management" FontSize="15" FontFamily="OpenSansSemibold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" VerticalOptions="Center" />
+            <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
           </Grid>
+        </Border>
+
+        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
+
+        <!-- Manage Users -->
+        <Border x:Name="ManageUsersButton" Padding="14,12" BackgroundColor="Transparent">
+          <Border.StrokeShape>
+            <RoundRectangle CornerRadius="10" />
+          </Border.StrokeShape>
+          <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnManageUsersClicked" />
+          </Border.GestureRecognizers>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
+              <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+              </Border.StrokeShape>
+              <Border.StrokeThickness>0</Border.StrokeThickness>
+              <Image Source="{StaticResource IconUser}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+            </Border>
+            <Label Grid.Column="1" Text="Manage Users" FontSize="15" FontFamily="OpenSansSemibold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" VerticalOptions="Center" />
+            <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
+          </Grid>
+        </Border>
+
+        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
+
+        <!-- Settings -->
+        <Border Padding="14,12" BackgroundColor="Transparent">
+          <Border.StrokeShape>
+            <RoundRectangle CornerRadius="10" />
+          </Border.StrokeShape>
+          <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnSettingsClicked" />
+          </Border.GestureRecognizers>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
+              <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+              </Border.StrokeShape>
+              <Border.StrokeThickness>0</Border.StrokeThickness>
+              <Image Source="{StaticResource IconSettings}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+            </Border>
+            <Label Grid.Column="1" Text="Settings" FontSize="15" FontFamily="OpenSansSemibold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" VerticalOptions="Center" />
+            <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
+          </Grid>
+        </Border>
+
+        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
+
+        <!-- Alliances (admin only) -->
+        <Border x:Name="AlliancesButton" Padding="14,12" BackgroundColor="Transparent">
+          <Border.StrokeShape>
+            <RoundRectangle CornerRadius="10" />
+          </Border.StrokeShape>
+          <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnAlliancesClicked" />
+          </Border.GestureRecognizers>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+            <Border Grid.Column="0" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
+              <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+              </Border.StrokeShape>
+              <Border.StrokeThickness>0</Border.StrokeThickness>
+              <Image Source="{StaticResource IconAlliances}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+            </Border>
+            <Label Grid.Column="1" Text="Alliances" FontSize="15" FontFamily="OpenSansSemibold" TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" VerticalOptions="Center" />
+            <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource LightTextTertiary}" VerticalOptions="Center" />
+          </Grid>
+        </Border>
+      </VerticalStackLayout>
     </Border>
-   </VerticalStackLayout>
-     </Border>
 
-   <!-- Bottom Spacing for TabBar -->
-<BoxView HeightRequest="80" Color="Transparent" />
+      <!-- Bottom Spacing for TabBar -->
+      <BoxView HeightRequest="80" Color="Transparent" />
 
-        </VerticalStackLayout>
-    </ScrollView>
+    </VerticalStackLayout>
+  </ScrollView>
 </ContentPage>

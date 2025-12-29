@@ -9,6 +9,17 @@
                 <Label Text="My Alliances" FontAttributes="Bold" FontSize="18" />
 
                 <CollectionView ItemsSource="{Binding MyAlliances}" SelectionMode="None">
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Spacing="12" Padding="20" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Image Source="{StaticResource IconAlliances}" WidthRequest="64" HeightRequest="64" Opacity="0.5" Aspect="AspectFit" HorizontalOptions="Center" />
+                            <Label Text="No alliances found" FontAttributes="Bold" FontSize="16" HorizontalTextAlignment="Center" />
+                            <Label Text="Create or join an alliance to get started." FontSize="13" HorizontalTextAlignment="Center" Opacity="0.8" />
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Button Text="Create Alliance" Command="{Binding CreateAllianceCommand}" />
+                                <Button Text="Refresh" Command="{Binding RefreshCommand}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Frame CornerRadius="8" Padding="10" Margin="4" HasShadow="True">
