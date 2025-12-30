@@ -320,7 +320,8 @@ System.Diagnostics.Debug.WriteLine("[WinUI App] ConfigureTitleBar: titleBar is n
      if (isLightMode)
              {
 // Light mode colors - High contrast
-   titleBar.BackgroundColor = WinUIColor.FromArgb(255, 255, 255, 255); // White
+   // Use slight transparency for modern look while keeping contrast
+   titleBar.BackgroundColor = WinUIColor.FromArgb(240, 255, 255, 255); // 94% white (subtle transparency)
                  titleBar.ForegroundColor = WinUIColor.FromArgb(255, 28, 28, 30); // #1C1C1E
            titleBar.InactiveBackgroundColor = WinUIColor.FromArgb(255, 245, 245, 247); // #F5F5F7
       titleBar.InactiveForegroundColor = WinUIColor.FromArgb(255, 142, 142, 147); // #8E8E93
@@ -340,7 +341,8 @@ System.Diagnostics.Debug.WriteLine("[WinUI App] ConfigureTitleBar: titleBar is n
     else
     {
       // Dark mode colors
-        titleBar.BackgroundColor = WinUIColor.FromArgb(255, 15, 23, 42); // #0F172A
+        // Use slightly translucent dark background to add depth
+        titleBar.BackgroundColor = WinUIColor.FromArgb(230, 15, 23, 42); // ~90% #0F172A
       titleBar.ForegroundColor = WinUIColor.FromArgb(255, 248, 250, 252); // #F8FAFC
    titleBar.InactiveBackgroundColor = WinUIColor.FromArgb(255, 30, 41, 59); // #1E293B
      titleBar.InactiveForegroundColor = WinUIColor.FromArgb(255, 100, 116, 139); // #64748B

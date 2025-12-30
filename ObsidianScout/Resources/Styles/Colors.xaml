@@ -144,6 +144,18 @@
   <Color x:Key="GlassOverlayDark">#B3121212</Color><!-- 70% dark -->
     <Color x:Key="GlassOverlay">#F5FFFFFF</Color>
 
+    <!-- Semi-transparent accents for modern look -->
+    <Color x:Key="AccentTransparent10">#1A2563EB</Color><!-- 10% primary blue -->
+    <Color x:Key="AccentTransparent20">#332563EB</Color><!-- 20% primary blue -->
+    <Color x:Key="AccentTransparent30">#4D2563EB</Color><!-- 30% primary blue -->
+    <Color x:Key="AccentTransparent40">#662563EB</Color><!-- 40% primary blue -->
+
+    <!-- Subtle neutral overlays -->
+    <Color x:Key="OverlayLight10">#1AFFFFFF</Color><!-- 10% white -->
+    <Color x:Key="OverlayLight20">#33FFFFFF</Color><!-- 20% white -->
+    <Color x:Key="OverlayDark10">#1A000000</Color><!-- 10% black -->
+    <Color x:Key="OverlayDark20">#33000000</Color><!-- 20% black -->
+
  <!-- Subtle overlays for cards -->
     <Color x:Key="CardOverlayLight">#FFFFFF</Color>
  <Color x:Key="CardOverlayDark">#1E1E1E</Color>

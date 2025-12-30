@@ -68,15 +68,34 @@ namespace ObsidianScout
      
       if (isNightMode)
         {
-     // Dark mode colors
-   Window.SetStatusBarColor(new Android.Graphics.Color(0x1E, 0x1E, 0x1E)); // #1E1E1E
-   Window.SetNavigationBarColor(new Android.Graphics.Color(0x2D, 0x2D, 0x30)); // #2D2D30
+     // Dark mode colors with subtle transparent accent overlays
+     // Use semi-transparent primary overlay and dark navigation overlay for depth
+   try
+            {
+                Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#332563EB")); // 20% primary blue overlay
+                Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#33000000")); // 20% black overlay
+            }
+            catch (System.Exception)
+            {
+                // Fallback to solid colors if parse fails
+                Window.SetStatusBarColor(new Android.Graphics.Color(0x1E, 0x1E, 0x1E)); // #1E1E1E
+                Window.SetNavigationBarColor(new Android.Graphics.Color(0x2D, 0x2D, 0x30)); // #2D2D30
+            }
   }
 else
           {
-  // Light mode colors
-    Window.SetStatusBarColor(new Android.Graphics.Color(0x63, 0x66, 0xF1)); // #6366F1
-          Window.SetNavigationBarColor(new Android.Graphics.Color(0xFF, 0xFF, 0xFF)); // #FFFFFF
+  // Light mode colors with subtle transparent accent and soft navigation
+   try
+            {
+                Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#332563EB")); // 20% primary blue overlay
+                Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#33FFFFFF")); // 20% white overlay
+            }
+            catch (System.Exception)
+            {
+                // Fallback to original solid colors
+                Window.SetStatusBarColor(new Android.Graphics.Color(0x63, 0x66, 0xF1)); // #6366F1
+                Window.SetNavigationBarColor(new Android.Graphics.Color(0xFF, 0xFF, 0xFF)); // #FFFFFF
+            }
   }
        
         // Set light/dark status bar icons based on theme
