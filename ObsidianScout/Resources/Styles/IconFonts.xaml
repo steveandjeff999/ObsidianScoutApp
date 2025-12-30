@@ -36,7 +36,7 @@
     <FontImageSource x:Key="IconAdd" FontFamily="FA" Glyph="&#xF067;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="24" />
     <FontImageSource x:Key="IconSettings" FontFamily="FA" Glyph="&#xF013;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="24" />
     <FontImageSource x:Key="IconMenu" FontFamily="FA" Glyph="&#xF0C9;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="26" />
-    <FontImageSource x:Key="IconRefresh" FontFamily="FA" Glyph="&#xF021;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="20" />
+    <FontImageSource x:Key="IconRefresh" FontFamily="FA" Glyph="&#xF021;" Color="{StaticResource White}" Size="20" />
     <FontImageSource x:Key="IconChevron" FontFamily="FA" Glyph="&#xF054;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="20" />
     <FontImageSource x:Key="IconSend" FontFamily="FA" Glyph="&#xF1D8;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
     <FontImageSource x:Key="IconGlobe" FontFamily="FA" Glyph="&#xF0AC;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="16" />
@@ -44,5 +44,8 @@
     <FontImageSource x:Key="IconMapMarker" FontFamily="FA" Glyph="&#xF041;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="12" />
     <FontImageSource x:Key="IconLock" FontFamily="FA" Glyph="&#xF023;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
     <FontImageSource x:Key="IconTestTube" FontFamily="FA" Glyph="&#xF0C3;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
+    <!-- Small utility icons not previously defined -->
+    <FontImageSource x:Key="IconClose" FontFamily="FA" Glyph="&#xF00D;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
+    <FontImageSource x:Key="IconWarning" FontFamily="FA" Glyph="&#xF071;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
 
 </ResourceDictionary>

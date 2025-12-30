@@ -285,11 +285,20 @@ Style="{StaticResource ErrorBadge}"
  <!-- Back Button (Floating) -->
         <Button Grid.Row="2"
      Text="←"
-          Style="{StaticResource FAB}"
+          Style="{StaticResource FABButton}"
            Command="{Binding GoBackCommand}"
       VerticalOptions="End"
            HorizontalOptions="Start"
-  Margin="20,0,0,20" />
+  Margin="20,0,0,20">
+            <Button.IsVisible>
+                <OnPlatform x:TypeArguments="x:Boolean">
+                    <On Platform="Android" Value="True" />
+                    <On Platform="WinUI" Value="False" />
+                    <On Platform="iOS" Value="True" />
+                    <On Platform="MacCatalyst" Value="True" />
+                </OnPlatform>
+            </Button.IsVisible>
+        </Button>
     </Grid>
 
 </ContentPage>

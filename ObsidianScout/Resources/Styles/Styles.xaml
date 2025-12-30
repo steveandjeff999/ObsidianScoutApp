@@ -5,9 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:ObsidianScout.Converters">
 
-    <!-- ========================================
- DESIGN TOKENS
-    ======================================== -->
+    <!-- DESIGN TOKENS -->
     
     <!-- Spacing Scale -->
  <x:Double x:Key="SpacingXs">4</x:Double>
@@ -61,9 +59,7 @@
         <On Platform="MacCatalyst" Value="OpenSansRegular" />
     </OnPlatform>
 
-    <!-- ========================================
-         GRADIENT BRUSHES
-    ======================================== -->
+    <!--GRADIENT BRUSHES -->
 
     <!-- Page Background Gradients -->
     <LinearGradientBrush x:Key="PageBackgroundBrushLight" StartPoint="0,0" EndPoint="0,1">
@@ -163,9 +159,7 @@
         <GradientStop Color="#333D3D3D" Offset="1" />
  </LinearGradientBrush>
 
-    <!-- ========================================
-         SHADOWS
-    ======================================== -->
+    <!-- SHADOWS -->
     
     <Shadow x:Key="ShadowSm">
         <Shadow.Brush>
@@ -231,9 +225,7 @@
         <Shadow.Opacity>1</Shadow.Opacity>
     </Shadow>
 
-    <!-- ========================================
-         ICON FONTS
-    ======================================== -->
+    <!-- ICON FONTS -->
     
     <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
@@ -242,13 +234,24 @@
     <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
 
-    <!-- ========================================
-         BASE STYLES
-    ======================================== -->
+    <!-- BASE STYLES -->
     
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}" />
       <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource PageBackgroundBrushLight}, Dark={StaticResource PageBackgroundBrushDark}}" />
+    </Style>
+
+    <!-- Floating Action Button (modern circular icon) - grey/black scheme -->
+    <Style x:Key="FAB" TargetType="ImageButton">
+        <Setter Property="WidthRequest" Value="56" />
+        <Setter Property="HeightRequest" Value="56" />
+        <Setter Property="CornerRadius" Value="28" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray900}}" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowLg}" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="HorizontalOptions" Value="End" />
+        <Setter Property="VerticalOptions" Value="End" />
+        <Setter Property="BorderWidth" Value="0" />
     </Style>
 
     <Style TargetType="NavigationPage">
@@ -263,9 +266,7 @@
         <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
     </Style>
 
-    <!-- ========================================
-         CARD STYLES
-    ======================================== -->
+    <!-- CARD STYLES -->
     
     <!-- Modern Card - Clean with subtle shadow -->
     <Style x:Key="ModernCard" TargetType="Border">
@@ -320,9 +321,7 @@
   </Setter>
     </Style>
 
-    <!-- ========================================
-         BUTTON STYLES
-    ======================================== -->
+    <!-- BUTTON STYLES -->
   
     <!-- Primary Button -->
     <Style x:Key="PrimaryButton" TargetType="Button">
@@ -477,10 +476,10 @@
         <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
     </Style>
 
-    <!-- FAB (Floating Action Button) -->
-    <Style x:Key="FAB" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#171717}" />
+    <!-- FAB (Floating Action Button) - grey/black scheme for Button usage -->
+    <Style x:Key="FABButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray900}}" />
+        <Setter Property="TextColor" Value="{StaticResource White}" />
         <Setter Property="CornerRadius" Value="28" />
       <Setter Property="WidthRequest" Value="56" />
         <Setter Property="HeightRequest" Value="56" />
@@ -511,9 +510,7 @@
   <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
     <Style x:Key="OutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButton}" />
 
-    <!-- ========================================
-         INPUT STYLES
-    ======================================== -->
+    <!-- INPUT STYLES -->
     
     <!-- Entry -->
     <Style x:Key="ModernEntry" TargetType="Entry">
@@ -598,9 +595,7 @@
  <Style x:Key="GlassPicker" TargetType="Picker" BasedOn="{StaticResource ModernPicker}" />
     <Style x:Key="GlassPickerStyle" TargetType="Picker" BasedOn="{StaticResource ModernPicker}" />
 
-    <!-- ========================================
-      LABEL STYLES
-    ======================================== -->
+    <!-- LABEL STYLES -->
     
     <!-- Default Label -->
     <Style TargetType="Label">
@@ -661,9 +656,7 @@
         <Setter Property="Margin" Value="4,20,0,8" />
     </Style>
 
-    <!-- ========================================
-UI ELEMENTS
-    ======================================== -->
+    <!-- UI ELEMENTS -->
     
     <!-- Divider -->
     <Style x:Key="Divider" TargetType="BoxView">
@@ -698,9 +691,7 @@ UI ELEMENTS
     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}" />
     </Style>
 
-    <!-- ========================================
-         FORM CONTROLS
-    ======================================== -->
+    <!-- FORM CONTROLS -->
     
     <Style TargetType="CheckBox">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />

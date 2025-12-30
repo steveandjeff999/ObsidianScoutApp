@@ -16,10 +16,10 @@
  <VerticalStackLayout Grid.Column="0" Spacing="6">
  <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" Style="{StaticResource SubheaderLabel}" FontSize="15" />
  <Label Text="{Binding TeamName}" Style="{StaticResource BodyLabel}" FontSize="13" LineBreakMode="TailTruncation" MaxLines="1" />
- <HorizontalStackLayout Spacing="6">
- <Label Text="📍" FontSize="11" VerticalOptions="Center" />
- <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" FontSize="11" VerticalOptions="Center" />
- </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="6">
+            <Image Source="{StaticResource IconMapMarker}" WidthRequest="12" HeightRequest="12" VerticalOptions="Center" />
+            <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" FontSize="11" VerticalOptions="Center" />
+          </HorizontalStackLayout>
  </VerticalStackLayout>
 
  <Border Grid.Column="1" Style="{StaticResource Badge}" VerticalOptions="Center" IsVisible="{Binding ScoutingDataCount, Converter={StaticResource IntToBoolConverter}}">
@@ -35,14 +35,14 @@
  <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
  <VerticalStackLayout Spacing="6">
  <Label Text="{Binding Name}" Style="{StaticResource SubheaderLabel}" FontSize="15" />
- <HorizontalStackLayout Spacing="8">
- <Label Text="📍" FontSize="12" VerticalOptions="Center" />
- <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
- </HorizontalStackLayout>
- <HorizontalStackLayout Spacing="8">
- <Label Text="📆" FontSize="12" VerticalOptions="Center" />
- <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
- </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="8">
+            <Image Source="{StaticResource IconMapMarker}" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" />
+            <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
+          </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="8">
+            <Image Source="{StaticResource IconEvents}" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" />
+            <Label Text="{Binding StartDate, StringFormat='{0:MMM dd, yyyy}'}" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
+          </HorizontalStackLayout>
  </VerticalStackLayout>
  </Border>
  </DataTemplate>
@@ -54,14 +54,14 @@
  <VerticalStackLayout Spacing="6">
  <Label Text="{Binding EventName}" Style="{StaticResource SubheaderLabel}" FontSize="15" />
  <Label Text="{Binding Match.MatchNumber, StringFormat='Match #{0}'}" Style="{StaticResource CaptionLabel}" FontSize="12" />
- <HorizontalStackLayout Spacing="8">
- <Label Text="🔴" FontSize="11" VerticalOptions="Center" />
- <Label Text="{Binding Match.RedAlliance}" Style="{StaticResource BodyLabel}" FontSize="12" VerticalOptions="Center" />
- </HorizontalStackLayout>
- <HorizontalStackLayout Spacing="8">
- <Label Text="🔵" FontSize="11" VerticalOptions="Center" />
- <Label Text="{Binding Match.BlueAlliance}" Style="{StaticResource BodyLabel}" FontSize="12" VerticalOptions="Center" />
- </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="8">
+            <BoxView WidthRequest="10" HeightRequest="10" CornerRadius="5" BackgroundColor="Red" VerticalOptions="Center" />
+            <Label Text="{Binding Match.RedAlliance}" Style="{StaticResource BodyLabel}" FontSize="12" VerticalOptions="Center" />
+          </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="8">
+            <BoxView WidthRequest="10" HeightRequest="10" CornerRadius="5" BackgroundColor="Blue" VerticalOptions="Center" />
+            <Label Text="{Binding Match.BlueAlliance}" Style="{StaticResource BodyLabel}" FontSize="12" VerticalOptions="Center" />
+          </HorizontalStackLayout>
  </VerticalStackLayout>
  </Border>
  </DataTemplate>
@@ -76,10 +76,10 @@
  <Label Text="{Binding MatchNumber, StringFormat='M{0}'}" Style="{StaticResource CaptionLabel}" FontSize="11" VerticalOptions="Center" HorizontalOptions="EndAndExpand" />
  </HorizontalStackLayout>
  <Label Text="{Binding TeamName}" Style="{StaticResource BodyLabel}" FontSize="13" />
- <HorizontalStackLayout Spacing="6">
- <Label Text="👤" FontSize="10" VerticalOptions="Center" />
- <Label Text="{Binding ScoutName}" Style="{StaticResource CaptionLabel}" FontSize="11" VerticalOptions="Center" />
- </HorizontalStackLayout>
+          <HorizontalStackLayout Spacing="6">
+            <Image Source="{StaticResource IconUser}" WidthRequest="12" HeightRequest="12" VerticalOptions="Center" />
+            <Label Text="{Binding ScoutName}" Style="{StaticResource CaptionLabel}" FontSize="11" VerticalOptions="Center" />
+          </HorizontalStackLayout>
  <Label Text="{Binding Timestamp, StringFormat='{0:MMM dd, HH:mm}'}" Style="{StaticResource CaptionLabel}" FontSize="10" Opacity="0.7" />
  </VerticalStackLayout>
  </Border>
@@ -89,7 +89,9 @@
  </ResourceDictionary>
  </ContentPage.Resources>
 
- <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="16">
+ <AbsoluteLayout Padding="0">
+ <!-- Main content grid -->
+ <Grid x:Name="MainGrid" RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="16" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All">
 
  <!-- AUTH ERROR BANNER -->
  <Border Grid.Row="0" 
@@ -102,22 +104,22 @@
  </Border.StrokeShape>
  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
  <VerticalStackLayout Grid.Column="0" Spacing="4">
- <Label Text="⚠️ Authentication Error" 
- TextColor="White"
-FontFamily="OpenSansSemibold"
- FontSize="16" />
+ <HorizontalStackLayout Spacing="8">
+   <Image Source="{StaticResource IconWarning}" WidthRequest="18" HeightRequest="18" VerticalOptions="Center" />
+   <Label Text="Authentication Error" TextColor="White" FontFamily="OpenSansSemibold" FontSize="16" />
+ </HorizontalStackLayout>
  <Label Text="{Binding AuthErrorMessage}" 
  TextColor="White"
  FontSize="13"
  Opacity="0.9" />
  </VerticalStackLayout>
- <Button Grid.Column="1"
- Text="✕"
+ <ImageButton Grid.Column="1"
+ Source="{StaticResource IconClose}"
  Command="{Binding ClearAuthErrorCommand}"
  BackgroundColor="Transparent"
- TextColor="White"
- FontSize="20"
- Padding="8"
+ WidthRequest="36"
+ HeightRequest="36"
+ HorizontalOptions="End"
  VerticalOptions="Start" />
  </Grid>
  </Border>
@@ -133,10 +135,7 @@ FontFamily="OpenSansSemibold"
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
- <Label Text="📊"
- FontSize="24"
- HorizontalOptions="Center"
-VerticalOptions="Center" />
+ <Image Source="{StaticResource IconScoutMatch}" WidthRequest="28" HeightRequest="28" HorizontalOptions="Center" VerticalOptions="Center" />
  </Border>
  <VerticalStackLayout Spacing="2" VerticalOptions="Center" HorizontalOptions="FillAndExpand">
  <Label Text="Server Data" 
@@ -166,7 +165,7 @@ VerticalOptions="Center" />
  <TapGestureRecognizer Command="{Binding LoadEventsCommand}" />
  </Border.GestureRecognizers>
  <VerticalStackLayout Spacing="4">
- <Label Text="📅" FontSize="18" HorizontalOptions="Center" />
+ <Image Source="{StaticResource IconEvents}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" />
  <Label Text="Events" 
  FontSize="10" 
 HorizontalOptions="Center"
@@ -186,7 +185,7 @@ HorizontalOptions="Center"
  <TapGestureRecognizer Command="{Binding LoadTeamsCommand}" />
  </Border.GestureRecognizers>
  <VerticalStackLayout Spacing="4">
- <Label Text="👥" FontSize="18" HorizontalOptions="Center" />
+ <Image Source="{StaticResource IconTeams}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" />
  <Label Text="Teams" 
  FontSize="10" 
  HorizontalOptions="Center"
@@ -206,7 +205,7 @@ HorizontalOptions="Center"
  <TapGestureRecognizer Command="{Binding LoadMatchesCommand}" />
  </Border.GestureRecognizers>
  <VerticalStackLayout Spacing="4">
- <Label Text="🎮" FontSize="18" HorizontalOptions="Center" />
+ <Image Source="{StaticResource IconMatches}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" />
  <Label Text="Matches" 
  FontSize="10" 
  HorizontalOptions="Center"
@@ -226,7 +225,7 @@ HorizontalOptions="Center"
  <TapGestureRecognizer Command="{Binding LoadScoutingCommand}" />
  </Border.GestureRecognizers>
  <VerticalStackLayout Spacing="4">
- <Label Text="📝" FontSize="18" HorizontalOptions="Center" />
+ <Image Source="{StaticResource IconScroll}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" />
  <Label Text="Scouting" 
  FontSize="10" 
  HorizontalOptions="Center"
@@ -248,11 +247,11 @@ HorizontalOptions="Center"
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
- <Entry Placeholder="🔍 Search..." 
- Style="{StaticResource ModernEntry}"
- Text="{Binding Query}"
- ClearButtonVisibility="WhileEditing"
-BackgroundColor="Transparent" />
+ <Grid>
+   <Grid.ColumnDefinitions> <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+   <Image Source="{StaticResource IconSearch}" WidthRequest="18" HeightRequest="18" VerticalOptions="Center" Margin="8,0" />
+   <Entry Grid.Column="1" Placeholder="Search..." Style="{StaticResource ModernEntry}" Text="{Binding Query}" ClearButtonVisibility="WhileEditing" BackgroundColor="Transparent" />
+ </Grid>
  </Border>
 
  <!-- Event Picker -->
@@ -285,15 +284,10 @@ BackgroundColor="Transparent" />
  </CollectionView>
  </RefreshView>
 
- <!-- FAB Refresh Button -->
- <Button Grid.Row="2"
- Style="{StaticResource FAB}"
- Command="{Binding LoadAllCommand}"
- Text="↻"
- FontSize="28"
- HorizontalOptions="End"
- VerticalOptions="End"
- Margin="0,0,16,16" />
-
  </Grid>
+
+ <!-- FAB positioned bottom-right outside main grid flow -->
+ <ImageButton Style="{StaticResource FAB}" Command="{Binding LoadAllCommand}" Source="{StaticResource IconRefresh}" AbsoluteLayout.LayoutBounds="1,1,56,56" AbsoluteLayout.LayoutFlags="PositionProportional" Margin="0,0,16,16" />
+
+</AbsoluteLayout>
 </ContentPage>

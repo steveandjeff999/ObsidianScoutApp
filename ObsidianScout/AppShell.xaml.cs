@@ -660,74 +660,149 @@ namespace ObsidianScout
 			}
 		}
 
-		private void OnNavigating(object? sender, ShellNavigatingEventArgs e)
-		{
-			// Don't block navigation until initial setup is complete
-			if (!_initialNavigationComplete)
-				return;
+        // Guard to avoid re-entrancy when performing manual navigation from this handler
+        private volatile bool _isHandlingShellNavigation = false;
 
-			try
-			{
-				var target = e.Target?.Location?.OriginalString;
-				if (string.IsNullOrEmpty(target))
-					return;
+        private async void OnNavigating(object? sender, ShellNavigatingEventArgs e)
+        {
+            // Don't block navigation until initial setup is complete
+            if (!_initialNavigationComplete)
+                return;
 
-				// Allow login and register pages always
-				if (target.Contains("LoginPage", StringComparison.OrdinalIgnoreCase) ||
-					target.Contains("RegisterPage", StringComparison.OrdinalIgnoreCase) ||
-					target.Contains("LoginTabBar", StringComparison.OrdinalIgnoreCase))
-					return;
+            try
+            {
+                // If we're already handling navigation ourselves, allow the default flow
+                if (_isHandlingShellNavigation)
+                    return;
 
-				// Check auth for protected pages
-				if (!IsLoggedIn)
-				{
+                var target = e.Target?.Location?.OriginalString;
+                if (string.IsNullOrEmpty(target))
+                    return;
+
+                // Allow login and register pages always
+                if (target.Contains("LoginPage", StringComparison.OrdinalIgnoreCase) ||
+                    target.Contains("RegisterPage", StringComparison.OrdinalIgnoreCase) ||
+                    target.Contains("LoginTabBar", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                // If navigation should be blocked due to auth, cancel and navigate to login safely
+                if (!IsLoggedIn)
+                {
 #if ANDROID || IOS
-					// Allow MenuPage even when not logged in
-					if (target.Contains("MenuPage", StringComparison.OrdinalIgnoreCase))
-						return;
-						
-					e.Cancel();
-					System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation blocked - user not logged in, redirecting to LoginPage");
-					var shellCurrent = Shell.Current;
-					if (shellCurrent != null)
-					{
-						_ = shellCurrent.GoToAsync("//LoginTabBar/LoginPage");
-					}
-					return;
-#else
-					if (target.Contains("MainPage", StringComparison.OrdinalIgnoreCase) ||
-						target.Contains("TeamsPage", StringComparison.OrdinalIgnoreCase) ||
-						target.Contains("EventsPage", StringComparison.OrdinalIgnoreCase) ||
-						target.Contains("ScoutingPage", StringComparison.OrdinalIgnoreCase) ||
-						target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase))
-					{
-						e.Cancel();
-						var shellCurrent = Shell.Current;
-						if (shellCurrent != null)
-						{
-							_ = shellCurrent.DisplayAlert("Authentication Required", "Please log in to access this page.", "OK");
-							_ = shellCurrent.GoToAsync("//LoginPage");
-						}
-						return;
-					}
-#endif
-				}
+                    // Allow MenuPage even when not logged in
+                    if (target.Contains("MenuPage", StringComparison.OrdinalIgnoreCase))
+                        return;
 
-				if (target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase) && !HasAnalyticsAccess)
-				{
-					e.Cancel();
-					var shellCurrent = Shell.Current;
-					if (shellCurrent != null)
-					{
-						_ = shellCurrent.DisplayAlert("Access Denied", "You need analytics privileges to access this page.", "OK");
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"[AppShell] OnNavigating error: {ex.Message}");
-			}
-		}
+                    e.Cancel();
+                    System.Diagnostics.Debug.WriteLine($"[AppShell] Navigation blocked - user not logged in, redirecting to LoginPage");
+                    var shellCurrent = Shell.Current;
+                    if (shellCurrent != null)
+                    {
+                        try
+                        {
+                            _isHandlingShellNavigation = true;
+                            await MainThread.InvokeOnMainThreadAsync(async () =>
+                            {
+                                try { await shellCurrent.GoToAsync("//LoginTabBar/LoginPage"); }
+                                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AppShell] Redirect to login failed: {ex.Message}"); }
+                            });
+                        }
+                        finally
+                        {
+                            _isHandlingShellNavigation = false;
+                        }
+                    }
+                    return;
+#else
+                    if (target.Contains("MainPage", StringComparison.OrdinalIgnoreCase) ||
+                        target.Contains("TeamsPage", StringComparison.OrdinalIgnoreCase) ||
+                        target.Contains("EventsPage", StringComparison.OrdinalIgnoreCase) ||
+                        target.Contains("ScoutingPage", StringComparison.OrdinalIgnoreCase) ||
+                        target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase))
+                    {
+                        e.Cancel();
+                        var shellCurrent = Shell.Current;
+                        if (shellCurrent != null)
+                        {
+                            try
+                            {
+                                _isHandlingShellNavigation = true;
+                                await MainThread.InvokeOnMainThreadAsync(async () =>
+                                {
+                                    try
+                                    {
+                                        await shellCurrent.DisplayAlert("Authentication Required", "Please log in to access this page.", "OK");
+                                        await shellCurrent.GoToAsync("//LoginPage");
+                                    }
+                                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AppShell] Redirect to login failed: {ex.Message}"); }
+                                });
+                            }
+                            finally { _isHandlingShellNavigation = false; }
+                        }
+                        return;
+                    }
+#endif
+                }
+
+                if (target.Contains("GraphsPage", StringComparison.OrdinalIgnoreCase) && !HasAnalyticsAccess)
+                {
+                    e.Cancel();
+                    var shellCurrent = Shell.Current;
+                    if (shellCurrent != null)
+                    {
+                        try
+                        {
+                            _isHandlingShellNavigation = true;
+                            await MainThread.InvokeOnMainThreadAsync(async () =>
+                            {
+                                try { await shellCurrent.DisplayAlert("Access Denied", "You need analytics privileges to access this page.", "OK"); }
+                                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[AppShell] Access denied alert failed: {ex.Message}"); }
+                            });
+                        }
+                        finally { _isHandlingShellNavigation = false; }
+                    }
+                    return;
+                }
+
+                // For normal navigation initiated by user (tab taps etc.), cancel the default and perform guarded navigation
+                e.Cancel();
+
+                var shell = Shell.Current;
+                if (shell == null)
+                    return;
+
+                try
+                {
+                    _isHandlingShellNavigation = true;
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        try
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[AppShell] Safe navigating to: {target}");
+                            await shell.GoToAsync(target);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[AppShell] Safe navigation to {target} failed: {ex.Message}");
+                            // Fallback: try with leading slashes
+                            if (!target.StartsWith("//"))
+                            {
+                                try { await shell.GoToAsync("//" + target.TrimStart('/')); }
+                                catch (Exception ex2) { System.Diagnostics.Debug.WriteLine($"[AppShell] Fallback navigation also failed: {ex2.Message}"); }
+                            }
+                        }
+                    });
+                }
+                finally
+                {
+                    _isHandlingShellNavigation = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AppShell] OnNavigating error: {ex.Message}");
+            }
+        }
 
 		/// <summary>
 		/// Called after successful login to update UI and navigate to main content
