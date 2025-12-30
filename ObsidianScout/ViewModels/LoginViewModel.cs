@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObsidianScout.Services;
+using Microsoft.Maui.ApplicationModel;
 
 namespace ObsidianScout.ViewModels;
 
@@ -37,6 +38,9 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private bool showServerConfig;
 
+    [ObservableProperty]
+    private string appVersion = string.Empty;
+
     public LoginViewModel(IApiService apiService, ISettingsService settingsService, IDataPreloadService dataPreloadService)
     {
         _apiService = apiService;
@@ -44,6 +48,16 @@ public partial class LoginViewModel : ObservableObject
         _dataPreloadService = dataPreloadService;
 
         LoadServerConfiguration();
+        try
+        {
+            var version = AppInfo.VersionString ?? string.Empty;
+            var build = AppInfo.BuildString ?? string.Empty;
+            AppVersion = string.IsNullOrEmpty(build) ? version : $"{version} (build {build})";
+        }
+        catch
+        {
+            AppVersion = string.Empty;
+        }
     }
 
     public string PreviewUrl => string.IsNullOrWhiteSpace(ServerPort)

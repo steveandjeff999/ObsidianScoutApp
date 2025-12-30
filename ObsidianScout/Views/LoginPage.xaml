@@ -263,13 +263,13 @@
  </Border>
 
  <!-- Version Info -->
- <Label Text="Version1.0.0"
- FontSize="12"
- Style="{StaticResource CaptionLabel}"
- Opacity="0.7"
- HorizontalTextAlignment="Center"
- Margin="0,20,0,20"
- LineBreakMode="NoWrap" />
+ <Label Text="{Binding AppVersion, StringFormat='Version {0}'}"
+  FontSize="12"
+  Style="{StaticResource CaptionLabel}"
+  Opacity="0.7"
+  HorizontalTextAlignment="Center"
+  Margin="0,20,0,20"
+  LineBreakMode="NoWrap" />
 
  </VerticalStackLayout>
  </ScrollView>

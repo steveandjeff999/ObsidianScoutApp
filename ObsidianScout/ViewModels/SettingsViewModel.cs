@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ObsidianScout.Services;
+using Microsoft.Maui.ApplicationModel;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
 using System.Linq;
@@ -43,6 +44,9 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool hasManagementAccess;
+
+    [ObservableProperty]
+    private string appVersion = string.Empty;
 
     // Explicit property for OfflineMode so we can persist immediately without relying on source-gen timing
     private bool _isOfflineMode;
@@ -104,6 +108,18 @@ public partial class SettingsViewModel : ObservableObject
         _ = CheckManagementAccessAsync();
         _ = LoadNotificationsPreferenceAsync();
         _ = LoadNetworkTimeoutAsync();
+
+        try
+        {
+            // Read version from platform manifest / package info
+            var version = AppInfo.VersionString ?? string.Empty;
+            var build = AppInfo.BuildString ?? string.Empty;
+            AppVersion = string.IsNullOrEmpty(build) ? version : $"{version} (build {build})";
+        }
+        catch
+        {
+            AppVersion = string.Empty;
+        }
     }
 
     private async Task CheckManagementAccessAsync()

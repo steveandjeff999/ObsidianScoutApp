@@ -53,6 +53,13 @@
     </VerticalStackLayout>
    </HorizontalStackLayout>
    </Border>
+   <Label Text="Version"
+       FontSize="12"
+       TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}" />
+  <Label Text="{Binding AppVersion}"
+       FontSize="14"
+       FontFamily="OpenSansSemibold"
+       TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
 
  <!-- ═══════════════════════════════════════════════════════════════
 PREFERENCES SECTION
@@ -515,7 +522,7 @@ Text="{Binding NotificationDelaySeconds}"
   FontFamily="OpenSansSemibold"
     FontAttributes="Bold"
       TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-  <Label Text="Version 1.0.0"
+  <Label Text="{Binding AppVersion, StringFormat='Version {0}'}"
  FontSize="13"
    TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
         <Label Text="FRC Scouting Platform"
