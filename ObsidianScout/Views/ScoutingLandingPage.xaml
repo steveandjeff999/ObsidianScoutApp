@@ -32,7 +32,7 @@
   <RoundRectangle CornerRadius="14" />
        </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
-        <Label Text="" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+        <Image Source="{StaticResource IconMatches}" WidthRequest="28" HeightRequest="28" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
           </Border>
           <VerticalStackLayout Spacing="2" VerticalOptions="Center">
          <Label Text="Match Scouting"
