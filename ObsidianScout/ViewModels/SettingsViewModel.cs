@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using ObsidianScout.Services;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Devices;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
 using System.Linq;
@@ -65,6 +66,9 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool autoUpdateCheck;
+
+    [ObservableProperty]
+    private bool isAndroid;
 
     // GitHub token removed - using public API for repo access
 
@@ -140,6 +144,9 @@ public partial class SettingsViewModel : ObservableObject
         {
             AppVersion = string.Empty;
         }
+
+        // Platform flags
+        IsAndroid = DeviceInfo.Platform == DevicePlatform.Android;
 
         // Load auto update preference
         _ = LoadAutoUpdatePreferenceAsync();

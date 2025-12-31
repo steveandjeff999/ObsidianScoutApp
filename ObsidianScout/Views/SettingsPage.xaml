@@ -168,7 +168,7 @@ Style="{StaticResource SectionHeader}"
     <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
 
     <!-- Manual update actions -->
-    <Border Padding="12" BackgroundColor="Transparent">
+    <Border Padding="12" BackgroundColor="Transparent" IsVisible="{Binding IsAndroid}">
       <HorizontalStackLayout Spacing="10">
         <Button Text="Check for Updates" Command="{Binding CheckForUpdatesCommand}" Style="{StaticResource PrimaryButton}" />
         <Button Text="Download &amp; Install" Command="{Binding DownloadAndInstallCommand}" Style="{StaticResource SecondaryButton}" />
