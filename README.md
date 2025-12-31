@@ -2,7 +2,12 @@
 
 ObsidianScout is a cross-platform .NET MAUI application for scouting robotics competitions. It provides offline caching, team and match management, and data synchronization with remote APIs.
 
-This repository contains the .NET MAUI application targeting Android, iOS, Mac Catalyst, and Windows (net10.0).
+This repository contains the .NET MAUI application targeting Android and Windows (net10.0).
+
+
+## Download 
+Select version and install here 
+github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/
 
 ## What this project is
 
@@ -22,7 +27,7 @@ This repository contains the .NET MAUI application targeting Android, iOS, Mac C
 
 Prerequisites
 - .NET10 SDK
-- Visual Studio2022/2023 with .NET MAUI workload (or VS Code with MAUI support)
+- Visual Studio with .NET MAUI workload (or VS Code with MAUI support)
 
 Quick build
 
@@ -33,7 +38,7 @@ dotnet build -f net10.0-windows10.0.19041.0
 ```
 
 Run
-- Use Visual Studio to run on Android/iOS/Windows, or use `dotnet run` with the appropriate TFM for basic testing.
+- Use Visual Studio to run on Android/Windows, or use `dotnet run` with the appropriate TFM for basic testing.
 
 ## Project structure
 
