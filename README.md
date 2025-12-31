@@ -5,9 +5,8 @@ ObsidianScout is a cross-platform .NET MAUI application for scouting robotics co
 This repository contains the .NET MAUI application targeting Android and Windows (net10.0).
 
 
-## Download 
-Select version and install here 
-github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/
+## [Download](https://github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/)
+[Select version and install here](https://github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/)
 
 ## What this project is
 
