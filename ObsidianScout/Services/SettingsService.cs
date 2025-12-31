@@ -32,6 +32,10 @@ public interface ISettingsService
     Task<int> GetNetworkTimeoutAsync();
     Task SetNetworkTimeoutAsync(int timeoutSeconds);
 
+    // Update preferences
+    Task<bool> GetAutoUpdateCheckAsync();
+    Task SetAutoUpdateCheckAsync(bool enabled);
+
     // Event fired when offline mode is changed via the settings service
     event EventHandler<bool> OfflineModeChanged;
 }
@@ -52,6 +56,7 @@ public class SettingsService : ISettingsService
     private const string OfflineModeKey = "offline_mode";
     private const string NotificationsEnabledKey = "notifications_enabled";
     private const string NetworkTimeoutKey = "network_timeout";
+    private const string AutoUpdateCheckKey = "auto_update_check";
 
     private const string DefaultProtocol = "https";
     private static readonly string DefaultServerAddress = "beta.obsidianscout.com";
@@ -90,6 +95,7 @@ public class SettingsService : ISettingsService
     private bool? _offlineMode;
     private bool? _notificationsEnabled;
     private int? _networkTimeout;
+    private bool? _autoUpdateCheck;
 
     public event EventHandler<bool>? OfflineModeChanged;
 
@@ -742,6 +748,42 @@ public class SettingsService : ISettingsService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsService] SetNetworkTimeoutAsync error: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> GetAutoUpdateCheckAsync()
+    {
+        if (_autoUpdateCheck.HasValue) return _autoUpdateCheck.Value;
+        try
+        {
+            var v = await SecureStorage.GetAsync(AutoUpdateCheckKey);
+            if (string.IsNullOrEmpty(v))
+            {
+                _autoUpdateCheck = false; // default off
+            }
+            else
+            {
+                _autoUpdateCheck = v == "1";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] GetAutoUpdateCheckAsync error: {ex.Message}");
+            return false;
+        }
+        return _autoUpdateCheck.Value;
+    }
+
+    public async Task SetAutoUpdateCheckAsync(bool enabled)
+    {
+        _autoUpdateCheck = enabled;
+        try
+        {
+            await SecureStorage.SetAsync(AutoUpdateCheckKey, enabled ? "1" : "0");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] SetAutoUpdateCheckAsync error: {ex.Message}");
         }
     }
 }

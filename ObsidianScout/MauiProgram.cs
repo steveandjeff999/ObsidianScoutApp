@@ -73,6 +73,8 @@ namespace ObsidianScout
 
  // Register Services
  builder.Services.AddSingleton<ISettingsService, SettingsService>();
+ // Update and installer services
+ builder.Services.AddSingleton<IUpdateService, UpdateService>();
  builder.Services.AddSingleton<ICacheService, CacheService>();
  builder.Services.AddSingleton<IDataPreloadService, DataPreloadService>();
  builder.Services.AddSingleton<IQRCodeService, QRCodeService>();
@@ -85,6 +87,7 @@ namespace ObsidianScout
  // Register platform-specific services
 #if ANDROID
  builder.Services.AddSingleton<ILocalNotificationService, Platforms.Android.LocalNotificationService>();
+ builder.Services.AddSingleton<IInstallerService, Platforms.Android.InstallerServiceAndroid>();
 #elif WINDOWS
  builder.Services.AddSingleton<ILocalNotificationService, Platforms.Windows.LocalNotificationService>();
 #else

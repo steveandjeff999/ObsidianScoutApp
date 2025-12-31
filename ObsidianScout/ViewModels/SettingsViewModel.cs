@@ -10,6 +10,9 @@ namespace ObsidianScout.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+        // Last update metadata returned by the update service
+        private UpdateInfo? _lastUpdateInfo;
+
     private readonly ICacheService _cacheService;
     private readonly ISettingsService _settingsService;
     private readonly IDataPreloadService _preloadService;
@@ -35,6 +38,18 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = string.Empty;
 
+    private string _installerStatusMessage = string.Empty;
+    public string InstallerStatusMessage
+    {
+        get => _installerStatusMessage;
+        set
+        {
+            if (_installerStatusMessage == value) return;
+            _installerStatusMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
     [ObservableProperty]
     private bool isCaching;
 
@@ -47,6 +62,11 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string appVersion = string.Empty;
+
+    [ObservableProperty]
+    private bool autoUpdateCheck;
+
+    // GitHub token removed - using public API for repo access
 
     // Explicit property for OfflineMode so we can persist immediately without relying on source-gen timing
     private bool _isOfflineMode;
@@ -119,6 +139,224 @@ public partial class SettingsViewModel : ObservableObject
         catch
         {
             AppVersion = string.Empty;
+        }
+
+        // Load auto update preference
+        _ = LoadAutoUpdatePreferenceAsync();
+        _ = CheckInstallerFileProviderAsync();
+        // no github token load required for public API
+    }
+
+    private async Task CheckInstallerFileProviderAsync()
+    {
+        try
+        {
+            var installer = App.Current?.Handler?.MauiContext?.Services?.GetService(typeof(IInstallerService)) as IInstallerService;
+            if (installer == null)
+            {
+                InstallerStatusMessage = "Installer service not available.";
+                return;
+            }
+
+            var ok = await installer.IsFileProviderAvailableAsync();
+            InstallerStatusMessage = ok ? string.Empty : "FileProvider not configured. APK installs may fail. See app documentation to add provider to AndroidManifest.";
+        }
+        catch (Exception ex)
+        {
+            InstallerStatusMessage = $"Installer check failed: {ex.Message}";
+        }
+    }
+
+    private async Task LoadAutoUpdatePreferenceAsync()
+    {
+        try
+        {
+            AutoUpdateCheck = await _settingsService.GetAutoUpdateCheckAsync();
+        }
+        catch { }
+    }
+
+    partial void OnAutoUpdateCheckChanged(bool value)
+    {
+        _ = _settingsService.SetAutoUpdateCheckAsync(value);
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var updateSvc = App.Current?.Handler?.MauiContext?.Services?.GetService(typeof(IUpdateService)) as IUpdateService;
+            if (updateSvc == null)
+            {
+                await Shell.Current.DisplayAlert("Update", "Update service not available.", "OK");
+                return;
+            }
+            var info = await updateSvc.GetLatestApkAsync();
+            if (info == null)
+            {
+                await Shell.Current.DisplayAlert("Update", "No update metadata found.", "OK");
+                return;
+            }
+
+            // remember last fetched info for install action
+            _lastUpdateInfo = info;
+
+            // Normalize and compare versions
+            string NormalizeVersion(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+                var v = s.Trim();
+                // strip leading 'v'
+                if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase)) v = v.Substring(1);
+                // remove any trailing non-numeric suffix (e.g., " (build 1)")
+                var idx = v.IndexOf(' ');
+                if (idx > 0) v = v.Substring(0, idx);
+                return v;
+            }
+
+            var remoteVerRaw = info.Version ?? string.Empty;
+            var localVerRaw = AppInfo.VersionString ?? string.Empty;
+            var remoteNorm = NormalizeVersion(remoteVerRaw);
+            var localNorm = NormalizeVersion(localVerRaw);
+
+            var canParseRemote = Version.TryParse(remoteNorm, out var remoteVer);
+            var canParseLocal = Version.TryParse(localNorm, out var localVer);
+
+            // If we can't parse remote version, still show found version or download availability
+            if (!canParseRemote)
+            {
+                if (string.IsNullOrEmpty(info.DownloadUrl))
+                {
+                    await Shell.Current.DisplayAlert("Update Check", $"No installable APK found. Version discovered: {remoteVerRaw}", "OK");
+                    StatusMessage = $"Found version: {remoteVerRaw}";
+                    return;
+                }
+
+                // Unknown remote version but APK exists -> inform user
+                await Shell.Current.DisplayAlert("Update Found", $"Update available: {remoteVerRaw}", "OK");
+                StatusMessage = info.DownloadUrl;
+                return;
+            }
+
+            // If local can't be parsed, treat remote as newer (conservative)
+            if (!canParseLocal)
+            {
+                if (string.IsNullOrEmpty(info.DownloadUrl))
+                {
+                    await Shell.Current.DisplayAlert("Update Check", $"No installable APK found. Version discovered: {remoteVerRaw}", "OK");
+                    StatusMessage = $"Found version: {remoteVerRaw}";
+                    return;
+                }
+
+                await Shell.Current.DisplayAlert("Update Found", $"Update available: {remoteVerRaw}", "OK");
+                StatusMessage = info.DownloadUrl;
+                return;
+            }
+
+            // Both parsed - compare
+            if (remoteVer > localVer)
+            {
+                if (string.IsNullOrEmpty(info.DownloadUrl))
+                {
+                    await Shell.Current.DisplayAlert("Update Check", $"New version available: {remoteVerRaw}, but no APK found.", "OK");
+                    StatusMessage = $"Found version: {remoteVerRaw}";
+                    return;
+                }
+
+                await Shell.Current.DisplayAlert("Update Found", $"Update available: {remoteVerRaw} (installed: {localVerRaw})", "OK");
+                StatusMessage = info.DownloadUrl;
+                return;
+            }
+
+            // remote <= local
+            await Shell.Current.DisplayAlert("Up to Date", $"No update available. Installed: {localVerRaw}, Latest: {remoteVerRaw}", "OK");
+            StatusMessage = $"Latest: {remoteVerRaw}";
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Update Error", ex.Message, "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadAndInstallAsync()
+    {
+        try
+        {
+            var url = StatusMessage; // we stored the download url here after check
+            if (string.IsNullOrEmpty(url))
+            {
+                await Shell.Current.DisplayAlert("Install", "No download URL available. Run 'Check for Updates' first.", "OK");
+                return;
+            }
+
+            // If we have last fetched update info and it contains a version, compare with installed version
+            try
+            {
+                if (_lastUpdateInfo != null && !string.IsNullOrEmpty(_lastUpdateInfo.Version))
+                {
+                    string NormalizeVersion(string s)
+                    {
+                        if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+                        var v = s.Trim();
+                        if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase)) v = v.Substring(1);
+                        var idx = v.IndexOf(' ');
+                        if (idx > 0) v = v.Substring(0, idx);
+                        return v;
+                    }
+
+                    var remote = NormalizeVersion(_lastUpdateInfo.Version ?? string.Empty);
+                    var local = NormalizeVersion(AppInfo.VersionString ?? string.Empty);
+                    if (Version.TryParse(remote, out var remoteVer) && Version.TryParse(local, out var localVer))
+                    {
+                        if (remoteVer == localVer)
+                        {
+                            var reinstall = await Shell.Current.DisplayAlert("Reinstall", $"The installer you selected is version {remoteVer} which matches the installed version ({localVer}). Do you want to reinstall it?", "Reinstall", "Cancel");
+                            if (!reinstall) return;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            var installer = App.Current?.Handler?.MauiContext?.Services?.GetService(typeof(IInstallerService)) as IInstallerService;
+            if (installer == null)
+            {
+                await Shell.Current.DisplayAlert("Install", "Installer service not available on this platform.", "OK");
+                return;
+            }
+
+            // Ensure URL is a valid http(s) URL. If not, try to construct a raw.githubusercontent fallback
+            string finalUrl = url;
+            try
+            {
+                if (!finalUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    // try to construct from last update info
+                    if (_lastUpdateInfo != null && !string.IsNullOrEmpty(_lastUpdateInfo.FileName))
+                    {
+                        var v = _lastUpdateInfo.Version ?? string.Empty;
+                        if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase)) v = v.Substring(1);
+                        finalUrl = $"https://raw.githubusercontent.com/steveandjeff999/ObsidianScoutApp/master/ObsidianScout/apks/{v}/{_lastUpdateInfo.FileName}";
+                    }
+                }
+            }
+            catch { }
+
+            var ok = await installer.DownloadAndInstallApkAsync(finalUrl);
+            if (ok)
+            {
+                await Shell.Current.DisplayAlert("Install", "Installer launched.", "OK");
+            }
+            else
+            {
+                await Shell.Current.DisplayAlert("Install", "Failed to download or launch installer.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Install Error", ex.Message, "OK");
         }
     }
 
