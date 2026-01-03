@@ -12,6 +12,15 @@ public partial class PitConfigEditorViewModel : ObservableObject
     private readonly IApiService _api;
     private readonly ISettingsService _settings;
     
+    // Alliance context (when editing alliance config)
+    [ObservableProperty]
+    private int? allianceId;
+    
+    [ObservableProperty]
+    private string? allianceName;
+    
+    public bool IsEditingAllianceConfig => AllianceId.HasValue;
+    
     private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions 
     { 
         WriteIndented = true,
@@ -71,9 +80,23 @@ public partial class PitConfigEditorViewModel : ObservableObject
         try
   {
      StatusMessage = "Loading pit config...";
-            // Use team config endpoint for editors (explicit per-team config, not alliance)
-  var resp = await _api.GetTeamPitConfigAsync();
- 
+     
+            PitConfigResponse resp;
+            if (IsEditingAllianceConfig)
+            {
+                // Load alliance config
+                resp = await _api.GetAlliancePitConfigAsync(AllianceId!.Value);
+                if (resp.Success && resp.Config != null)
+                {
+                    StatusMessage = $"Loaded alliance pit config for {AllianceName}";
+                }
+            }
+            else
+            {
+                // Use team config endpoint for editors (explicit per-team config, not alliance)
+                resp = await _api.GetTeamPitConfigAsync();
+            }
+  
   if (resp.Success && resp.Config != null)
       {
 NormalizeConfig(resp.Config);
@@ -81,7 +104,10 @@ NormalizeConfig(resp.Config);
    JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
      PopulateCollections(resp.Config);
      UpdateStatusCounts();
-       StatusMessage = "Loaded pit config successfully";
+     if (!IsEditingAllianceConfig)
+     {
+        StatusMessage = "Loaded pit config successfully";
+     }
   }
       else
     {
@@ -100,39 +126,89 @@ NormalizeConfig(resp.Config);
   {
         try
         {
-    PitConfig? cfg = null;
+            if (string.IsNullOrWhiteSpace(JsonText))
+            {
+                StatusMessage = "No JSON provided";
+                return false;
+            }
 
- // Deserialize on background thread to avoid blocking UI
- await Task.Run(() =>
- {
- cfg = JsonSerializer.Deserialize<PitConfig>(JsonText, _jsonOptions);
- });
+            var firstNonWhitespace = JsonText.TrimStart();
+            if (!IsLikelyJson(firstNonWhitespace))
+            {
+                var preview = JsonText.Length > 200 ? JsonText.Substring(0, 200) + "..." : JsonText;
+                StatusMessage = $"Invalid JSON: content does not appear to be JSON. Preview: {preview}";
+                return false;
+            }
 
- if (cfg == null)
- {
- StatusMessage = "Invalid pit config JSON";
- return false;
- }
+            PitConfig? cfg = null;
+            Exception? deserializeException = null;
 
- // Normalize on background thread (works on POCOs)
- NormalizeConfig(cfg);
+            // Deserialize on background thread to avoid blocking UI
+            await Task.Run(() =>
+            {
+                try
+                {
+                    cfg = JsonSerializer.Deserialize<PitConfig>(JsonText, _jsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    deserializeException = ex;
+                }
+            });
 
- // Apply to UI-bound collections on UI thread
- await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
- {
- CurrentConfig = cfg;
- PopulateCollections(cfg);
- UpdateStatusCounts();
- });
+            if (deserializeException != null)
+            {
+                if (deserializeException is JsonException jex)
+                {
+                    var msg = jex.Message;
+                    var preview = JsonText.Length > 200 ? JsonText.Substring(0, 200) + "..." : JsonText;
+                    StatusMessage = $"JSON parse error: {msg}. Preview: {preview}";
+                }
+                else
+                {
+                    StatusMessage = $"Unexpected error parsing JSON: {deserializeException.Message}";
+                }
 
- StatusMessage = "Parsed JSON to model";
- return true;
- }
- catch (JsonException jex)
- {
- StatusMessage = "JSON parse error: " + jex.Message;
- return false;
- }
+                return false;
+            }
+
+            if (cfg == null)
+            {
+                StatusMessage = "Invalid pit config JSON (empty result)";
+                return false;
+            }
+
+            // Normalize on background thread (works on POCOs)
+            NormalizeConfig(cfg);
+
+            // Apply to UI-bound collections on UI thread
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                CurrentConfig = cfg;
+                PopulateCollections(cfg);
+                UpdateStatusCounts();
+            });
+
+            StatusMessage = "Parsed JSON to model";
+            return true;
+        }
+        catch (JsonException jex)
+        {
+            StatusMessage = "JSON parse error: " + jex.Message;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error parsing JSON: " + ex.Message;
+            return false;
+        }
+    }
+
+    private bool IsLikelyJson(string trimmedText)
+    {
+        if (string.IsNullOrEmpty(trimmedText)) return false;
+        var c = trimmedText[0];
+        return c == '{' || c == '[' || c == '"';
     }
 
     private void FinalizeAvailableTypes()
@@ -384,13 +460,28 @@ NormalizeConfig(resp.Config);
             // Save to server
             StatusMessage = "Saving pit config...";
             
-    // Note: You'll need to add this endpoint to IApiService and ApiService
-            // For now, we'll use a placeholder
-        var saveResp = await _api.SavePitConfigAsync(CurrentConfig);
+            ApiResponse<bool>? saveResp;
+            if (IsEditingAllianceConfig)
+            {
+                // Save alliance config
+                saveResp = await _api.SaveAlliancePitConfigAsync(AllianceId!.Value, CurrentConfig);
+                if (saveResp.Success)
+                {
+                    StatusMessage = $"? Saved alliance pit config for {AllianceName} successfully!";
+                }
+            }
+            else
+            {
+                // Save team config
+                saveResp = await _api.SavePitConfigAsync(CurrentConfig);
+                if (saveResp.Success)
+                {
+                    StatusMessage = "? Saved successfully!";
+                }
+            }
             
          if (saveResp.Success)
    {
-        StatusMessage = "? Saved successfully!";
         await LoadAsync();
     }
           else

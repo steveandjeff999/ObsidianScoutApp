@@ -13,6 +13,15 @@ public partial class GameConfigEditorViewModel : ObservableObject
     private readonly IApiService _api;
     private readonly ISettingsService _settings;
   
+    // Alliance context (when editing alliance config)
+    [ObservableProperty]
+    private int? allianceId;
+    
+    [ObservableProperty]
+    private string? allianceName;
+    
+    public bool IsEditingAllianceConfig => AllianceId.HasValue;
+  
     // Reusable JSON serializer options
     private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions 
     { 
@@ -119,16 +128,41 @@ public ObservableCollection<ScoringOption> CurrentElementOptions { get; } = new(
  try
      {
     StatusMessage = "Loading...";
-   // Use team config endpoint for editors (explicit per-team config, not alliance)
-      var resp = await _api.GetTeamGameConfigAsync();
-      if (resp.Success && resp.Config != null)
+    
+    System.Diagnostics.Debug.WriteLine("=== GameConfigEditorViewModel: LoadAsync ===");
+    System.Diagnostics.Debug.WriteLine($"IsEditingAllianceConfig: {IsEditingAllianceConfig}");
+    System.Diagnostics.Debug.WriteLine($"AllianceId: {AllianceId}");
+    System.Diagnostics.Debug.WriteLine($"AllianceName: {AllianceName}");
+    
+    GameConfigResponse resp;
+    if (IsEditingAllianceConfig)
+    {
+        System.Diagnostics.Debug.WriteLine("? Loading ALLIANCE config via GetAllianceGameConfigAsync");
+        // Load alliance config
+        resp = await _api.GetAllianceGameConfigAsync(AllianceId!.Value);
+        if (resp.Success && resp.Config != null)
+        {
+            StatusMessage = $"Loaded alliance config for {AllianceName}";
+        }
+    }
+    else
+    {
+        System.Diagnostics.Debug.WriteLine("? Loading TEAM config via GetTeamGameConfigAsync");
+        // Use team config endpoint for editors (explicit per-team config, not alliance)
+        resp = await _api.GetTeamGameConfigAsync();
+    }
+    
+    if (resp.Success && resp.Config != null)
  {
                 NormalizeConfig(resp.Config);
   CurrentConfig = resp.Config;
         JsonText = JsonSerializer.Serialize(resp.Config, _jsonOptions);
     PopulateCollections(resp.Config);
         UpdateStatusCounts();
-   StatusMessage = "Loaded";
+    if (!IsEditingAllianceConfig)
+    {
+        StatusMessage = "Loaded";
+    }
      }
 else
   {
@@ -138,47 +172,103 @@ else
  catch (Exception ex)
         {
        StatusMessage = $"Error loading: {ex.Message}";
+       System.Diagnostics.Debug.WriteLine($"[GameConfigEditor] Load error: {ex}");
         }
     }
 
     [RelayCommand]
     public async Task<bool> ParseJsonToModelAsync()
     {
- try
- {
- // Deserialize off the UI thread to avoid blocking
- GameConfig? cfg = null;
- await Task.Run(() =>
- {
- cfg = JsonSerializer.Deserialize<GameConfig>(JsonText, _jsonOptions);
- });
+        try
+        {
+            // Basic quick-check: ensure the text looks like JSON before attempting a full parse
+            if (string.IsNullOrWhiteSpace(JsonText))
+            {
+                StatusMessage = "No JSON provided";
+                return false;
+            }
 
- if (cfg == null)
- {
- StatusMessage = "Invalid config JSON";
- return false;
- }
+            var firstNonWhitespace = JsonText.TrimStart();
+            if (!IsLikelyJson(firstNonWhitespace))
+            {
+                // Provide helpful feedback and a short preview to help debugging
+                var preview = JsonText.Length > 200 ? JsonText.Substring(0, 200) + "..." : JsonText;
+                StatusMessage = $"Invalid JSON: content does not appear to be JSON. Preview: {preview}";
+                return false;
+            }
 
- // Normalize on background thread where safe (works on POCOs)
- NormalizeConfig(cfg);
+            // Deserialize off the UI thread to avoid blocking
+            GameConfig? cfg = null;
+            Exception? deserializeException = null;
+            await Task.Run(() =>
+            {
+                try
+                {
+                    cfg = JsonSerializer.Deserialize<GameConfig>(JsonText, _jsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    // Capture exception to report on UI thread
+                    deserializeException = ex;
+                }
+            });
 
- // Apply collections and UI-bound ObservableCollections on UI thread
- await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
- {
- CurrentConfig = cfg;
- PopulateCollections(cfg);
- UpdateStatusCounts();
- });
+            if (deserializeException != null)
+            {
+                if (deserializeException is JsonException jex)
+                {
+                    var msg = jex.Message;
+                    // Show a short preview of the content to aid diagnosis
+                    var preview = JsonText.Length > 200 ? JsonText.Substring(0, 200) + "..." : JsonText;
+                    StatusMessage = $"JSON parse error: {msg}. Preview: {preview}";
+                }
+                else
+                {
+                    StatusMessage = $"Unexpected error parsing JSON: {deserializeException.Message}";
+                }
 
- StatusMessage = "Parsed JSON to model";
- return true;
- }
- catch (JsonException jex)
- {
- StatusMessage = "JSON parse error: " + jex.Message;
- return false;
- }
+                return false;
+            }
+
+            if (cfg == null)
+            {
+                StatusMessage = "Invalid config JSON (empty result)";
+                return false;
+            }
+
+            // Normalize on background thread where safe (works on POCOs)
+            NormalizeConfig(cfg);
+
+            // Apply collections and UI-bound ObservableCollections on UI thread
+            await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                CurrentConfig = cfg;
+                PopulateCollections(cfg);
+                UpdateStatusCounts();
+            });
+
+            StatusMessage = "Parsed JSON to model";
+            return true;
+        }
+        catch (JsonException jex)
+        {
+            StatusMessage = "JSON parse error: " + jex.Message;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error parsing JSON: " + ex.Message;
+            return false;
+        }
 }
+
+    // Quick heuristic: check whether the supplied trimmed text looks like JSON
+    private bool IsLikelyJson(string trimmedText)
+    {
+        if (string.IsNullOrEmpty(trimmedText)) return false;
+        var c = trimmedText[0];
+        return c == '{' || c == '[' || c == '"';
+    }
 
  private void PopulateCollections(GameConfig cfg)
     {
@@ -324,7 +414,7 @@ PostMatchTextElements.Clear();
          element.Type = DenormalizeType(element.Type);
     }
 
- [RelayCommand]
+  [RelayCommand]
     public async Task SaveAsync()
     {
   try
@@ -356,11 +446,36 @@ PostMatchTextElements.Clear();
       
         // Save to server
  StatusMessage = "Saving...";
-            var saveResp = await _api.SaveGameConfigAsync(CurrentConfig!);
+ 
+        System.Diagnostics.Debug.WriteLine("=== GameConfigEditorViewModel: SaveAsync ===");
+        System.Diagnostics.Debug.WriteLine($"IsEditingAllianceConfig: {IsEditingAllianceConfig}");
+        System.Diagnostics.Debug.WriteLine($"AllianceId: {AllianceId}");
+        System.Diagnostics.Debug.WriteLine($"AllianceName: {AllianceName}");
+ 
+        ApiResponse<bool>? saveResp;
+        if (IsEditingAllianceConfig)
+        {
+            System.Diagnostics.Debug.WriteLine("? Saving ALLIANCE config via SaveAllianceGameConfigAsync");
+            // Save alliance config
+            saveResp = await _api.SaveAllianceGameConfigAsync(AllianceId!.Value, CurrentConfig!);
+            if (saveResp.Success)
+            {
+                StatusMessage = $"Saved alliance config for {AllianceName} successfully";
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("? Saving TEAM config via SaveGameConfigAsync");
+            // Save team config
+            saveResp = await _api.SaveGameConfigAsync(CurrentConfig!);
+            if (saveResp.Success)
+            {
+                StatusMessage = "Saved successfully";
+            }
+        }
        
     if (saveResp.Success)
     {
- StatusMessage = "Saved successfully";
      // Reload to get fresh data
       await LoadAsync();
  }

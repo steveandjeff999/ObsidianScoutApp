@@ -1699,18 +1699,24 @@ var errorContent = await response.Content.ReadAsStringAsync();
             var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ChatDeleteResponse>(_jsonOptions);
-                return result ?? new ChatDeleteResponse { Success = false, Error = "Invalid response" };
+                var content = await response.Content.ReadAsStringAsync();
+                if (JsonUtils.TryDeserialize<ChatDeleteResponse>(content, _jsonOptions, out var parsedSuccess, out var parseError))
+                {
+                    return parsedSuccess ?? new ChatDeleteResponse { Success = false, Error = "Invalid response" };
+                }
+
+                // fall back
+                System.Diagnostics.Debug.WriteLine($"[API] Failed to parse success response for DeleteChatMessageAsync: {parseError}");
+                return new ChatDeleteResponse { Success = false, Error = $"Invalid JSON response: {parseError}" };
             }
 
             var err = await response.Content.ReadAsStringAsync();
-            try
+            if (JsonUtils.TryDeserialize<ChatDeleteResponse>(err, _jsonOptions, out var parsedError, out var parseErr2))
             {
-                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatDeleteResponse>(err, _jsonOptions);
-                if (parsed != null) return parsed;
+                return parsedError ?? new ChatDeleteResponse { Success = false, Error = "Invalid response" };
             }
-            catch { }
 
+            System.Diagnostics.Debug.WriteLine($"[API] Failed to parse error response for DeleteChatMessageAsync: {parseErr2}");
             return new ChatDeleteResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
@@ -1735,18 +1741,23 @@ var errorContent = await response.Content.ReadAsStringAsync();
             var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ChatReactResponse>(_jsonOptions);
-                return result ?? new ChatReactResponse { Success = false, Error = "Invalid response" };
+                var content = await response.Content.ReadAsStringAsync();
+                if (JsonUtils.TryDeserialize<ChatReactResponse>(content, _jsonOptions, out var parsedSuccess, out var parseError))
+                {
+                    return parsedSuccess ?? new ChatReactResponse { Success = false, Error = "Invalid response" };
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[API] Failed to parse success response for ReactToChatMessageAsync: {parseError}");
+                return new ChatReactResponse { Success = false, Error = $"Invalid JSON response: {parseError}" };
             }
 
             var err = await response.Content.ReadAsStringAsync();
-            try
+            if (JsonUtils.TryDeserialize<ChatReactResponse>(err, _jsonOptions, out var parsedError, out var parseErr2))
             {
-                var parsed = System.Text.Json.JsonSerializer.Deserialize<ChatReactResponse>(err, _jsonOptions);
-                if (parsed != null) return parsed;
+                return parsedError ?? new ChatReactResponse { Success = false, Error = "Invalid response" };
             }
-            catch { }
 
+            System.Diagnostics.Debug.WriteLine($"[API] Failed to parse error response for ReactToChatMessageAsync: {parseErr2}");
             return new ChatReactResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
@@ -2207,63 +2218,54 @@ try
     System.Diagnostics.Debug.WriteLine($"  {header.Key}: {string.Join(", ", header.Value)}");
        }
 
- if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-      var responseContent = await response.Content.ReadAsStringAsync();
-             System.Diagnostics.Debug.WriteLine($"Response Body: {responseContent}");
-        
-           try
-       {
-        var result = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(responseContent, _jsonOptions);
-                
-    if (result != null)
-    {
-        System.Diagnostics.Debug.WriteLine($"Parsed Success: {result.Success}");
-     System.Diagnostics.Debug.WriteLine($"Parsed Pit Scouting ID: {result.PitScoutingId}");
-        return result;
-    }
-        else
-    {
-      return new PitScoutingSubmitResponse { Success = false, Error = "Invalid response - null result" };
-   }
-          }
-         catch (JsonException jsonEx)
- {
-         System.Diagnostics.Debug.WriteLine($"ERROR: JSON deserialization failed: {jsonEx.Message}");
-         return new PitScoutingSubmitResponse 
-    { 
-      Success = false, 
-           Error = $"Invalid JSON response: {jsonEx.Message}",
-                ErrorCode = "JSON_PARSE_ERROR"
-   };
-    }
-      }
-       else
-         {
-var errorContent = await response.Content.ReadAsStringAsync();
-         System.Diagnostics.Debug.WriteLine($"Error Response Body: {errorContent}");
-   
- // Try to parse error response
-      try
-      {
-        if (!string.IsNullOrWhiteSpace(errorContent))
-      {
-       var errorResponse = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(errorContent, _jsonOptions);
-    if (errorResponse != null)
-      {
-        return errorResponse;
-       }
-           }
-   }
-  catch { }
-          
-        return new PitScoutingSubmitResponse 
-     { 
-       Success = false, 
-       Error = $"HTTP {(int)response.StatusCode}: {errorContent}",
-    ErrorCode = $"HTTP_{(int)response.StatusCode}"
-     };
-        }
+                var responseContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"Response Body: {responseContent}");
+
+                if (JsonUtils.TryDeserialize<PitScoutingSubmitResponse>(responseContent, _jsonOptions, out var parsedSuccess, out var parseErr))
+                {
+                    if (parsedSuccess != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Parsed Success: {parsedSuccess.Success}");
+                        System.Diagnostics.Debug.WriteLine($"Parsed Pit Scouting ID: {parsedSuccess.PitScoutingId}");
+                        return parsedSuccess;
+                    }
+
+                    return new PitScoutingSubmitResponse { Success = false, Error = "Invalid response - null result" };
+                }
+
+                System.Diagnostics.Debug.WriteLine($"ERROR: JSON deserialization failed for pit submit success body: {parseErr}");
+                return new PitScoutingSubmitResponse { Success = false, Error = $"Invalid JSON response: {parseErr}", ErrorCode = "JSON_PARSE_ERROR" };
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"Error Response Body: {errorContent}");
+
+                // Try to parse error response
+                if (!string.IsNullOrWhiteSpace(errorContent))
+                {
+                    if (JsonUtils.TryDeserialize<PitScoutingSubmitResponse>(errorContent, _jsonOptions, out var errorResponse, out var parseErr2))
+                    {
+                        if (errorResponse != null)
+                        {
+                            return errorResponse;
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[API] Failed to parse pit submit error body: {parseErr2}");
+                    }
+                }
+
+                return new PitScoutingSubmitResponse
+                {
+                    Success = false,
+                    Error = $"HTTP {(int)response.StatusCode}: {errorContent}",
+                    ErrorCode = $"HTTP_{(int)response.StatusCode}"
+                };
+            }
         }
         catch (Exception ex)
         {

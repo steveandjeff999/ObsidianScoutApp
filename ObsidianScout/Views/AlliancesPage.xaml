@@ -32,6 +32,10 @@
                                         <Button Text="Invite" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.InviteCommand}" CommandParameter="{Binding .}" />
                                         <Button Text="Leave" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.LeaveAllianceCommand}" CommandParameter="{Binding .}" BackgroundColor="#D9534F" TextColor="White" />
                                     </HorizontalStackLayout>
+                                    <HorizontalStackLayout Spacing="8" Margin="0,8,0,0">
+                                        <Button Text="Edit Game Config" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditGameConfigCommand}" CommandParameter="{Binding .}" FontSize="12" />
+                                        <Button Text="Edit Pit Config" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditPitConfigCommand}" CommandParameter="{Binding .}" FontSize="12" />
+                                    </HorizontalStackLayout>
                                 </VerticalStackLayout>
                             </Frame>
                         </DataTemplate>

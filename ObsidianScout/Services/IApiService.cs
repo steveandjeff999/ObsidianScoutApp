@@ -76,6 +76,12 @@ public interface IApiService
     Task<ApiResponse<bool>> RespondToInvitationAsync(int invitationId, RespondInvitationRequest request);
     Task<ToggleAllianceResponse> ToggleAllianceAsync(int allianceId, ToggleAllianceRequest request);
     Task<ApiResponse<bool>> LeaveAllianceAsync(int allianceId);
+    
+    // Alliance config endpoints
+    Task<GameConfigResponse> GetAllianceGameConfigAsync(int allianceId);
+    Task<ApiResponse<bool>> SaveAllianceGameConfigAsync(int allianceId, GameConfig config);
+    Task<PitConfigResponse> GetAlliancePitConfigAsync(int allianceId);
+    Task<ApiResponse<bool>> SaveAlliancePitConfigAsync(int allianceId, PitConfig config);
 
     // Network configuration
     Task UpdateHttpClientTimeoutAsync();

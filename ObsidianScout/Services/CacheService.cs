@@ -127,7 +127,11 @@ public class CacheService : ICacheService
             var json = await GetStringFromCacheAsync(CACHE_KEY_PIT_SCOUTING_DATA);
             if (!string.IsNullOrEmpty(json))
             {
-                var data = JsonSerializer.Deserialize<List<PitScoutingEntry>>(json, _jsonOptions);
+                if (!JsonUtils.TryDeserialize<List<PitScoutingEntry>>(json, _jsonOptions, out var data, out var err))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Cache] Failed to parse cached pit scouting data: {err}");
+                    return null;
+                }
 
                 var timestamp = await GetCacheTimestampAsync(CACHE_KEY_PIT_SCOUTING_DATA);
                 if (timestamp.HasValue)
@@ -977,7 +981,11 @@ public class CacheService : ICacheService
  var json = await GetStringFromCacheAsync(cacheKey);
  if (!string.IsNullOrEmpty(json))
  {
- var metrics = JsonSerializer.Deserialize<TeamMetrics>(json, _jsonOptions);
+  if (!JsonUtils.TryDeserialize<TeamMetrics>(json, _jsonOptions, out var metrics, out var _err2))
+  {
+      System.Diagnostics.Debug.WriteLine($"[Cache] Failed to parse cached team metrics");
+      return null;
+  }
  
  var timestamp = await GetCacheTimestampAsync(cacheKey);
  if (timestamp.HasValue)

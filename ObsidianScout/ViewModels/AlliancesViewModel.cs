@@ -213,4 +213,67 @@ public partial class AlliancesViewModel : ObservableObject
     }
 
     public Task LeaveAlliancePublicAsync(Alliance alliance) => LeaveAllianceAsync(alliance);
+
+    [RelayCommand]
+    private async Task EditGameConfigAsync(Alliance alliance)
+    {
+        if (alliance == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[AlliancesViewModel] EditGameConfigAsync: alliance is null!");
+            return;
+        }
+        
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("=== AlliancesViewModel: EditGameConfigAsync ===");
+            System.Diagnostics.Debug.WriteLine($"Alliance ID: {alliance.Id}");
+            System.Diagnostics.Debug.WriteLine($"Alliance Name: {alliance.Name}");
+            
+            // Use query string parameters instead of Dictionary<string, object>
+            // QueryProperty attributes expect string values from the URL
+            var encodedName = Uri.EscapeDataString(alliance.Name ?? "");
+            var route = $"GameConfigEditorPage?AllianceId={alliance.Id}&AllianceName={encodedName}";
+            
+            System.Diagnostics.Debug.WriteLine($"Navigating to: {route}");
+            await Shell.Current.GoToAsync(route);
+            System.Diagnostics.Debug.WriteLine($"? Navigation completed");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AlliancesViewModel] EditGameConfigAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[AlliancesViewModel] Stack trace: {ex.StackTrace}");
+            await Application.Current.MainPage.DisplayAlert("Error", "Failed to navigate to config editor", "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task EditPitConfigAsync(Alliance alliance)
+    {
+        if (alliance == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[AlliancesViewModel] EditPitConfigAsync: alliance is null!");
+            return;
+        }
+        
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("=== AlliancesViewModel: EditPitConfigAsync ===");
+            System.Diagnostics.Debug.WriteLine($"Alliance ID: {alliance.Id}");
+            System.Diagnostics.Debug.WriteLine($"Alliance Name: {alliance.Name}");
+            
+            // Use query string parameters instead of Dictionary<string, object>
+            var encodedName = Uri.EscapeDataString(alliance.Name ?? "");
+            var route = $"PitConfigEditorPage?AllianceId={alliance.Id}&AllianceName={encodedName}";
+            
+            System.Diagnostics.Debug.WriteLine($"Navigating to: {route}");
+            await Shell.Current.GoToAsync(route);
+            System.Diagnostics.Debug.WriteLine($"? Navigation completed");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AlliancesViewModel] EditPitConfigAsync error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[AlliancesViewModel] Stack trace: {ex.StackTrace}");
+            await Application.Current.MainPage.DisplayAlert("Error", "Failed to navigate to config editor", "OK");
+        }
+    }
 }
