@@ -272,6 +272,9 @@
 	 <MauiXaml Update="Views\GraphsPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Views\HistoryPage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Views\LoginPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
@@ -413,6 +416,10 @@
 	 <PackagePath>Resources\appicon.png</PackagePath>
 	 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	 </None>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="ObsidianScout\ViewModels\" />
+	  <Folder Include="ObsidianScout\Views\" />
 	</ItemGroup>
 
 </Project>

@@ -62,6 +62,16 @@ public partial class PitScoutingEditViewModel : ObservableObject
           if (entry != null)
             {
                 PitEntry = entry;
+                // If this entry has a server id, treat as read-only (uploaded)
+                try
+                {
+                    IsEditMode = entry.Id == 0;
+                    if (!IsEditMode)
+                    {
+                        StatusMessage = "Uploaded entry - editing is read-only. Update on server.";
+                    }
+                }
+                catch { }
             System.Diagnostics.Debug.WriteLine($"[PitScoutingEdit] Entry loaded for team {entry.TeamNumber}");
         
          // Populate field values from entry data

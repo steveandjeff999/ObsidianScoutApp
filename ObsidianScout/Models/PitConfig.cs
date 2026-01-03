@@ -286,6 +286,7 @@ public class PitScoutingSubmission
 
     [JsonPropertyName("images")]
     public List<string>? Images { get; set; }
+    
 }
 
 public class PitScoutingSubmitResponse
@@ -332,6 +333,37 @@ public class PitScoutingEntry
 
     [JsonPropertyName("images")]
     public List<string>? Images { get; set; }
+
+    // UI state
+    [JsonIgnore]
+    public bool HasLocalChanges { get; set; } = false;
+
+    [JsonIgnore]
+    public bool UploadInProgress { get; set; } = false;
+
+    [JsonIgnore]
+    public string UploadStatus
+    {
+        get
+        {
+            if (UploadInProgress) return "Uploading...";
+            if (HasLocalChanges) return "Modified (not uploaded)";
+            if (Id > 0) return "Uploaded";
+            return "Pending";
+        }
+    }
+
+    [JsonIgnore]
+    public bool IsUploaded => Id > 0;
+
+    [JsonIgnore]
+    public bool IsPending => Id == 0;
+
+    [JsonIgnore]
+    public bool CanUpload => !IsUploaded && !IsPending;
+
+    [JsonIgnore]
+    public bool CanEdit => !IsUploaded && !IsPending;
 }
 
 // NEW: Pit Scouting List Response

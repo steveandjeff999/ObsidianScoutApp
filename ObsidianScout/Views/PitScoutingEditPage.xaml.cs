@@ -71,6 +71,7 @@ _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         FontAttributes = FontAttributes.Bold,
     Margin = new Thickness(0, 16, 0, 8)
       };
+
           FormContainer.Children.Add(sectionLabel);
 
             // Section Elements
@@ -177,6 +178,9 @@ _viewModel.PropertyChanged += ViewModel_PropertyChanged;
             _viewModel.SetFieldValue(element.Id, e.NewTextValue);
  };
 
+        // Disable editing if view model is not in edit mode
+        try { entry.IsEnabled = _viewModel.IsEditMode; } catch { }
+
         return entry;
   }
 
@@ -201,6 +205,9 @@ _viewModel.PropertyChanged += ViewModel_PropertyChanged;
             _viewModel.SetFieldValue(element.Id, e.NewTextValue);
         };
 
+        // Disable editing if view model is not in edit mode
+        try { editor.IsEnabled = _viewModel.IsEditMode; } catch { }
+
         return editor;
     }
 
@@ -223,7 +230,10 @@ _viewModel.PropertyChanged += ViewModel_PropertyChanged;
        _viewModel.SetFieldValue(element.Id, e.Value);
    };
 
-    return checkBox;
+        // Disable editing if view model is not in edit mode
+        try { checkBox.IsEnabled = _viewModel.IsEditMode; } catch { }
+
+        return checkBox;
     }
 
   private Picker CreatePicker(PitElement element)
@@ -355,6 +365,8 @@ TextColor = Colors.Red
         }
          _viewModel.SetFieldValue(element.Id, new List<string>(selectedValues));
             };
+
+            try { checkBox.IsEnabled = _viewModel.IsEditMode; } catch { }
 
       checkBoxLayout.Add(checkBox);
             checkBoxLayout.Add(optionLabel);

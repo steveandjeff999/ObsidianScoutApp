@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using ObsidianScout.Models;
 using ObsidianScout.Services;
 using System.Collections.ObjectModel;
+// removed invalid usings
 
 namespace ObsidianScout.ViewModels;
 
@@ -10,6 +11,8 @@ public partial class PitScoutingViewModel : ObservableObject
 {
     private readonly IApiService _apiService;
     private readonly ISettingsService _settingsService;
+    private readonly ICacheService _cacheService;
+    private readonly IConnectivityService _connectivityService;
 
     [ObservableProperty]
     private int teamId;
@@ -40,10 +43,12 @@ private bool isViewingHistory = false;
     public ObservableCollection<Team> Teams { get; } = new();
     public ObservableCollection<PitScoutingEntry> HistoryEntries { get; } = new();
 
-    public PitScoutingViewModel(IApiService apiService, ISettingsService settingsService)
+    public PitScoutingViewModel(IApiService apiService, ISettingsService settingsService, ICacheService cacheService, IConnectivityService connectivityService)
     {
   _apiService = apiService;
         _settingsService = settingsService;
+        _cacheService = cacheService;
+        _connectivityService = connectivityService;
  _ = InitializeAsync();
     }
 
@@ -301,15 +306,132 @@ StatusMessage = $"Required: {element.Name}";
   var result = await _apiService.SubmitPitScoutingDataAsync(submission);
 
             if (result.Success)
- {
-       StatusMessage = "Submitted successfully!";
-     await Task.Delay(3000);
-  StatusMessage = string.Empty;
-       ResetForm();
-}
+            {
+                StatusMessage = "Submitted successfully!";
+
+                // Build a local PitScoutingEntry for history
+                try
+                {
+                    var entry = new PitScoutingEntry
+                    {
+                        TeamId = TeamId,
+                        TeamNumber = SelectedTeam?.TeamNumber ?? 0,
+                        Timestamp = DateTime.Now,
+                        Data = convertedData.ToDictionary(k => k.Key, v => v.Value ?? new object()),
+                        Images = new List<string>()
+                    };
+
+                    // If server returned an id, attach it so entry is treated as uploaded
+                    try
+                    {
+                        if (result.PitScoutingId > 0)
+                        {
+                            entry.Id = result.PitScoutingId;
+                            entry.HasLocalChanges = false;
+                        }
+                    }
+                    catch { }
+
+                    // Insert into HistoryViewModel so history updates immediately
+                    try
+                    {
+                        var services = Application.Current?.Handler?.MauiContext?.Services;
+                        if (services != null && services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm)
+                        {
+                            await MainThread.InvokeOnMainThreadAsync(() => { try { hvm.AllPit.Insert(0, entry); } catch { } });
+
+                            // Remove any matching pending entries from in-memory collections so UI reflects uploaded state
+                            try
+                            {
+                                await MainThread.InvokeOnMainThreadAsync(() =>
+                                {
+                                    // remove pending duplicates (same timestamp + team)
+                                    var toRemove = hvm.PendingPit.Where(p => p.TeamId == entry.TeamId && p.Timestamp == entry.Timestamp).ToList();
+                                    foreach (var r in toRemove) { try { hvm.PendingPit.Remove(r); } catch { } }
+
+                                    // remove any local AllPit entries that match but are still pending (Id == 0)
+                                    var localMatches = hvm.AllPit.Where(p => p.TeamId == entry.TeamId && p.Timestamp == entry.Timestamp && p.Id == 0).ToList();
+                                    foreach (var lm in localMatches) { try { hvm.AllPit.Remove(lm); } catch { } }
+                                    // ensure server-backed entry is present at top
+                                    if (!hvm.AllPit.Any(p => p.Id == entry.Id && entry.Id > 0)) hvm.AllPit.Insert(0, entry);
+                                });
+                            }
+                            catch { }
+                            // Refresh history view model to ensure UI/cache reconciliation
+                            try
+                            {
+                                if (services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm2)
+                                {
+                                    await hvm2.LoadAsync();
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                    catch { }
+
+                    // Also update cached pit scouting data so History.LoadAsync can pick it up
+                    try
+                    {
+                        if (_cacheService != null)
+                        {
+                            var cached = await _cacheService.GetCachedPitScoutingDataAsync() ?? new List<PitScoutingEntry>();
+
+                            // If server returned id, remove any matching pending entries first
+                            try
+                            {
+                                if (entry.Id > 0)
+                                {
+                                    await _cacheService.RemovePendingPitAsync(x => x.Id == entry.Id || (x.Timestamp == entry.Timestamp && x.TeamId == entry.TeamId));
+                                }
+                            }
+                            catch { }
+
+                            // Insert or update cached list
+                            var existingIdx = cached.FindIndex(x => (entry.Id > 0 && x.Id == entry.Id) || (x.Timestamp == entry.Timestamp && x.TeamId == entry.TeamId));
+                            if (existingIdx >= 0) cached[existingIdx] = entry; else cached.Insert(0, entry);
+
+                            await _cacheService.CachePitScoutingDataAsync(cached);
+                        }
+                    }
+                    catch { }
+                }
+                catch { }
+
+                await Task.Delay(3000);
+                StatusMessage = string.Empty;
+                ResetForm();
+            }
         else
             {
     StatusMessage = $"Error: {result.Error}";
+    // Save to pending pit cache so it appears in history and can be retried
+    try
+    {
+        var entry = new PitScoutingEntry
+        {
+            TeamId = TeamId,
+            TeamNumber = SelectedTeam?.TeamNumber ?? 0,
+            Timestamp = DateTime.Now,
+            Data = convertedData.ToDictionary(k => k.Key, v => v.Value ?? new object()),
+            Images = new List<string>()
+        };
+
+        if (_cacheService != null)
+        {
+            await _cacheService.AddPendingPitAsync(entry);
+            try
+            {
+                var services = Application.Current?.Handler?.MauiContext?.Services;
+                if (services != null && services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm2)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => { try { hvm2.AllPit.Insert(0, entry); } catch { } });
+                }
+            }
+            catch { }
+        }
+    }
+    catch { }
  }
         }
         catch (Exception ex)

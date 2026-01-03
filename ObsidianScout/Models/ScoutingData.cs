@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ObsidianScout.Models;
@@ -22,7 +23,7 @@ public class ScoutingData
     [JsonPropertyName("notes")]
     public string Notes { get; set; } = string.Empty;
 }
-
+ 
 public class ScoutingSubmission
 {
     [JsonPropertyName("team_id")]
@@ -104,11 +105,97 @@ public class ScoutingEntry
     [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; }
 
+    [JsonPropertyName("offline_id")]
+    public string OfflineId { get; set; } = string.Empty;
+
     [JsonPropertyName("scouting_team_number")]
     public int ScoutingTeamNumber { get; set; }
 
     [JsonPropertyName("data")]
     public Dictionary<string, object> Data { get; set; } = new();
+
+    // Non-serialized preview of the data for UI display
+    [JsonIgnore]
+    public string Preview
+    {
+        get
+        {
+            try
+            {
+                var opts = new JsonSerializerOptions { WriteIndented = false };
+                return JsonSerializer.Serialize(Data, opts);
+            }
+            catch { return string.Empty; }
+        }
+    }
+
+    // Short human readable summary (first 3 fields)
+    [JsonIgnore]
+    public string Summary
+    {
+        get
+        {
+            try
+            {
+                if (Data == null || Data.Count == 0) return string.Empty;
+                var parts = Data.Take(3).Select(kv => $"{kv.Key}: {FormatValue(kv.Value)}");
+                return string.Join(" — ", parts);
+            }
+            catch { return string.Empty; }
+        }
+    }
+
+    private static string FormatValue(object? v)
+    {
+        if (v == null) return "(null)";
+        if (v is JsonElement je)
+        {
+            try
+            {
+                if (je.ValueKind == JsonValueKind.String) return je.GetString() ?? string.Empty;
+                return je.ToString() ?? string.Empty;
+            }
+            catch { return je.ToString() ?? string.Empty; }
+        }
+        return v.ToString() ?? string.Empty;
+    }
+
+    // Indicates whether this entry has local unsaved changes compared to server
+    [JsonIgnore]
+    public bool HasLocalChanges { get; set; } = false;
+
+    // Upload in progress flag for UI
+    [JsonIgnore]
+    public bool UploadInProgress { get; set; } = false;
+
+    // Indicates whether this entry has been uploaded to server
+    [JsonIgnore]
+    public bool IsUploaded => Id > 0;
+
+    // Indicates whether this entry exists only locally (pending upload)
+    [JsonIgnore]
+    public bool IsPending => !string.IsNullOrEmpty(OfflineId) && Id == 0;
+
+    // Whether Upload button should be shown (only when not uploaded and not pending)
+    [JsonIgnore]
+    public bool CanUpload => !IsUploaded && !IsPending; // No change made
+
+    [JsonIgnore]
+    public bool CanEdit => !IsUploaded && !IsPending;
+
+    // Human-friendly status text for UI
+    [JsonIgnore]
+    public string UploadStatus
+    {
+        get
+        {
+            if (UploadInProgress) return "Uploading...";
+            if (HasLocalChanges) return "Modified (not uploaded)";
+            if (IsUploaded) return "Uploaded";
+            if (IsPending) return "Pending";
+            return "Not uploaded";
+        }
+    }
 }
 
 public class ScoutingListResponse

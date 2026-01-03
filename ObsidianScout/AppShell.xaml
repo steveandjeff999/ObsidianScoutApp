@@ -97,6 +97,8 @@ FontSize="15"
           <RowDefinition Height="Auto" />
   <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
+        <!-- History button (top-right) -->
+        <!-- moved later so it renders on top of header content -->
 
     <!-- User info row -->
        <HorizontalStackLayout Grid.Row="0" Spacing="16" VerticalOptions="Center">
@@ -152,6 +154,22 @@ Source="{Binding ProfilePictureSource}"
               TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
         </VerticalStackLayout>
           </HorizontalStackLayout>
+
+        <!-- History button: visible on Windows only -->
+       <ImageButton
+          x:Name="HistoryButton"
+          Clicked="OnHistoryClicked"
+          Grid.Row="0"
+          HorizontalOptions="End"
+          VerticalOptions="Start"
+          WidthRequest="36"
+          HeightRequest="36"
+          BackgroundColor="Transparent"
+          Margin="0,0,0,0"
+          Source="{StaticResource IconClock}"
+          Padding="4"
+          AutomationProperties.Name="Open History"
+          IsVisible="{OnPlatform Android=false,iOS=false,WinUI=true}" />
 
         <!-- Offline mode toggle -->
             <Border 
@@ -212,6 +230,7 @@ Source="{Binding ProfilePictureSource}"
         </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
         </Tab>
+        <!-- History moved into Menu for Android; removed from bottom tab bar to avoid showing under 'More' -->
 
    <Tab Title="Pit" Route="PitScoutingPage">
         <Tab.Icon>
@@ -233,6 +252,7 @@ Source="{Binding ProfilePictureSource}"
             </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:MenuPage}" />
         </Tab>
+
   </TabBar>
 
     <!-- Flyout Items -->

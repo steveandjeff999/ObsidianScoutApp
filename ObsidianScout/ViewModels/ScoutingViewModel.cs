@@ -12,6 +12,8 @@ public partial class ScoutingViewModel : ObservableObject
     private readonly IApiService _apiService;
     private readonly IQRCodeService _qrCodeService;
     private readonly ISettingsService _settingsService;
+    private readonly ICacheService? _cacheService;
+    private readonly IConnectivityService? _connectivityService;
     private System.Threading.Timer? _refreshTimer;
 
     [ObservableProperty]
@@ -82,11 +84,12 @@ public partial class ScoutingViewModel : ObservableObject
     public ObservableCollection<RatingElement> RatingElements { get; } = new();
     public ObservableCollection<TextElement> TextElements { get; } = new();
 
-    public ScoutingViewModel(IApiService apiService, IQRCodeService qrCodeService, ISettingsService settingsService)
+    public ScoutingViewModel(IApiService apiService, IQRCodeService qrCodeService, ISettingsService settingsService, ICacheService cacheService)
     {
         _apiService = apiService;
         _qrCodeService = qrCodeService;
         _settingsService = settingsService;
+        _cacheService = cacheService;
         
         // Load initial data
         _ = InitializeAsync();
@@ -1059,23 +1062,79 @@ if (selectedOption != null)
      Data = convertedData
      };
 
-       var result = await _apiService.SubmitScoutingDataAsync(submission);
+        var result = await _apiService.SubmitScoutingDataAsync(submission);
 
-            if (result.Success)
-   {
-     StatusMessage = "✓ Scouting data submitted successfully!";
-     
-       await Task.Delay(3000);
-  if (StatusMessage == "✓ Scouting data submitted successfully!")
+                // Build a local ScoutingEntry for history/cache
+                var entry = new ScoutingEntry
                 {
-            StatusMessage = string.Empty;
-    ResetForm();
-       }
-            }
-   else
-{
-     StatusMessage = $"✗ {result.Error}";
-       }
+                    TeamId = TeamId,
+                    TeamNumber = SelectedTeam?.TeamNumber ?? 0,
+                    MatchId = MatchId,
+                    MatchNumber = SelectedMatch?.MatchNumber ?? 0,
+                    ScoutName = ScoutName ?? string.Empty,
+                    Timestamp = DateTime.Now,
+                    Data = convertedData.ToDictionary(k => k.Key, v => v.Value ?? new object())
+                };
+
+                if (result.Success)
+                {
+                    // If server returned an id/offline id, copy it
+                    try { if (!string.IsNullOrEmpty(result.OfflineId)) entry.OfflineId = result.OfflineId; } catch { }
+
+                    StatusMessage = "✓ Scouting data submitted successfully!";
+
+                    // Add to cached scouting data so History shows it
+                    try
+                    {
+                        if (_cacheService != null)
+                        {
+                            var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                            cached.Add(entry);
+                            await _cacheService.CacheScoutingDataAsync(cached);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Scouting] Failed to cache submitted scouting: {ex.Message}");
+                    }
+
+                    // Also insert into HistoryViewModel in-memory list so it appears immediately
+                    try
+                    {
+                        var services = Application.Current?.Handler?.MauiContext?.Services;
+                        if (services != null && services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm)
+                        {
+                            await MainThread.InvokeOnMainThreadAsync(() =>
+                            {
+                                try { hvm.AllScouting.Insert(0, entry); } catch { }
+                            });
+                        }
+                    }
+                    catch { }
+
+                    await Task.Delay(3000);
+                    if (StatusMessage == "✓ Scouting data submitted successfully!")
+                    {
+                        StatusMessage = string.Empty;
+                        ResetForm();
+                    }
+                }
+                else
+                {
+                    StatusMessage = $"✗ {result.Error}";
+                    // Save to pending queue so it can be uploaded later
+                    try
+                    {
+                        if (_cacheService != null)
+                        {
+                            await _cacheService.AddPendingScoutingAsync(entry);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Scouting] Failed to add pending scouting: {ex.Message}");
+                    }
+                }
         }
         catch (Exception ex)
         {
@@ -1151,6 +1210,54 @@ qrData["offline_generated"] = true;
  // Show overlay but preserve selected items explicitly
  IsQRCodeVisible = true;
  StatusMessage = string.Empty;
+
+            // Persist to cache so History shows this QR/export
+            try
+            {
+                var entry = new ScoutingEntry
+                {
+                    TeamId = TeamId,
+                    TeamNumber = SelectedTeam?.TeamNumber ?? 0,
+                    MatchId = MatchId,
+                    MatchNumber = SelectedMatch?.MatchNumber ?? 0,
+                    ScoutName = ScoutName ?? string.Empty,
+                    Timestamp = DateTime.Now,
+                    Data = qrData.ToDictionary(k => k.Key, v => v.Value ?? new object())
+                };
+
+                // Ensure we have an offline id so History can track this pending entry
+                try { entry.OfflineId = Guid.NewGuid().ToString(); } catch { }
+
+                if (_cacheService != null)
+                {
+                    var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                    cached.Add(entry);
+                    await _cacheService.CacheScoutingDataAsync(cached);
+
+                    // Add to pending cache for upload workflows
+                    try { await _cacheService.AddPendingScoutingAsync(entry); } catch { }
+                }
+
+                // Also update in-memory HistoryViewModel so UI shows it immediately
+                // Also update in-memory HistoryViewModel so UI shows it immediately
+                try
+                {
+                    var services = Application.Current?.Handler?.MauiContext?.Services;
+                    if (services != null && services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            try { hvm.PendingScouting.Insert(0, entry); } catch { }
+                            try { hvm.AllScouting.Insert(0, entry); } catch { }
+                        });
+                    }
+                }
+                catch { }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Scouting] Failed to cache QR scouting entry: {ex.Message}");
+            }
 
  // Re-assign preserved selections to ensure pickers keep their values
  SelectedTeam = preservedTeam;
@@ -1246,6 +1353,60 @@ else
       {
          StatusMessage = "✗ Failed to save JSON file";
        }
+
+            // Also add to cache so History shows exported JSON
+            try
+            {
+                var entry = new ScoutingEntry
+                {
+                    TeamId = TeamId,
+                    TeamNumber = SelectedTeam?.TeamNumber ?? 0,
+                    MatchId = MatchId,
+                    MatchNumber = SelectedMatch?.MatchNumber ?? 0,
+                    ScoutName = ScoutName ?? string.Empty,
+                    Timestamp = DateTime.Now,
+                    Data = jsonData.ToDictionary(k => k.Key, v => v.Value ?? new object())
+                };
+                
+                // Ensure we have an offline id so History can track this exported entry
+                try { entry.OfflineId = Guid.NewGuid().ToString(); } catch { }
+
+                if (_cacheService != null)
+                {
+                    var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                    cached.Add(entry);
+                    await _cacheService.CacheScoutingDataAsync(cached);
+
+                    // Add to pending cache so it's visible in History (exported JSON should appear)
+                    try { await _cacheService.AddPendingScoutingAsync(entry); } catch { }
+                }
+
+                // Update in-memory HistoryViewModel so UI reflects the new export immediately
+                try
+                {
+                    var services = Application.Current?.Handler?.MauiContext?.Services;
+                    if (services != null && services.GetService(typeof(HistoryViewModel)) is HistoryViewModel hvm)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            try { hvm.PendingScouting.Insert(0, entry); } catch { }
+                            try { hvm.AllScouting.Insert(0, entry); } catch { }
+                        });
+                    }
+                }
+                catch { }
+
+                if (_cacheService != null)
+                {
+                    var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                    cached.Add(entry);
+                    await _cacheService.CacheScoutingDataAsync(cached);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Scouting] Failed to cache exported JSON entry: {ex.Message}");
+            }
         }
         catch (Exception ex)
         {
@@ -1286,15 +1447,35 @@ else
     [RelayCommand]
     private void ResetForm()
     {
-    SelectedTeam = null;
+        SelectedTeam = null;
         SelectedMatch = null;
         TeamId = 0;
         MatchId = 0;
         ScoutName = string.Empty;
         InitializeFieldValues();
         OnPropertyChanged("FieldValuesChanged");
-  StatusMessage = string.Empty;
+        StatusMessage = string.Empty;
         IsQRCodeVisible = false;
         QrCodeImage = null;
+    }
+
+    // Preserve scout name when resetting form (used by QR overlay Reset & Close button)
+    [RelayCommand]
+    private void ResetFormPreserveScoutName()
+    {
+        var preserved = ScoutName;
+
+        SelectedTeam = null;
+        SelectedMatch = null;
+        TeamId = 0;
+        MatchId = 0;
+        InitializeFieldValues();
+        OnPropertyChanged("FieldValuesChanged");
+        StatusMessage = string.Empty;
+        IsQRCodeVisible = false;
+        QrCodeImage = null;
+
+        // Restore scout name
+        ScoutName = preserved;
     }
 }

@@ -51,13 +51,21 @@
 ColumnSpacing="8"
     Margin="0,16,0,0">
       
-     <!-- Save Button -->
+        <!-- Save Button -->
         <Button Grid.Column="0"
      Text="Save"
             Command="{Binding SaveCommand}"
            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
      Style="{StaticResource PrimaryButton}"
-      BackgroundColor="{StaticResource SuccessColor}"/>
+      BackgroundColor="{StaticResource SuccessColor}">
+          <Button.Triggers>
+            <DataTrigger TargetType="Button" Binding="{Binding IsEditMode}" Value="False">
+              <Setter Property="IsEnabled" Value="False" />
+              <Setter Property="Text" Value="Update on server" />
+              <Setter Property="BackgroundColor" Value="#BDBDBD" />
+            </DataTrigger>
+          </Button.Triggers>
+        </Button>
         
      <!-- Delete Button -->
     <Button Grid.Column="1"

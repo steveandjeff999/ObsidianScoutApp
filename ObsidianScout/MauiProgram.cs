@@ -216,6 +216,9 @@ namespace ObsidianScout
  builder.Services.AddTransient<ManageUsersPage>();
  builder.Services.AddTransient<ManageUserEditPage>();
  builder.Services.AddTransient<AlliancesPage>();
+// History
+builder.Services.AddTransient<HistoryViewModel>();
+builder.Services.AddTransient<HistoryPage>();
 
  var app = builder.Build();
 

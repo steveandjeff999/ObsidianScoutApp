@@ -46,6 +46,22 @@ public interface ICacheService
  // Scouting Data
  Task<List<ScoutingEntry>?> GetCachedScoutingDataAsync();
  Task CacheScoutingDataAsync(List<ScoutingEntry> scoutingData);
+    
+    // Pit scouting cache
+    Task<List<PitScoutingEntry>?> GetCachedPitScoutingDataAsync();
+    Task CachePitScoutingDataAsync(List<PitScoutingEntry> pitData);
+
+    // Pending uploads (history/offline queue)
+    Task<List<ScoutingEntry>?> GetPendingScoutingAsync();
+    Task AddPendingScoutingAsync(ScoutingEntry entry);
+    Task RemovePendingScoutingAsync(Func<ScoutingEntry, bool> predicate);
+
+
+    Task<List<PitScoutingEntry>?> GetPendingPitAsync();
+    Task AddPendingPitAsync(PitScoutingEntry entry);
+    Task RemovePendingPitAsync(Func<PitScoutingEntry, bool> predicate);
+
+    
  
  // Team Metrics
  Task<TeamMetrics?> GetCachedTeamMetricsAsync(int teamId, int eventId);
@@ -67,7 +83,6 @@ public interface ICacheService
  Task<bool> IsCacheExpiredAsync(string key, TimeSpan maxAge);
  Task<bool> HasCachedDataAsync();
 }
-
 public class CacheService : ICacheService
 {
  private const string CACHE_KEY_GAME_CONFIG = "cache_game_config";
@@ -78,6 +93,7 @@ public class CacheService : ICacheService
  private const string CACHE_KEY_TEAMS = "cache_teams";
  private const string CACHE_KEY_MATCHES = "cache_matches";
  private const string CACHE_KEY_SCOUTING_DATA = "cache_scouting_data";
+    private const string CACHE_KEY_PENDING_SCOUTING = "cache_pending_scouting";
  private const string CACHE_KEY_AVAILABLE_METRICS = "cache_available_metrics";
  private const string CACHE_KEY_LAST_PRELOAD = "cache_last_preload";
  private const string CACHE_KEY_PROFILE_PICTURE = "cache_profile_picture";
@@ -100,6 +116,274 @@ public class CacheService : ICacheService
  WriteIndented = false
  };
  }
+
+    // Pit scouting cache (mirror of match scouting cache)
+    private const string CACHE_KEY_PIT_SCOUTING_DATA = "cache_pit_scouting_data";
+
+    public async Task<List<PitScoutingEntry>?> GetCachedPitScoutingDataAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PIT_SCOUTING_DATA);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var data = JsonSerializer.Deserialize<List<PitScoutingEntry>>(json, _jsonOptions);
+
+                var timestamp = await GetCacheTimestampAsync(CACHE_KEY_PIT_SCOUTING_DATA);
+                if (timestamp.HasValue)
+                {
+                    var age = DateTime.UtcNow - timestamp.Value;
+                    System.Diagnostics.Debug.WriteLine($"[Cache] Pit scouting data loaded from cache (age: {age.TotalHours:F1}h, count: {data?.Count ??0})");
+                }
+
+                return data;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load pit scouting data: {ex.Message}");
+        }
+        return null;
+    }
+
+    public async Task CachePitScoutingDataAsync(List<PitScoutingEntry> pitData)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(pitData, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PIT_SCOUTING_DATA, json);
+            await SetCacheTimestampAsync(CACHE_KEY_PIT_SCOUTING_DATA);
+            System.Diagnostics.Debug.WriteLine($"[Cache] Cached {pitData.Count} pit scouting entries");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache pit scouting data: {ex.Message}");
+        }
+    }
+
+    #region Pending Uploads
+
+    public async Task<List<ScoutingEntry>?> GetPendingScoutingAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PENDING_SCOUTING);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var list = JsonSerializer.Deserialize<List<ScoutingEntry>>(json, _jsonOptions);
+                return list;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load pending scouting: {ex.Message}");
+        }
+        return new List<ScoutingEntry>();
+    }
+
+    public async Task AddPendingScoutingAsync(ScoutingEntry entry)
+    {
+        try
+        {
+            var list = await GetPendingScoutingAsync() ?? new List<ScoutingEntry>();
+            // Remove duplicates: match by OfflineId if present, otherwise by Id or timestamp+team+match
+            try
+            {
+                list = list.Where(e =>
+                {
+                    if (!string.IsNullOrEmpty(entry.OfflineId) && !string.IsNullOrEmpty(e.OfflineId))
+                        return e.OfflineId != entry.OfflineId;
+                    if (entry.Id > 0 && e.Id > 0)
+                        return e.Id != entry.Id;
+                    return !(e.Timestamp == entry.Timestamp && e.TeamId == entry.TeamId && e.MatchId == entry.MatchId);
+                }).ToList();
+            }
+            catch { }
+
+            list.Add(entry);
+            var json = JsonSerializer.Serialize(list, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_SCOUTING, json);
+            await SetCacheTimestampAsync(CACHE_KEY_PENDING_SCOUTING);
+            System.Diagnostics.Debug.WriteLine("[Cache] Added pending scouting entry (deduped)");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to add pending scouting: {ex.Message}");
+        }
+    }
+
+    public async Task RemovePendingScoutingAsync(Func<ScoutingEntry, bool> predicate)
+    {
+        try
+        {
+            var list = await GetPendingScoutingAsync() ?? new List<ScoutingEntry>();
+            var remaining = list.Where(e => !predicate(e)).ToList();
+            var json = JsonSerializer.Serialize(remaining, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_SCOUTING, json);
+            await SetCacheTimestampAsync(CACHE_KEY_PENDING_SCOUTING);
+            System.Diagnostics.Debug.WriteLine("[Cache] Removed matching pending scouting entries");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to remove pending scouting: {ex.Message}");
+        }
+    }
+
+    private const string CACHE_KEY_PENDING_PIT = "cache_pending_pit";
+
+    public async Task<List<PitScoutingEntry>?> GetPendingPitAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PENDING_PIT);
+            if (!string.IsNullOrEmpty(json))
+            {
+                var list = JsonSerializer.Deserialize<List<PitScoutingEntry>>(json, _jsonOptions);
+                return list;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load pending pit scouting: {ex.Message}");
+        }
+        return new List<PitScoutingEntry>();
+    }
+
+    public async Task AddPendingPitAsync(PitScoutingEntry entry)
+    {
+        try
+        {
+            var list = await GetPendingPitAsync() ?? new List<PitScoutingEntry>();
+            list.Add(entry);
+            var json = JsonSerializer.Serialize(list, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_PIT, json);
+            await SetCacheTimestampAsync(CACHE_KEY_PENDING_PIT);
+            System.Diagnostics.Debug.WriteLine("[Cache] Added pending pit entry");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to add pending pit: {ex.Message}");
+        }
+    }
+
+    public async Task RemovePendingPitAsync(Func<PitScoutingEntry, bool> predicate)
+    {
+        try
+        {
+            var list = await GetPendingPitAsync() ?? new List<PitScoutingEntry>();
+            var remaining = list.Where(e => !predicate(e)).ToList();
+            var json = JsonSerializer.Serialize(remaining, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_PIT, json);
+            await SetCacheTimestampAsync(CACHE_KEY_PENDING_PIT);
+            System.Diagnostics.Debug.WriteLine("[Cache] Removed matching pending pit entries");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] Failed to remove pending pit: {ex.Message}");
+        }
+    }
+
+    // Deleted items tracking implementations (persist markers so deletions survive restarts)
+    public async Task<List<string>?> GetDeletedScoutingOfflineIdsAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PENDING_SCOUTING + "_deleted_offline");
+            if (!string.IsNullOrEmpty(json))
+            {
+                var list = JsonSerializer.Deserialize<List<string>>(json, _jsonOptions);
+                return list;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] GetDeletedScoutingOfflineIdsAsync failed: {ex.Message}");
+        }
+        return new List<string>();
+    }
+
+    public async Task AddDeletedScoutingOfflineIdAsync(string offlineId)
+    {
+        try
+        {
+            var list = await GetDeletedScoutingOfflineIdsAsync() ?? new List<string>();
+            if (!list.Contains(offlineId)) list.Add(offlineId);
+            var json = JsonSerializer.Serialize(list, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_SCOUTING + "_deleted_offline", json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] AddDeletedScoutingOfflineIdAsync failed: {ex.Message}");
+        }
+    }
+
+    public async Task<List<int>?> GetDeletedScoutingIdsAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PENDING_SCOUTING + "_deleted_ids");
+            if (!string.IsNullOrEmpty(json))
+            {
+                var list = JsonSerializer.Deserialize<List<int>>(json, _jsonOptions);
+                return list;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] GetDeletedScoutingIdsAsync failed: {ex.Message}");
+        }
+        return new List<int>();
+    }
+
+    public async Task AddDeletedScoutingIdAsync(int id)
+    {
+        try
+        {
+            var list = await GetDeletedScoutingIdsAsync() ?? new List<int>();
+            if (!list.Contains(id)) list.Add(id);
+            var json = JsonSerializer.Serialize(list, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_SCOUTING + "_deleted_ids", json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] AddDeletedScoutingIdAsync failed: {ex.Message}");
+        }
+    }
+
+    public async Task<List<int>?> GetDeletedPitIdsAsync()
+    {
+        try
+        {
+            var json = await GetStringFromCacheAsync(CACHE_KEY_PENDING_PIT + "_deleted_ids");
+            if (!string.IsNullOrEmpty(json))
+            {
+                var list = JsonSerializer.Deserialize<List<int>>(json, _jsonOptions);
+                return list;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] GetDeletedPitIdsAsync failed: {ex.Message}");
+        }
+        return new List<int>();
+    }
+
+    public async Task AddDeletedPitIdAsync(int id)
+    {
+        try
+        {
+            var list = await GetDeletedPitIdsAsync() ?? new List<int>();
+            if (!list.Contains(id)) list.Add(id);
+            var json = JsonSerializer.Serialize(list, _jsonOptions);
+            await SaveStringToCacheAsync(CACHE_KEY_PENDING_PIT + "_deleted_ids", json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cache] AddDeletedPitIdAsync failed: {ex.Message}");
+        }
+    }
+
+    #endregion
 
  #region Storage helpers
 

@@ -481,6 +481,15 @@ public partial class ScoutingPage : ContentPage
                 team != null ? $"{team.TeamNumber} - {team.TeamName}" : ""));
         teamLayout.Add(teamPicker);
 
+        // Live team number display that updates when SelectedTeam changes
+        var teamNumberLabel = new Label
+        {
+            FontSize = 13,
+            TextColor = GetSecondaryTextColor()
+        };
+        teamNumberLabel.SetBinding(Label.TextProperty, new Binding("SelectedTeam.TeamNumber", stringFormat: "Team: {0}"));
+        teamLayout.Add(teamNumberLabel);
+
         mainLayout.Add(teamLayout);
 
         // Match Selection Row
@@ -533,6 +542,15 @@ public partial class ScoutingPage : ContentPage
             converter: new FuncConverter<Match, string>(match =>
                 match != null ? $"{match.MatchType} {match.MatchNumber}" : ""));
         matchLayout.Add(matchPicker);
+
+        // Live match number display that updates when SelectedMatch changes
+        var matchNumberLabel = new Label
+        {
+            FontSize = 13,
+            TextColor = GetSecondaryTextColor()
+        };
+        matchNumberLabel.SetBinding(Label.TextProperty, new Binding("SelectedMatch.MatchNumber", stringFormat: "Match: {0}"));
+        matchLayout.Add(matchNumberLabel);
 
         mainLayout.Add(matchLayout);
 
@@ -1428,8 +1446,17 @@ FontSize = 24,
         };
         resetAndCloseButton.Clicked += (s, e) =>
         {
-            _viewModel.CloseQRCodeCommand.Execute(null);
-            _viewModel.ResetFormCommand.Execute(null);
+            // Use command that preserves scout name so generating/clearing QR doesn't erase it
+            try
+            {
+                _viewModel.ResetFormPreserveScoutNameCommand.Execute(null);
+            }
+            catch
+            {
+                // Fallback to original behavior if command not available
+                try { _viewModel.CloseQRCodeCommand.Execute(null); } catch { }
+                try { _viewModel.ResetFormCommand.Execute(null); } catch { }
+            }
         };
         buttonLayout.Add(resetAndCloseButton, 0, 0);
 

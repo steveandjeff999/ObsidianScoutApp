@@ -28,7 +28,7 @@
     <FontImageSource x:Key="IconMoon" FontFamily="FA" Glyph="&#xF186;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
     <FontImageSource x:Key="IconTimer" FontFamily="FA" Glyph="&#xF2F2;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
     <FontImageSource x:Key="IconClipboard" FontFamily="FA" Glyph="&#xF328;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="18" />
-    <FontImageSource x:Key="IconClock" FontFamily="FA" Glyph="&#xF017;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="14" />
+    <FontImageSource x:Key="IconClock" FontFamily="FA" Glyph="&#xF017;" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" Size="14" />
     <FontImageSource x:Key="IconScroll" FontFamily="FA" Glyph="&#xF70E;" Color="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}" Size="22" />
 
     <!-- Toolbar / utility icons -->

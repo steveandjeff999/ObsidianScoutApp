@@ -129,6 +129,11 @@ namespace ObsidianScout.Views
 			await SafeNavigateAsync("QRCodeScannerPage");
 		}
 
+		private async void OnHistoryClicked(object sender, EventArgs e)
+		{
+			await SafeNavigateAsync("HistoryPage");
+		}
+
 		private async void OnGraphsClicked(object sender, EventArgs e)
 		{
 			await SafeNavigateAsync("GraphsPage");

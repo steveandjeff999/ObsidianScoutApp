@@ -11,6 +11,9 @@ namespace ObsidianScout
         private readonly INotificationNavigationService? _notificationNavigationService;
         private readonly IServiceProvider _services;
 
+        // Expose the IServiceProvider so pages that are instantiated by XAML can resolve services
+        public IServiceProvider Services => _services;
+
         // Global banner overlay instance
      private ConnectionBannerView? _bannerOverlay;
 

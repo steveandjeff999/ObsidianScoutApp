@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ObsidianScout.Services;
 using ObsidianScout.ViewModels;
 using ObsidianScout.Views;
+using Microsoft.Maui.Devices;
 
 namespace ObsidianScout
 {
@@ -183,7 +184,17 @@ namespace ObsidianScout
 			_settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			_apiService = apiService ?? throw new ArgumentNullException(nameof(apiService));
 
-			InitializeComponent();
+		InitializeComponent();
+
+		// Show history button only on Windows (WinUI). Some platforms surface History in the Menu instead.
+		try
+		{
+			if (this.FindByName("HistoryButton") is Microsoft.Maui.Controls.View hb)
+			{
+				hb.IsVisible = DeviceInfo.Platform == DevicePlatform.WinUI;
+			}
+		}
+		catch { }
 			BindingContext = this;
 
 			// Subscribe to offline mode changes with error handling
@@ -203,6 +214,20 @@ namespace ObsidianScout
 			_ = SafeInitializeAuthAndNavigationAsync();
 
 			Navigating += OnNavigating;
+		}
+
+		// Make handler public so XAML can wire the Clicked event
+		public async void OnHistoryClicked(object? sender, EventArgs e)
+		{
+			try
+			{
+				// Navigate to HistoryPage route
+				await Shell.Current.GoToAsync("HistoryPage");
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[AppShell] OnHistoryClicked navigation error: {ex.Message}");
+			}
 		}
 
 		private void RegisterRoutes()
@@ -234,6 +259,7 @@ namespace ObsidianScout
 				Routing.RegisterRoute("Chat", typeof(ChatPage));
 				Routing.RegisterRoute("ChatPage", typeof(ChatPage));
 				Routing.RegisterRoute("MatchPredictionPage", typeof(MatchPredictionPage));
+				Routing.RegisterRoute("HistoryPage", typeof(Views.HistoryPage));
 			}
 			catch (Exception ex)
 			{
