@@ -42,6 +42,39 @@ public partial class MainViewModel : ObservableObject
         _ = LoadDashboardData();
     }
 
+    [RelayCommand]
+    private async Task TriggerSyncAsync()
+    {
+        if (IsLoading) return;
+
+        try
+        {
+            IsLoading = true;
+            WelcomeMessage = "Triggering server sync...";
+            var resp = await _apiService.TriggerSyncAsync();
+            if (resp.Success)
+            {
+                WelcomeMessage = "Server sync triggered successfully.";
+            }
+            else
+            {
+                WelcomeMessage = $"Sync failed: {resp.Error ?? "unknown"}";
+            }
+
+            // refresh dashboard after short delay
+            await Task.Delay(1200);
+            _ = LoadDashboardData();
+        }
+        catch (Exception ex)
+        {
+            WelcomeMessage = $"Sync error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
     private async Task LoadUserData()
     {
         var token = await _settingsService.GetTokenAsync();

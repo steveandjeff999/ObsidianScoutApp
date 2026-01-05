@@ -345,124 +345,124 @@ var errorContent = await response.Content.ReadAsStringAsync();
         }
     }
 
- public async Task<byte[]?> GetProfilePictureAsync()
- {
- try
- {
- System.Diagnostics.Debug.WriteLine("[API] GetProfilePictureAsync called");
+    public async Task<byte[]?> GetProfilePictureAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[API] GetProfilePictureAsync called");
 
- // If offline or offline-mode, return cached picture if available
- if (!await ShouldUseNetworkAsync())
- {
- var cached = await _cache_service.GetCachedProfilePictureAsync();
- if (cached != null && cached.Length >0)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Offline - returning cached profile picture ({cached.Length} bytes)");
- return cached;
- }
+            // If offline or offline-mode, return cached picture if available
+            if (!await ShouldUseNetworkAsync())
+            {
+                var cached = await _cache_service.GetCachedProfilePictureAsync();
+                if (cached != null && cached.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] Offline - returning cached profile picture ({cached.Length} bytes)");
+                    return cached;
+                }
 
- System.Diagnostics.Debug.WriteLine("[API] Offline and no cached profile picture available");
- return null;
- }
+                System.Diagnostics.Debug.WriteLine("[API] Offline and no cached profile picture available");
+                return null;
+            }
 
- await AddAuthHeaderAsync();
- var baseUrl = await GetBaseUrlAsync();
- var url = $"{baseUrl}/profiles/me/picture";
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var url = $"{baseUrl}/profiles/me/picture";
 
- System.Diagnostics.Debug.WriteLine($"[API] Profile picture URL: {url}");
+            System.Diagnostics.Debug.WriteLine($"[API] Profile picture URL: {url}");
 
- // Check if auth header is set
- var authHeader = _httpClient.DefaultRequestHeaders.Authorization?.ToString();
- if (!string.IsNullOrEmpty(authHeader) && authHeader.Length >20)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Auth header: {authHeader.Substring(0,20)}...");
- }
- else
- {
- System.Diagnostics.Debug.WriteLine($"[API] ? WARNING: No auth header or invalid auth header");
- }
+            // Check if auth header is set
+            var authHeader = _httpClient.DefaultRequestHeaders.Authorization?.ToString();
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.Length > 20)
+            {
+                System.Diagnostics.Debug.WriteLine($"[API] Auth header: {authHeader.Substring(0, 20)}...");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[API] ? WARNING: No auth header or invalid auth header");
+            }
 
- var response = await _httpClient.GetAsync(url);
+            var response = await _httpClient.GetAsync(url);
 
- System.Diagnostics.Debug.WriteLine($"[API] Response status: {(int)response.StatusCode} {response.StatusCode}");
- System.Diagnostics.Debug.WriteLine($"[API] Response content type: {response.Content.Headers.ContentType?.MediaType ?? "null"}");
- System.Diagnostics.Debug.WriteLine($"[API] Response content length: {response.Content.Headers.ContentLength?.ToString() ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response status: {(int)response.StatusCode} {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response content type: {response.Content.Headers.ContentType?.MediaType ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[API] Response content length: {response.Content.Headers.ContentLength?.ToString() ?? "null"}");
 
- if (response.IsSuccessStatusCode)
- {
- var bytes = await response.Content.ReadAsByteArrayAsync();
- System.Diagnostics.Debug.WriteLine($"[API] ? Received {bytes.Length} bytes for profile picture");
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                System.Diagnostics.Debug.WriteLine($"[API] ? Received {bytes.Length} bytes for profile picture");
 
- // Log first few bytes to verify image data
- if (bytes.Length >=4)
- {
- System.Diagnostics.Debug.WriteLine($"[API] First4 bytes: {bytes[0]:X2} {bytes[1]:X2} {bytes[2]:X2} {bytes[3]:X2}");
- }
+                // Log first few bytes to verify image data
+                if (bytes.Length >= 4)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] First4 bytes: {bytes[0]:X2} {bytes[1]:X2} {bytes[2]:X2} {bytes[3]:X2}");
+                }
 
- // Cache the profile picture for offline use
- try
- {
- await _cache_service.CacheProfilePictureAsync(bytes);
- }
- catch (Exception cex)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Failed to cache profile picture: {cex.Message}");
- }
+                // Cache the profile picture for offline use
+                try
+                {
+                    await _cache_service.CacheProfilePictureAsync(bytes);
+                }
+                catch (Exception cex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] Failed to cache profile picture: {cex.Message}");
+                }
 
- return bytes;
- }
- else
- {
- var errorContent = await response.Content.ReadAsStringAsync();
- System.Diagnostics.Debug.WriteLine($"[API] ? Profile picture request failed");
- System.Diagnostics.Debug.WriteLine($"[API] Error content: {errorContent}");
+                return bytes;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"[API] ? Profile picture request failed");
+                System.Diagnostics.Debug.WriteLine($"[API] Error content: {errorContent}");
 
- // Try to return cached picture when server responds with error
- try
- {
- var cached = await _cache_service.GetCachedProfilePictureAsync();
- if (cached != null && cached.Length >0)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Returning cached profile picture after server error ({cached.Length} bytes)");
- return cached;
- }
- }
- catch (Exception cex)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Failed to read cached profile picture: {cex.Message}");
- }
- }
+                // Try to return cached picture when server responds with error
+                try
+                {
+                    var cached = await _cache_service.GetCachedProfilePictureAsync();
+                    if (cached != null && cached.Length > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[API] Returning cached profile picture after server error ({cached.Length} bytes)");
+                        return cached;
+                    }
+                }
+                catch (Exception cex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] Failed to read cached profile picture: {cex.Message}");
+                }
 
- return null;
- }
- catch (Exception ex)
- {
- System.Diagnostics.Debug.WriteLine($"[API] ? Error fetching profile picture");
- System.Diagnostics.Debug.WriteLine($"[API] Exception type: {ex.GetType().Name}");
- System.Diagnostics.Debug.WriteLine($"[API] Exception message: {ex.Message}");
- if (ex.InnerException != null)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Inner exception: {ex.InnerException.Message}");
- }
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[API] ? Error fetching profile picture");
+            System.Diagnostics.Debug.WriteLine($"[API] Exception type: {ex.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"[API] Exception message: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[API] Inner exception: {ex.InnerException.Message}");
+            }
 
- // On exception, try to return cached picture as fallback
- try
- {
- var cached = await _cache_service.GetCachedProfilePictureAsync();
- if (cached != null && cached.Length >0)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Returning cached profile picture due to exception ({cached.Length} bytes)");
- return cached;
- }
- }
- catch (Exception cex)
- {
- System.Diagnostics.Debug.WriteLine($"[API] Failed to read cached profile picture after exception: {cex.Message}");
- }
+            // On exception, try to return cached picture as fallback
+            try
+            {
+                var cached = await _cache_service.GetCachedProfilePictureAsync();
+                if (cached != null && cached.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] Returning cached profile picture due to exception ({cached.Length} bytes)");
+                    return cached;
+                }
+            }
+            catch (Exception cex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[API] Failed to read cached profile picture after exception: {cex.Message}");
+            }
 
- return null;
- }
- }
+            return null;
+        }
+    }
 
     public async Task<TeamsResponse> GetTeamsAsync(int? eventId = null, int limit = 100, int offset = 0)
     {
@@ -1065,6 +1065,37 @@ var errorContent = await response.Content.ReadAsStringAsync();
            Error = $"Connection error: {ex.Message}"
   };
      }
+
+    }
+
+    public async Task<SyncTriggerResponse> TriggerSyncAsync()
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new SyncTriggerResponse { Success = false, Error = "Offline - cannot trigger sync" };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var endpoint = $"{baseUrl}/sync/trigger";
+            var request = await CreateRequestMessageAsync(HttpMethod.Post, endpoint);
+            var response = await _httpClient.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<SyncTriggerResponse>(_jsonOptions);
+                return result ?? new SyncTriggerResponse { Success = false, Error = "Invalid response" };
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            return new SyncTriggerResponse { Success = false, Error = $"HTTP {response.StatusCode}: {errorContent}" };
+        }
+        catch (Exception ex)
+        {
+            return new SyncTriggerResponse { Success = false, Error = ex.Message };
+        }
     }
 
     public async Task<ApiResponse<string>> HealthCheckAsync()
@@ -2039,14 +2070,61 @@ var errorContent = await response.Content.ReadAsStringAsync();
        var result = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<bool>>(content, _jsonOptions);
         return result ?? new ApiResponse<bool> { Success = true };
  }
-
     return new ApiResponse<bool> { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
         }
         catch (Exception ex)
         {
      System.Diagnostics.Debug.WriteLine($"[API] MarkChatMessagesAsReadAsync failed: {ex.Message}");
-         return new ApiResponse<bool> { Success = false, Error = ex.Message };
-   }
+          return new ApiResponse<bool> { Success = false, Error = ex.Message };
+    }
+     }
+
+    // Public registration that does not persist tokens/settings
+    public async Task<LoginResponse> PublicRegisterAsync(string username, string password, string? confirmPassword, int teamNumber, string? email)
+    {
+        try
+        {
+            var baseUrl = await GetBaseUrlAsync();
+            var payload = new Dictionary<string, object?>
+            {
+                ["username"] = username,
+                ["password"] = password,
+                ["team_number"] = teamNumber
+            };
+
+            if (!string.IsNullOrEmpty(confirmPassword)) payload["confirm_password"] = confirmPassword;
+            if (!string.IsNullOrEmpty(email)) payload["email"] = email;
+
+            var endpoint = $"{baseUrl}/auth/register";
+            var response = await _httpClient.PostAsJsonAsync(endpoint, payload, _jsonOptions);
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var result = System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content, _jsonOptions);
+                    return result ?? new LoginResponse { Success = false, Error = "Invalid response" };
+                }
+                catch (System.Text.Json.JsonException jex)
+                {
+                    return new LoginResponse { Success = false, Error = $"JSON parse error: {jex.Message}" };
+                }
+            }
+
+            try
+            {
+                var err = System.Text.Json.JsonSerializer.Deserialize<LoginResponse>(content, _jsonOptions);
+                if (err != null) return err;
+            }
+            catch { }
+
+            return new LoginResponse { Success = false, Error = $"HTTP {(int)response.StatusCode}: {content}" };
+        }
+        catch (Exception ex)
+        {
+            return new LoginResponse { Success = false, Error = ex.Message };
+        }
     }
 
     public async Task<ApiResponse<bool>> SaveGameConfigAsync(GameConfig config)

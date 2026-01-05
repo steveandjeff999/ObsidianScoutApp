@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
+             x:Class="ObsidianScout.Views.ManageUserCreatePage"
+             x:DataType="viewmodels:ManageUserCreateViewModel"
+             Title="Create User">
+
+  <ScrollView>
+    <VerticalStackLayout Padding="20" Spacing="12">
+      <Label Text="Create User" FontSize="20" HorizontalTextAlignment="Center" />
+
+      <Entry Placeholder="Username" Text="{Binding Username}" />
+      <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+      <Entry Placeholder="Confirm Password (optional)" IsPassword="True" Text="{Binding ConfirmPassword}" />
+      <Entry Placeholder="Team Number" Keyboard="Numeric" Text="{Binding TeamNumber}" />
+      <Entry Placeholder="Email (optional)" Keyboard="Email" Text="{Binding Email}" />
+
+      <HorizontalStackLayout Spacing="8">
+        <Button Text="Create" Command="{Binding CreateCommand}" />
+        <Button Text="Cancel" Command="{Binding CancelCommand}" />
+      </HorizontalStackLayout>
+
+      <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+    </VerticalStackLayout>
+  </ScrollView>
+
+</ContentPage>

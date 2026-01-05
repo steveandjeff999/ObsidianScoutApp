@@ -8,6 +8,8 @@ public interface IApiService
 {
     Task<LoginResponse> LoginAsync(string username, string password, int teamNumber);
     Task<LoginResponse> RegisterAsync(string username, string password, string? confirmPassword, int teamNumber, string? email);
+    // Public registration endpoint (does not imply admin creation)
+    Task<LoginResponse> PublicRegisterAsync(string username, string password, string? confirmPassword, int teamNumber, string? email);
     Task<TokenResponse> RefreshTokenAsync();
     Task<ApiResponse<User>> VerifyTokenAsync();
     
@@ -85,4 +87,7 @@ public interface IApiService
 
     // Network configuration
     Task UpdateHttpClientTimeoutAsync();
+
+    // Trigger server sync for teams and matches
+    Task<SyncTriggerResponse> TriggerSyncAsync();
 }

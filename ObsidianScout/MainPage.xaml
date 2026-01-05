@@ -176,6 +176,41 @@ Padding="12,10">
             <Label Text="QUICK ACTIONS"
           Style="{StaticResource SectionHeader}" />
 
+    <!-- Server Sync - card styled like a primary button -->
+    <Border
+        HeightRequest="56"
+        Padding="0"
+        Margin="0,0,0,0"
+        StrokeThickness="0"
+        Shadow="{StaticResource ShadowSm}"
+        Background="{AppThemeBinding Light={StaticResource PrimaryGradient}, Dark={StaticResource PrimaryGradientDark}}">
+
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="12" />
+        </Border.StrokeShape>
+
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding TriggerSyncCommand}" NumberOfTapsRequired="1" />
+        </Border.GestureRecognizers>
+
+        <Grid ColumnDefinitions="*,Auto" HorizontalOptions="Fill" VerticalOptions="Center">
+            <!-- Centered label looks like a button -->
+            <Label Grid.Column="0"
+                   Text="Trigger Server Sync"
+                   HorizontalTextAlignment="Center"
+                   VerticalTextAlignment="Center"
+                   FontFamily="OpenSansSemibold"
+                   FontSize="16"
+                   TextColor="White"
+                   Padding="12,0" />
+
+            <!-- Loading indicator on the right -->
+            <HorizontalStackLayout Grid.Column="1" Padding="12,0" Spacing="8" VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="White" />
+            </HorizontalStackLayout>
+        </Grid>
+    </Border>
+
  <!-- Action Cards Grid -->
          <Grid RowDefinitions="Auto,Auto" 
                ColumnDefinitions="*,*"

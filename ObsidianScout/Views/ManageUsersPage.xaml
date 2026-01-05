@@ -35,7 +35,10 @@
  </DataTemplate>
  </CollectionView.ItemTemplate>
  </CollectionView>
+ <HorizontalStackLayout Spacing="8">
+ <Button Text="Create User" Command="{Binding CreateCommand}" />
  <Button Text="Refresh" Command="{Binding RefreshCommand}" />
+ </HorizontalStackLayout>
  </StackLayout>
  </ContentPage.Content>
 </ContentPage>

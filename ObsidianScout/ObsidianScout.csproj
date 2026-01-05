@@ -281,6 +281,9 @@
 	 <MauiXaml Update="Views\ManagementPage.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Views\ManageUserCreatePage.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Views\ManageUserEditPage.xaml">
 	   <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>

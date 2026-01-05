@@ -238,6 +238,7 @@
     <FontImageSource x:Key="IconScoutMatch" FontFamily="FA" Glyph="&#xF15C;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconTeams" FontFamily="FA" Glyph="&#xF0C0;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconEvents" FontFamily="FA" Glyph="&#xF073;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
+    <FontImageSource x:Key="IconSync" FontFamily="FA" Glyph="&#xF021;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="22" />
     <FontImageSource x:Key="IconGraphs" FontFamily="FA" Glyph="&#xF080;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconPredictions" FontFamily="FA" Glyph="&#xF544;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
     <FontImageSource x:Key="IconLogout" FontFamily="FA" Glyph="&#xF2F5;" Color="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" Size="24" />
