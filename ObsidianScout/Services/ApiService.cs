@@ -94,7 +94,8 @@ public partial class ApiService : IApiService
     }
 
     // New helper: returns true when network calls should be attempted (offline mode disabled AND connectivity present)
-    private async Task<bool> ShouldUseNetworkAsync()
+    // If ignoreOfflineMode is true, skip the offline mode setting and only consider connectivity.
+    private async Task<bool> ShouldUseNetworkAsync(bool ignoreOfflineMode = false)
     {
         try
         {
@@ -104,12 +105,14 @@ public partial class ApiService : IApiService
                 System.Diagnostics.Debug.WriteLine("[API] No connectivity - using cache");
                 return false;
             }
-
-            var offlineMode = await _settings_service.GetOfflineModeAsync();
-            if (offlineMode)
+            if (!ignoreOfflineMode)
             {
-                System.Diagnostics.Debug.WriteLine("[API] Offline mode is enabled in settings - using cache instead of network");
-                return false;
+                var offlineMode = await _settings_service.GetOfflineModeAsync();
+                if (offlineMode)
+                {
+                    System.Diagnostics.Debug.WriteLine("[API] Offline mode is enabled in settings - using cache instead of network");
+                    return false;
+                }
             }
         }
         catch (Exception ex)
@@ -1334,9 +1337,9 @@ var errorContent = await response.Content.ReadAsStringAsync();
         return query.ToList();
     }
 
-    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset = 0)
+    public async Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset = 0, bool ignoreOfflineMode = false)
     {
-        if (!await ShouldUseNetworkAsync())
+        if (!await ShouldUseNetworkAsync(ignoreOfflineMode))
         {
             var cachedData = await _cache_service.GetCachedScoutingDataAsync();
             var filtered = FilterScoutingEntries(cachedData, teamNumber, eventId, matchId);
@@ -1372,16 +1375,54 @@ var errorContent = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ScoutingListResponse>(_jsonOptions);
-                
-                // Cache the scouting data
-                if (result != null && result.Success && result.Entries != null && result.Entries.Count > 0)
+                // Read raw content first so we can attempt tolerant parsing and still cache on partial success
+                var responseContent = await response.Content.ReadAsStringAsync();
+                try
                 {
-                    await _cache_service.CacheScoutingDataAsync(result.Entries);
+                    var result = System.Text.Json.JsonSerializer.Deserialize<ScoutingListResponse>(responseContent, _jsonOptions);
+
+                    // If we got a valid response with entries, cache and return
+                    if (result != null && result.Entries != null && result.Entries.Count > 0)
+                    {
+                        try { await _cache_service.CacheScoutingDataAsync(result.Entries); } catch { }
+                        System.Diagnostics.Debug.WriteLine($"Success: Fetched {result.Entries.Count} scouting entries");
+                        return result;
+                    }
+
+                    // If result was null or had no entries, try to extract entries array manually (more tolerant)
+                    using var doc = JsonDocument.Parse(responseContent);
+                    if (doc.RootElement.TryGetProperty("entries", out var entriesElement) && entriesElement.ValueKind == JsonValueKind.Array)
+                    {
+                        var list = new List<ScoutingEntry>();
+                        foreach (var el in entriesElement.EnumerateArray())
+                        {
+                            try
+                            {
+                                var item = System.Text.Json.JsonSerializer.Deserialize<ScoutingEntry>(el.GetRawText(), _jsonOptions);
+                                if (item != null) list.Add(item);
+                            }
+                            catch (Exception exItem)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[API] Failed to deserialize individual scouting entry: {exItem.Message}");
+                            }
+                        }
+
+                        if (list.Count > 0)
+                        {
+                            try { await _cache_service.CacheScoutingDataAsync(list); } catch { }
+                            System.Diagnostics.Debug.WriteLine($"Success (fallback): Parsed and cached {list.Count} scouting entries");
+                            return new ScoutingListResponse { Success = true, Entries = list, Count = list.Count, Total = list.Count };
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("[API] Scouting response had no entries after parsing attempt");
+                    return new ScoutingListResponse { Success = false, Error = "Invalid or empty response" };
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"Success: Fetched {result?.Entries.Count ??0} scouting entries");
-                return result ?? new ScoutingListResponse { Success = false, Error = "Invalid response" };
+                catch (JsonException jex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[API] Scouting JSON deserialization failed: {jex.Message}");
+                    // Fall through to fallback below which will try to use cache
+                }
             }
 
             // Try to load from cache on failure
@@ -1397,6 +1438,27 @@ var errorContent = await response.Content.ReadAsStringAsync();
                     Error = "Using cached data (offline mode)"
                 };
             }
+
+            // If server returned content but parsing failed, try to cache raw content for later inspection
+            try
+            {
+                var raw = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(raw))
+                {
+                    // Save raw server scouting JSON to cache file for debugging and fallback
+                    try
+                    {
+                        var parsedCandidate = System.Text.Json.JsonSerializer.Deserialize<ScoutingListResponse>(raw, _jsonOptions);
+                        if (parsedCandidate != null && parsedCandidate.Entries != null && parsedCandidate.Entries.Count > 0)
+                        {
+                            await _cache_service.CacheScoutingDataAsync(parsedCandidate.Entries);
+                            return parsedCandidate;
+                        }
+                    }
+                    catch { /* ignore */ }
+                }
+            }
+            catch { }
 
             var errorContent = await response.Content.ReadAsStringAsync();
             System.Diagnostics.Debug.WriteLine($"Error Content: {errorContent}");

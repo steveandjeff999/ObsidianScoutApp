@@ -23,10 +23,10 @@ public class ScoutingData
     [JsonPropertyName("notes")]
     public string Notes { get; set; } = string.Empty;
 }
- 
 public class ScoutingSubmission
 {
     [JsonPropertyName("team_id")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int TeamId { get; set; }
 
     [JsonPropertyName("match_id")]
@@ -69,21 +69,25 @@ public class ScoutingEntry
     public int TeamId { get; set; }
 
     [JsonPropertyName("team_number")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int TeamNumber { get; set; }
 
     [JsonPropertyName("team_name")]
     public string TeamName { get; set; } = string.Empty;
 
     [JsonPropertyName("match_id")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int MatchId { get; set; }
 
     [JsonPropertyName("match_number")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int MatchNumber { get; set; }
 
     [JsonPropertyName("match_type")]
     public string MatchType { get; set; } = string.Empty;
 
     [JsonPropertyName("event_id")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int EventId { get; set; }
 
     [JsonPropertyName("event_code")]
@@ -109,6 +113,7 @@ public class ScoutingEntry
     public string OfflineId { get; set; } = string.Empty;
 
     [JsonPropertyName("scouting_team_number")]
+    [JsonConverter(typeof(SafeIntJsonConverter))]
     public int ScoutingTeamNumber { get; set; }
 
     [JsonPropertyName("data")]

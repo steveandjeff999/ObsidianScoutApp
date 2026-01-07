@@ -126,7 +126,8 @@ public partial class HistoryViewModel : ObservableObject
         // Load server scouting entries (best-effort)
         try
         {
-            var serverRes = await _apiService.GetAllScoutingDataAsync(limit: 500);
+            // Request server entries and allow History to bypass offline-mode setting so users can view server data when connected
+            var serverRes = await _apiService.GetAllScoutingDataAsync(limit: 500, ignoreOfflineMode: true);
             if (serverRes != null && serverRes.Success && serverRes.Entries != null && serverRes.Entries.Count > 0)
             {
                 serverEntries = serverRes.Entries;

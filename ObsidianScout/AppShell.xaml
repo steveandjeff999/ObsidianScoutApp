@@ -246,7 +246,7 @@ Source="{Binding ProfilePictureSource}"
             <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
       </Tab>
 
-   <Tab Title="Menu" Route="MenuPage">
+   <Tab Title="Menu" Route="MenuPage" IsVisible="{OnPlatform Android=true,iOS=true,WinUI=false}">
             <Tab.Icon>
         <FontImageSource Glyph="☰" FontFamily="OpenSansSemibold" Size="28" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
             </Tab.Icon>
@@ -255,69 +255,125 @@ Source="{Binding ProfilePictureSource}"
 
   </TabBar>
 
-    <!-- Flyout Items -->
+    <!-- Flyout Items - reordered and icons added to match mobile tab layout on desktop -->
     <FlyoutItem Title="Home" IsVisible="{Binding IsLoggedIn}" Route="MainPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🏠" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Scouting" IsVisible="{Binding IsLoggedIn}" Route="ScoutingLandingPage">
-<ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🔭" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Pit Scouting" IsVisible="{Binding IsLoggedIn}" Route="PitScoutingPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🔧" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="⚙" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Menu" IsVisible="{OnPlatform Android=true,iOS=true,WinUI=false}" Route="MenuPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="☰" FontFamily="OpenSansSemibold" Size="22" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:MenuPage}" />
+    </FlyoutItem>
+
+    <!-- Secondary items -->
     <FlyoutItem Title="QR Scanner" IsVisible="{Binding IsLoggedIn}" Route="QRCodeScannerPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="📷" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:QRCodeScannerPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Teams" IsVisible="{Binding IsLoggedIn}" Route="TeamsPage">
-    <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="👥" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:TeamsPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Events" IsVisible="{Binding IsLoggedIn}" Route="EventsPage">
-  <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="📅" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:EventsPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Matches" IsVisible="{Binding IsLoggedIn}" Route="MatchesPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🏆" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:MatchesPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Graphs" IsVisible="{Binding IsLoggedIn}" Route="GraphsPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="📈" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:GraphsPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Match Prediction" IsVisible="{Binding IsLoggedIn}" Route="MatchPredictionPage">
-   <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="📊" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:MatchPredictionPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Server Data" IsVisible="{Binding IsLoggedIn}" Route="DataPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🗄️" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:DataPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Management" IsVisible="{Binding HasManagementAccess}" Route="ManagementPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🔒" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:ManagementPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Manage Users" IsVisible="{Binding HasManagementAccess}" Route="ManageUsersPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="➕" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:ManageUsersPage}" />
     </FlyoutItem>
 
     <!-- Scouting Alliances (admin only) -->
     <FlyoutItem Title="Alliances" IsVisible="{Binding HasAdminAccess}" Route="AlliancesPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🤝" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:AlliancesPage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Chat" IsVisible="{Binding IsLoggedIn}" Route="ChatPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="💬" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:ChatPage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
-     <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
-    </FlyoutItem>
-
     <FlyoutItem Title="Login" IsVisible="{Binding IsLoggedOut}" Route="LoginPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="🔑" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
     </FlyoutItem>
 

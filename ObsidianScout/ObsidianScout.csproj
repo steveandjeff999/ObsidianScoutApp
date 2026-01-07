@@ -219,6 +219,7 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<!-- CommunityToolkit.Maui provides the CommunityToolkit.Maui namespace and UseMauiCommunityToolkit() extension -->
 		<PackageReference Include="CommunityToolkit.Maui" Version="8.4.0" />
+
 		<PackageReference Include="Microcharts.Maui" Version="1.0.1" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-rc.1.25451.107" />

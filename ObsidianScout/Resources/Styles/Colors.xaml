@@ -9,26 +9,26 @@
          Clean, Professional Design with High Contrast
     ======================================== -->
     
-    <!-- Primary Brand Colors for Light Mode - Vibrant Blue -->
-    <Color x:Key="LightPrimary">#2563EB</Color><!-- Blue 600 -->
-    <Color x:Key="LightPrimaryDark">#1D4ED8</Color><!-- Blue 700 -->
-    <Color x:Key="LightPrimaryLight">#3B82F6</Color><!-- Blue 500 -->
-    <Color x:Key="LightSecondary">#7C3AED</Color><!-- Violet 600 -->
-    <Color x:Key="LightSecondaryLight">#8B5CF6</Color><!-- Violet 500 -->
-    <Color x:Key="LightTertiary">#DB2777</Color><!-- Pink 600 -->
-    <Color x:Key="LightAccent">#0EA5E9</Color><!-- Sky 500 -->
+    <!-- Primary Brand Colors for Light Mode - Modern Indigo + Teal accent -->
+    <Color x:Key="LightPrimary">#3B2F7A</Color><!-- Deep Indigo -->
+    <Color x:Key="LightPrimaryDark">#2E235F</Color><!-- Indigo dark -->
+    <Color x:Key="LightPrimaryLight">#5A48A8</Color><!-- Indigo light -->
+    <Color x:Key="LightSecondary">#7C3AED</Color><!-- Violet remains as accent -->
+    <Color x:Key="LightSecondaryLight">#9B6CF7</Color><!-- Softer violet -->
+    <Color x:Key="LightTertiary">#FF6B6B</Color><!-- Warm coral for emphasis -->
+    <Color x:Key="LightAccent">#17BEBB</Color><!-- Teal accent -->
     
-    <!-- Backgrounds for Light Mode - Warm Neutrals -->
-    <Color x:Key="LightBackground">#FAFAFA</Color><!-- Neutral 50 -->
+    <!-- Backgrounds for Light Mode - Soft neutrals -->
+    <Color x:Key="LightBackground">#F6F8FB</Color><!-- very light blue-gray -->
     <Color x:Key="LightSurface">#FFFFFF</Color><!-- White -->
-    <Color x:Key="LightSurfaceVariant">#F5F5F5</Color><!-- Neutral 100 -->
-    <Color x:Key="LightSurfaceElevated">#FFFFFF</Color><!-- White elevated -->
-    <Color x:Key="LightSurfaceContainer">#F0F0F0</Color><!-- Input backgrounds -->
+    <Color x:Key="LightSurfaceVariant">#F1F3F8</Color><!-- subtle variant -->
+    <Color x:Key="LightSurfaceElevated">#FFFFFF</Color><!-- elevated -->
+    <Color x:Key="LightSurfaceContainer">#F3F6FA</Color><!-- Input backgrounds -->
 
     <!-- Text Colors for Light Mode - High Contrast -->
- <Color x:Key="LightTextPrimary">#171717</Color><!-- Neutral 900 -->
-    <Color x:Key="LightTextSecondary">#525252</Color><!-- Neutral 600 -->
-    <Color x:Key="LightTextTertiary">#A3A3A3</Color><!-- Neutral 400 -->
+    <Color x:Key="LightTextPrimary">#0F1724</Color><!-- rich charcoal -->
+    <Color x:Key="LightTextSecondary">#3F4A59</Color><!-- muted slate -->
+    <Color x:Key="LightTextTertiary">#8B95A1</Color><!-- subdued -->
     <Color x:Key="LightTextOnPrimary">#FFFFFF</Color>
     
     <!-- Borders and Dividers for Light Mode -->
@@ -51,11 +51,11 @@
     <Color x:Key="LightInfoBg">#E0F2FE</Color><!-- Sky 100 -->
 
     <!-- Interactive States Light -->
-    <Color x:Key="LightHover">#F5F5F5</Color>
-    <Color x:Key="LightPressed">#E5E5E5</Color>
-    <Color x:Key="LightDisabled">#FAFAFA</Color>
-    <Color x:Key="LightDisabledText">#D4D4D4</Color>
-    <Color x:Key="LightFocusRing">#3B82F6</Color>
+    <Color x:Key="LightHover">#EEF2F7</Color>
+    <Color x:Key="LightPressed">#E0E6F0</Color>
+    <Color x:Key="LightDisabled">#F7F9FB</Color>
+    <Color x:Key="LightDisabledText">#C7CDD6</Color>
+    <Color x:Key="LightFocusRing">#5A48A8</Color>
 
     <!-- ========================================
   MODERN DARK MODE COLORS
@@ -63,26 +63,26 @@
     ======================================== -->
     
     <!-- Primary Brand Colors for Dark Mode -->
-    <Color x:Key="DarkPrimary">#60A5FA</Color><!-- Blue 400 -->
-    <Color x:Key="DarkPrimaryDark">#3B82F6</Color><!-- Blue 500 -->
-    <Color x:Key="DarkPrimaryLight">#93C5FD</Color><!-- Blue 300 -->
-    <Color x:Key="DarkSecondary">#A78BFA</Color><!-- Violet 400 -->
-    <Color x:Key="DarkSecondaryLight">#C4B5FD</Color><!-- Violet 300 -->
-    <Color x:Key="DarkTertiary">#F472B6</Color><!-- Pink 400 -->
-    <Color x:Key="DarkAccent">#38BDF8</Color><!-- Sky 400 -->
+    <Color x:Key="DarkPrimary">#8E7DC9</Color><!-- muted indigo -->
+    <Color x:Key="DarkPrimaryDark">#6E57A8</Color><!-- darker indigo -->
+    <Color x:Key="DarkPrimaryLight">#B2A3E3</Color><!-- light indigo -->
+    <Color x:Key="DarkSecondary">#5A4A82</Color><!-- dark purple -->
+    <Color x:Key="DarkSecondaryLight">#8879B8</Color><!-- dark lighter -->
+    <Color x:Key="DarkTertiary">#FF8A80</Color><!-- coral accent -->
+    <Color x:Key="DarkAccent">#2EC4B6</Color><!-- teal accent -->
     
     <!-- Backgrounds for Dark Mode - Neutral Grays -->
-    <Color x:Key="DarkBackground">#121212</Color><!-- Material Dark -->
-    <Color x:Key="DarkSurface">#1E1E1E</Color><!-- Elevated surface -->
-    <Color x:Key="DarkSurfaceVariant">#2A2A2A</Color><!-- Cards and containers -->
- <Color x:Key="DarkSurfaceElevated">#333333</Color><!-- Higher elevation -->
-    <Color x:Key="DarkSurfaceContainer">#262626</Color><!-- Input backgrounds -->
+    <Color x:Key="DarkBackground">#0B0F13</Color><!-- near black with blue hint -->
+    <Color x:Key="DarkSurface">#12171C</Color><!-- surface -->
+    <Color x:Key="DarkSurfaceVariant">#1B2228</Color><!-- Cards -->
+    <Color x:Key="DarkSurfaceElevated">#232B31</Color><!-- higher elevation -->
+    <Color x:Key="DarkSurfaceContainer">#172026</Color><!-- Inputs -->
     
     <!-- Text Colors for Dark Mode -->
-    <Color x:Key="DarkTextPrimary">#FAFAFA</Color><!-- Neutral 50 -->
- <Color x:Key="DarkTextSecondary">#A3A3A3</Color><!-- Neutral 400 -->
-  <Color x:Key="DarkTextTertiary">#737373</Color><!-- Neutral 500 -->
-    <Color x:Key="DarkTextOnPrimary">#171717</Color>
+    <Color x:Key="DarkTextPrimary">#F6F8FA</Color>
+    <Color x:Key="DarkTextSecondary">#B6C1CC</Color>
+    <Color x:Key="DarkTextTertiary">#8795A1</Color>
+    <Color x:Key="DarkTextOnPrimary">#071024</Color>
     
     <!-- Borders and Dividers for Dark Mode -->
     <Color x:Key="DarkBorder">#3D3D3D</Color><!-- Subtle border -->
@@ -104,28 +104,28 @@
     <Color x:Key="DarkInfoBg">#0C4A6E</Color><!-- Sky 900 -->
 
     <!-- Interactive States Dark -->
-    <Color x:Key="DarkHover">#333333</Color>
-    <Color x:Key="DarkPressed">#404040</Color>
-    <Color x:Key="DarkDisabled">#1E1E1E</Color>
-    <Color x:Key="DarkDisabledText">#525252</Color>
-    <Color x:Key="DarkFocusRing">#60A5FA</Color>
+    <Color x:Key="DarkHover">#162127</Color>
+    <Color x:Key="DarkPressed">#1C2A33</Color>
+    <Color x:Key="DarkDisabled">#0F1417</Color>
+    <Color x:Key="DarkDisabledText">#39444A</Color>
+    <Color x:Key="DarkFocusRing">#8E7DC9</Color>
 
     <!-- ========================================
   SEMANTIC COLORS (Theme-aware aliases)
     ======================================== -->
     
-    <Color x:Key="Primary">#2563EB</Color>
-    <Color x:Key="PrimaryDark">#1D4ED8</Color>
-    <Color x:Key="Secondary">#7C3AED</Color>
-    <Color x:Key="Tertiary">#DB2777</Color>
+    <Color x:Key="Primary">#3B2F7A</Color>
+    <Color x:Key="PrimaryDark">#2E235F</Color>
+    <Color x:Key="Secondary">#7065A2</Color>
+    <Color x:Key="Tertiary">#FF6B6B</Color>
     
-    <Color x:Key="Background">#FAFAFA</Color>
+    <Color x:Key="Background">#F6F8FB</Color>
     <Color x:Key="Surface">#FFFFFF</Color>
-    <Color x:Key="SurfaceVariant">#F5F5F5</Color>
+    <Color x:Key="SurfaceVariant">#F1F3F8</Color>
     
-    <Color x:Key="TextPrimary">#171717</Color>
-    <Color x:Key="TextSecondary">#525252</Color>
-    <Color x:Key="TextTertiary">#A3A3A3</Color>
+    <Color x:Key="TextPrimary">#0F1724</Color>
+    <Color x:Key="TextSecondary">#3F4A59</Color>
+    <Color x:Key="TextTertiary">#8B95A1</Color>
     
     <Color x:Key="BorderColor">#E5E5E5</Color>
     <Color x:Key="DividerColor">#E5E5E5</Color>

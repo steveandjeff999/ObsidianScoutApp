@@ -193,4 +193,10 @@ public partial class MainViewModel : ObservableObject
     {
         await Shell.Current.GoToAsync("ScoutingPage");
     }
+
+    [RelayCommand]
+    private async Task NavigateToGraphsAsync()
+    {
+        await Shell.Current.GoToAsync("GraphsPage");
+    }
 }

@@ -27,7 +27,7 @@ public interface IApiService
     Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId);
     Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request);
     Task<MetricsResponse> GetAvailableMetricsAsync();
-    Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0);
+    Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0, bool ignoreOfflineMode = false);
     Task<byte[]?> GetGraphsImageAsync(GraphImageRequest request);
     Task<ScheduledNotificationsResponse> GetScheduledNotificationsAsync(int limit =200, int offset =0);
     Task<PastNotificationsResponse> GetPastNotificationsAsync(int limit =200, int offset =0);

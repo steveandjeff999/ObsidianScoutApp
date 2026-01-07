@@ -7,6 +7,11 @@ using Microcharts;
 using SkiaSharp;
 using System.IO;
 using Microsoft.Maui.Controls;
+using System.Text.Json;
+using System.ComponentModel;
+using Microsoft.Maui.Storage;
+using Microsoft.Maui.Devices;
+// OxyPlot removed from dependencies in this change; keep Microcharts-based fallback
 
 namespace ObsidianScout.ViewModels;
 
@@ -16,6 +21,8 @@ public partial class GraphsViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IConnectivityService _connectivityService;
     private GameConfig? _gameConfig;
+    // Cached scouting entries used to quickly rebuild graphs when switching data view
+    private List<ScoutingEntry>? _cachedScoutingEntries;
 
     [ObservableProperty]
     private bool isLoading;
@@ -55,6 +62,8 @@ public partial class GraphsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool hasGraphData;
+
+    // Note: advanced OxyPlot offline model removed when package unavailable; Microcharts used as fallback
     
     // Legacy Microcharts properties (kept for fallback)
     [ObservableProperty]
@@ -74,6 +83,16 @@ public partial class GraphsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool showMicrocharts = true;
+
+    // Plotly HTML payload for WebView
+    [ObservableProperty]
+    private string? plotlyHtml;
+
+    [ObservableProperty]
+    private string? plotlyPayloadJson;
+
+    [ObservableProperty]
+    private bool usePlotlyWebView;
 
     // Define team colors
     private readonly string[] TeamColors = new[]
@@ -285,22 +304,52 @@ public partial class GraphsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ChangeDataView(string dataView)
+    private async void ChangeDataView(string dataView)
     {
         System.Diagnostics.Debug.WriteLine($"=== CHANGE DATA VIEW ===");
         System.Diagnostics.Debug.WriteLine($"From: {SelectedDataView} → To: {dataView}");
         
+        var oldView = SelectedDataView;
         SelectedDataView = dataView;
         
         System.Diagnostics.Debug.WriteLine($"SelectedDataView now set to: {SelectedDataView}");
         
-        if (HasGraphData)
+        if (HasGraphData && _cachedScoutingEntries != null && _cachedScoutingEntries.Count > 0)
         {
-            // Clear old chart and regenerate with new view
+            // Clear old chart
             CurrentChart = null;
-            System.Diagnostics.Debug.WriteLine("Cleared chart for data view change, calling GenerateGraphsAsync");
+            ServerGraphImage = null;
+            UseServerImage = false;
+            System.Diagnostics.Debug.WriteLine($"Data view changed - rebuilding ComparisonData.Graphs from {_cachedScoutingEntries.Count} cached entries");
             
-            // Regenerate graphs with new data view
+            // Rebuild ComparisonData.Graphs with the NEW data view
+            if (SelectedDataView == "match_by_match") GenerateMatchByMatchData(_cachedScoutingEntries);
+            else GenerateTeamAveragesData(_cachedScoutingEntries);
+            
+            // Mark that we have graph data
+            HasGraphData = true;
+            
+            // Regenerate Microcharts from the new ComparisonData
+            GenerateChart();
+            
+            // Regenerate Plotly HTML from the new ComparisonData
+            try
+            {
+                await PreparePlotlyHtmlAsync();
+                UsePlotlyWebView = !string.IsNullOrEmpty(PlotlyHtml);
+                OnPropertyChanged(nameof(PlotlyHtml));
+                OnPropertyChanged(nameof(UsePlotlyWebView));
+                System.Diagnostics.Debug.WriteLine($"Plotly HTML regenerated for data view '{dataView}'");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PreparePlotlyHtmlAsync failed: {ex.Message}");
+            }
+        }
+        else if (HasGraphData)
+        {
+            // No cached entries - need to re-fetch from API/cache
+            System.Diagnostics.Debug.WriteLine("No cached scouting entries - calling GenerateGraphsAsync to rebuild");
             _ = GenerateGraphsAsync();
         }
         else
@@ -375,44 +424,63 @@ public partial class GraphsViewModel : ObservableObject
                     System.Diagnostics.Debug.WriteLine($"  graph_type: {request.GraphType}");
                     System.Diagnostics.Debug.WriteLine($"  mode: {request.Mode}");
 
+                    // Start preloading raw scouting entries in parallel so local graphs and Plotly HTML
+                    // are available quickly even when server returns an image.
+                    var preloadTask = PreloadComparisonDataAsync(request.TeamNumbers, request.EventId);
                     var bytes = await _apiService.GetGraphsImageAsync(request);
                     if (bytes != null && bytes.Length >0)
                     {
-                        // Force clear old image first to prevent caching issues
-                        ServerGraphImage = null;
-                        UseServerImage = false;
-                        OnPropertyChanged(nameof(ServerGraphImage));
-                        OnPropertyChanged(nameof(UseServerImage));
-                        
-                        // Small delay to ensure UI clears the old image
-                        await Task.Delay(100);
-                        
-                        // Create a copy of bytes to ensure it's truly unique
-                        var bytesCopy = new byte[bytes.Length];
-                        Array.Copy(bytes, bytesCopy, bytes.Length);
-                        
-                        // Create new image from stream with fresh data
-                        // Use StreamImageSource to avoid caching issues
-                        var imageSource = new StreamImageSource
+                        // Store server image but prefer local generation by default. Only switch UI to server image
+                        // when UseServerImage is explicitly enabled.
+                        try
                         {
-                            Stream = cancellationToken => Task.FromResult<Stream>(new MemoryStream(bytesCopy))
-                        };
-                        
-                        ServerGraphImage = imageSource;
-                        UseServerImage = true;
-                        ShowMicrocharts = false;
-                        HasGraphData = true;
-                        StatusMessage = "Server graph image loaded";
+                            // Force clear old image first to prevent caching issues
+                            ServerGraphImage = null;
+                            OnPropertyChanged(nameof(ServerGraphImage));
 
-                        // Notify UI
-                        OnPropertyChanged(nameof(ServerGraphImage));
-                        OnPropertyChanged(nameof(UseServerImage));
-                        OnPropertyChanged(nameof(ShowMicrocharts));
-                        OnPropertyChanged(nameof(HasGraphData));
-                        
-                        System.Diagnostics.Debug.WriteLine($"Server image updated: {bytes.Length} bytes, first 4 bytes: {bytes[0]} {bytes[1]} {bytes[2]} {bytes[3]}");
+                            // Small delay to ensure UI clears the old image
+                            await Task.Delay(50);
 
-                        return; // done
+                            // Create a copy of bytes to ensure it's truly unique
+                            var bytesCopy = new byte[bytes.Length];
+                            Array.Copy(bytes, bytesCopy, bytes.Length);
+
+                            // Create new image from stream with fresh data
+                            var imageSource = new StreamImageSource
+                            {
+                                Stream = cancellationToken => Task.FromResult<Stream>(new MemoryStream(bytesCopy))
+                            };
+
+                            // Assign cached server image but don't switch UI unless requested
+                            ServerGraphImage = imageSource;
+                            OnPropertyChanged(nameof(ServerGraphImage));
+
+                            System.Diagnostics.Debug.WriteLine($"Server image cached: {bytes.Length} bytes");
+
+                            // If the user explicitly wants server image, show it and skip local generation
+                            if (UseServerImage)
+                            {
+                                ShowMicrocharts = false;
+                                HasGraphData = true;
+                                StatusMessage = "Server graph image loaded";
+                                OnPropertyChanged(nameof(ShowMicrocharts));
+                                OnPropertyChanged(nameof(HasGraphData));
+                                _ = preloadTask;
+                                return; // show server image instead of local charts
+                            }
+
+                            // Otherwise keep cached image available and continue to local generation so
+                            // Plotly HTML and microcharts are generated and can be switched dynamically.
+                            System.Diagnostics.Debug.WriteLine("Server image cached but local generation will be used (UseServerImage=false)");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to cache server image: {ex.Message}");
+                        }
+
+                        // Ensure preload continues (may already be running)
+                        _ = preloadTask;
+                        // continue to local generation (do not return)
                     }
                     else
                     {
@@ -528,6 +596,14 @@ public partial class GraphsViewModel : ObservableObject
 
             System.Diagnostics.Debug.WriteLine($"Total entries after fallback: {allEntries.Count}");
 
+            // Cache entries so mode switches can rebuild charts without re-fetching
+            try
+            {
+                _cachedScoutingEntries = allEntries.ToList();
+                System.Diagnostics.Debug.WriteLine($"Cached {_cachedScoutingEntries.Count} scouting entries for quick rebuilds");
+            }
+            catch { _cachedScoutingEntries = null; }
+
             // CRITICAL VALIDATION: Ensure only selected teams are in the data
             var entriesTeamNumbers = allEntries.Select(e => e.TeamNumber).Distinct().ToHashSet();
             var unexpectedTeams = entriesTeamNumbers.Except(selectedTeamNumbers).ToList();
@@ -585,6 +661,17 @@ public partial class GraphsViewModel : ObservableObject
             
             // Generate the chart
             GenerateChart();
+
+            // Prepare Plotly HTML payload for advanced interactive web-style graphs (inline local JS if available)
+            try
+            {
+                await PreparePlotlyHtmlAsync();
+                UsePlotlyWebView = !string.IsNullOrEmpty(PlotlyHtml);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PreparePlotlyHtmlAsync failed: {ex.Message}");
+            }
         }
         catch (Exception ex)
         {
@@ -674,7 +761,22 @@ public partial class GraphsViewModel : ObservableObject
             colorIndex++;
         }
         
-        // Create comparison response
+        // Also build a bar-version of the same match-by-match data so UI/plotly can switch types
+        var barGraphData = new GraphData
+        {
+            Type = "bar",
+            Labels = graphData.Labels,
+            Datasets = graphData.Datasets.Select(ds => new GraphDataset
+            {
+                Label = ds.Label,
+                Data = ds.Data,
+                BorderColor = ds.BorderColor,
+                BackgroundColor = ds.BackgroundColor,
+                Tension = ds.Tension
+            }).ToList()
+        };
+
+        // Create comparison response with both line and bar representations
         ComparisonData = new CompareTeamsResponse
         {
             Success = true,
@@ -683,10 +785,55 @@ public partial class GraphsViewModel : ObservableObject
             MetricDisplayName = SelectedMetric!.Name,
             DataView = SelectedDataView,
             Teams = teamDataList,
-            Graphs = new Dictionary<string, GraphData> { { "line", graphData } }
+            Graphs = new Dictionary<string, GraphData>
+            {
+                { "line", graphData },
+                { "bar", barGraphData }
+            }
         };
         
         System.Diagnostics.Debug.WriteLine($"Created {teamDataList.Count} team datasets with {allMatchNumbers.Count} match points each");
+    }
+
+    // Preload and cache comparison data entries for quick view-mode switching without re-fetch
+    private async Task PreloadComparisonDataAsync(List<int> teamNumbers, int? eventId)
+    {
+        try
+        {
+            if (!eventId.HasValue)
+            {
+                System.Diagnostics.Debug.WriteLine("PreloadComparisonDataAsync: eventId is null, aborting preload");
+                return;
+            }
+            var allEntries = new List<ScoutingEntry>();
+            foreach (var tn in teamNumbers)
+            {
+                var resp = await _apiService.GetAllScoutingDataAsync(teamNumber: tn, eventId: eventId, limit: 1000, ignoreOfflineMode: true);
+                if (resp.Success && resp.Entries != null)
+                {
+                    allEntries.AddRange(resp.Entries.Where(e => e.TeamNumber == tn));
+                }
+            }
+
+            if (allEntries.Count > 0)
+            {
+                _cachedScoutingEntries = allEntries;
+                System.Diagnostics.Debug.WriteLine($"Preloaded {_cachedScoutingEntries.Count} entries for event {eventId}");
+                // regenerate ComparisonData based on current SelectedDataView
+                if (SelectedDataView == "match_by_match")
+                    GenerateMatchByMatchData(_cachedScoutingEntries);
+                else
+                    GenerateTeamAveragesData(_cachedScoutingEntries);
+
+                // regenerate Plotly html so UI can switch modes without network
+                try { await PreparePlotlyHtmlAsync(); UsePlotlyWebView = !string.IsNullOrEmpty(PlotlyHtml); }
+                catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"PreloadComparisonDataAsync failed: {ex.Message}");
+        }
     }
 
     private void GenerateTeamAveragesData(List<ScoutingEntry> entries)
@@ -747,6 +894,21 @@ public partial class GraphsViewModel : ObservableObject
             Labels = labels,
             Datasets = datasets
         };
+
+        // Also create a line-version so plotly can respect selectedGraphType even for averages
+        var lineGraphData = new GraphData
+        {
+            Type = "line",
+            Labels = labels,
+            Datasets = datasets.Select(d => new GraphDataset
+            {
+                Label = d.Label,
+                Data = new List<double> { d.Data.FirstOrDefault() },
+                BorderColor = d.BorderColor,
+                BackgroundColor = d.BackgroundColor,
+                Tension = d.Tension
+            }).ToList()
+        };
         
         // Create comparison response
         ComparisonData = new CompareTeamsResponse
@@ -757,7 +919,7 @@ public partial class GraphsViewModel : ObservableObject
             MetricDisplayName = SelectedMetric!.Name,
             DataView = SelectedDataView,
             Teams = teamDataList,
-            Graphs = new Dictionary<string, GraphData> { { "bar", graphData } }
+            Graphs = new Dictionary<string, GraphData> { { "bar", graphData }, { "line", lineGraphData } }
         };
         
         System.Diagnostics.Debug.WriteLine($"Created averages for {teamDataList.Count} teams with {datasets.Count} datasets");
@@ -766,68 +928,89 @@ public partial class GraphsViewModel : ObservableObject
     private double ExtractMetricValue(Dictionary<string, object> data, string metricId)
     {
         System.Diagnostics.Debug.WriteLine($"Extracting metric '{metricId}' from scouting data...");
-        
-        // Handle special calculated metrics
-        if (metricId.ToLower() == "total_points" || metricId == "tot")
-        {
-            return CalculateTotalPoints(data);
-        }
-        
-        if (metricId.ToLower() == "auto_points" || metricId == "apt")
-        {
-            return CalculateAutoPoints(data);
-        }
-        
-        if (metricId.ToLower() == "teleop_points" || metricId == "tpt")
-        {
-            return CalculateTeleopPoints(data);
-        }
-        
-        if (metricId.ToLower() == "endgame_points" || metricId == "ept")
-        {
-            return CalculateEndgamePoints(data);
-        }
 
-        // Try to find the metric directly in the data
-        var possibleKeys = metricId.ToLower() switch
-        {
-            "consistency" => new[] { "consistency", "consistent" },
-            "win_rate" => new[] { "win_rate", "wins" },
-            _ => new[] { metricId }
-        };
-
-        foreach (var key in possibleKeys)
-        {
-            if (data.TryGetValue(key, out var value))
-            {
-                return ConvertToDouble(value);
-            }
-        }
-
-        // Fallback: try partial key matches (some cached payloads may have slightly different keys)
         try
         {
+            // Handle special calculated metrics
+            if (metricId.ToLower() == "total_points" || metricId == "tot")
+            {
+                try { return CalculateTotalPoints(data); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CalculateTotalPoints failed: {ex.GetType().Name}: {ex.Message}");
+                    return 0;
+                }
+            }
+
+            if (metricId.ToLower() == "auto_points" || metricId == "apt")
+            {
+                try { return CalculateAutoPoints(data); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CalculateAutoPoints failed: {ex.GetType().Name}: {ex.Message}");
+                    return 0;
+                }
+            }
+
+            if (metricId.ToLower() == "teleop_points" || metricId == "tpt")
+            {
+                try { return CalculateTeleopPoints(data); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CalculateTeleopPoints failed: {ex.GetType().Name}: {ex.Message}");
+                    return 0;
+                }
+            }
+
+            if (metricId.ToLower() == "endgame_points" || metricId == "ept")
+            {
+                try { return CalculateEndgamePoints(data); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CalculateEndgamePoints failed: {ex.GetType().Name}: {ex.Message}");
+                    return 0;
+                }
+            }
+
+            // Try to find the metric directly in the data
+            var possibleKeys = metricId.ToLower() switch
+            {
+                "consistency" => new[] { "consistency", "consistent" },
+                "win_rate" => new[] { "win_rate", "wins" },
+                _ => new[] { metricId }
+            };
+
+            foreach (var key in possibleKeys)
+            {
+                if (data.TryGetValue(key, out var value))
+                {
+                    return ConvertToDouble(value);
+                }
+            }
+
+            // Fallback: try partial key matches (some cached payloads may have slightly different keys)
             var lowerMetric = metricId.ToLower();
             foreach (var kvp in data)
             {
                 if (kvp.Key != null && kvp.Key.ToLower().Contains(lowerMetric))
                 {
                     var v = ConvertToDouble(kvp.Value);
-                    if (v !=0)
+                    if (v != 0)
                     {
                         System.Diagnostics.Debug.WriteLine($" Fallback: found value for key '{kvp.Key}' = {v}");
                         return v;
                     }
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine($" Metric '{metricId}' not found, returning 0");
+            return 0;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($" Fallback key scan failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"ExtractMetricValue error for '{metricId}': {ex.GetType().Name}: {ex.Message}");
+            return 0;
         }
-
-        System.Diagnostics.Debug.WriteLine($" Metric '{metricId}' not found, returning 0");
-        return 0;
     }
 
     private double CalculateTotalPoints(Dictionary<string, object> data)
@@ -1048,6 +1231,8 @@ public partial class GraphsViewModel : ObservableObject
             ComparisonData = null;
             HasGraphData = false;
             CurrentChart = null;
+            // Clear cached entries when event changes
+            _cachedScoutingEntries = null;
             
             _ = LoadTeamsForEventAsync();
         }
@@ -1179,21 +1364,44 @@ public partial class GraphsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ChangeGraphType(string graphType)
+    private async void ChangeGraphType(string graphType)
     {
         System.Diagnostics.Debug.WriteLine($"=== CHANGING GRAPH TYPE ===");
         System.Diagnostics.Debug.WriteLine($"From: {SelectedGraphType} → To: {graphType}");
         
         SelectedGraphType = graphType;
         
-        if (HasGraphData)
+        if (HasGraphData && ComparisonData != null)
         {
             // Force clear the chart
             CurrentChart = null;
+            ServerGraphImage = null;
+            UseServerImage = false;
             OnPropertyChanged(nameof(CurrentChart));
-            System.Diagnostics.Debug.WriteLine("Cleared old chart with OnPropertyChanged");
+            OnPropertyChanged(nameof(ServerGraphImage));
+            System.Diagnostics.Debug.WriteLine("Graph type changed - regenerating visualizations from existing ComparisonData");
             
-            // Regenerate graphs (fetches new server image or regenerates local chart)
+            // Regenerate Microcharts from existing ComparisonData
+            GenerateChart();
+            
+            // Regenerate Plotly HTML from existing ComparisonData
+            try
+            {
+                await PreparePlotlyHtmlAsync();
+                UsePlotlyWebView = !string.IsNullOrEmpty(PlotlyHtml);
+                OnPropertyChanged(nameof(PlotlyHtml));
+                OnPropertyChanged(nameof(UsePlotlyWebView));
+                System.Diagnostics.Debug.WriteLine($"Plotly HTML regenerated for graph type '{graphType}'");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PreparePlotlyHtmlAsync failed: {ex.Message}");
+            }
+        }
+        else if (HasGraphData)
+        {
+            // ComparisonData is null but HasGraphData is true - need to regenerate from scratch
+            System.Diagnostics.Debug.WriteLine("ComparisonData is null - calling GenerateGraphsAsync to rebuild");
             _ = GenerateGraphsAsync();
         }
     }
@@ -1536,7 +1744,7 @@ public partial class GraphsViewModel : ObservableObject
 
         System.Diagnostics.Debug.WriteLine($"{DateTime.Now:HH:mm:ss} === GenerateChartFromTeamAverages ===");
         System.Diagnostics.Debug.WriteLine($"Created {entries.Count} entries from team averages");
-        System.Diagnostics.Debug.WriteLine($"⚠️ CRITICAL TEAM AVERAGES DEBUG:");
+        System.Diagnostics.Debug.WriteLine($"⚠️ TEAM AVERAGES DEBUG:");
         for (int i = 0; i < entries.Count; i++)
         {
             System.Diagnostics.Debug.WriteLine($"  Entry[{i}]: Label='{entries[i].Label}', Value={entries[i].Value}, ValueLabel='{entries[i].ValueLabel}', Color={entries[i].Color}");
@@ -1641,5 +1849,335 @@ public partial class GraphsViewModel : ObservableObject
         {
             return null;
         }
+    }
+
+    private void PreparePlotlyHtml()
+    {
+        if (ComparisonData == null || ComparisonData.Graphs == null || ComparisonData.Graphs.Count == 0)
+        {
+            PlotlyHtml = null;
+            return;
+        }
+
+        // Choose graph type available in Graphs dictionary matching SelectedGraphType
+        var key = SelectedGraphType.ToLower();
+        if (!ComparisonData.Graphs.TryGetValue(key, out var graphData))
+        {
+            // fallback to first graph
+            graphData = ComparisonData.Graphs.Values.FirstOrDefault();
+        }
+
+        if (graphData == null)
+        {
+            PlotlyHtml = null;
+            return;
+        }
+
+        // Build Plotly traces
+        var traces = new List<object>();
+
+        foreach (var ds in graphData.Datasets)
+        {
+            // normalize color
+            string? colorStr = null;
+            if (ds.BorderColor is string s) colorStr = s;
+            else if (ds.BorderColor is IEnumerable<object> arr)
+            {
+                var first = arr.FirstOrDefault();
+                if (first != null) colorStr = first.ToString();
+            }
+
+            // If radar chart requested, use scatterpolar traces with r/theta
+            if (key == "radar")
+            {
+                // Ensure theta length matches r length. If labels are a single category or mismatch,
+                // fall back to generating numeric theta based on data indices so points don't collapse.
+                var rValues = ds.Data;
+                var theta = graphData.Labels;
+
+                if (theta == null || theta.Count != rValues.Count)
+                {
+                    // build numeric theta like ["1","2",...]
+                    theta = Enumerable.Range(1, rValues.Count).Select(i => i.ToString()).ToList();
+                }
+
+                var tracePolar = new Dictionary<string, object>
+                {
+                    ["type"] = "scatterpolar",
+                    ["r"] = rValues,
+                    ["theta"] = theta,
+                    ["name"] = ds.Label ?? string.Empty,
+                    ["fill"] = "toself"
+                };
+
+                if (!string.IsNullOrEmpty(colorStr))
+                {
+                    tracePolar["marker"] = new Dictionary<string, object> { ["color"] = colorStr };
+                    tracePolar["line"] = new Dictionary<string, object> { ["color"] = colorStr };
+                }
+
+                traces.Add(tracePolar);
+                continue;
+            }
+
+            // Default: line / scatter / bar with x (labels) when match-by-match
+            var trace = new Dictionary<string, object>();
+            trace["name"] = ds.Label ?? string.Empty;
+
+            // if match-by-match, provide x values from labels
+            if (SelectedDataView == "match_by_match")
+            {
+                // ALWAYS filter out NaN values to avoid JSON serialization errors
+                var xVals = new List<string>();
+                var yVals = new List<double>();
+                
+                for (int i = 0; i < ds.Data.Count && i < (graphData.Labels?.Count ?? 0); i++)
+                {
+                    var v = ds.Data[i];
+                    if (!double.IsNaN(v) && !double.IsInfinity(v))
+                    {
+                        xVals.Add(graphData.Labels![i]);
+                        yVals.Add(v);
+                    }
+                }
+                
+                // Only add data if we have valid points
+                if (xVals.Count > 0)
+                {
+                    trace["x"] = xVals;
+                    trace["y"] = yVals;
+                }
+                else
+                {
+                    // No valid data points - create empty trace
+                    trace["x"] = new List<string>();
+                    trace["y"] = new List<double>();
+                }
+            }
+            else
+            {
+                // for averages and other modes, filter out NaN values as well
+                var filteredData = ds.Data.Where(v => !double.IsNaN(v) && !double.IsInfinity(v)).ToList();
+                trace["y"] = filteredData.Count > 0 ? filteredData : new List<double> { 0 };
+            }
+
+            if (key == "bar")
+            {
+                trace["type"] = "bar";
+            }
+            else
+            {
+                trace["type"] = "scatter";
+                trace["mode"] = key == "line" ? "lines+markers" : "markers";
+            }
+
+            if (!string.IsNullOrEmpty(colorStr))
+            {
+                trace["marker"] = new Dictionary<string, object> { ["color"] = colorStr };
+                trace["line"] = new Dictionary<string, object> { ["color"] = colorStr };
+            }
+
+            traces.Add(trace);
+        }
+
+            var layout = new Dictionary<string, object>
+            {
+                ["title"] = ComparisonData.MetricDisplayName ?? ComparisonData.Metric,
+                ["xaxis"] = new { title = "", tickvals = graphData.Labels ?? new List<string>(), ticktext = graphData.Labels ?? new List<string>() },
+                ["yaxis"] = new { title = ComparisonData.MetricDisplayName ?? ComparisonData.Metric },
+                // For radar ensure polar settings are present when used
+                ["polar"] = new { radialaxis = new { visible = true, tickangle = 0 } }
+            };
+
+        var payload = new Dictionary<string, object>
+        {
+            ["data"] = traces,
+            ["layout"] = layout
+        };
+
+        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var dataJson = JsonSerializer.Serialize(payload, jsonOptions);
+
+        // Minimal HTML that loads Plotly from CDN and renders the JSON payload
+        var html =
+            "<!doctype html>\n" +
+            "<html>\n" +
+            "  <head>\n" +
+            "    <meta charset=\"utf-8\" />\n" +
+            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n" +
+            "    <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>\n" +
+            "  </head>\n" +
+            "  <body>\n" +
+            "    <div id=\"plot\" style=\"width:100%;height:100%;\"></div>\n" +
+            "    <script>\n" +
+            "      const payload = " + dataJson + ";\n" +
+            "      Plotly.newPlot('plot', payload.data, payload.layout, {responsive:true});\n" +
+            "    </script>\n" +
+            "  </body>\n" +
+            "</html>\n";
+
+        PlotlyHtml = html;
+    }
+
+    private async Task PreparePlotlyHtmlAsync()
+    {
+        // Build payload as before
+        if (ComparisonData == null || ComparisonData.Graphs == null || ComparisonData.Graphs.Count == 0)
+        {
+            PlotlyHtml = null;
+            return;
+        }
+
+        var key = SelectedGraphType.ToLower();
+        if (!ComparisonData.Graphs.TryGetValue(key, out var graphData))
+            graphData = ComparisonData.Graphs.Values.FirstOrDefault();
+        if (graphData == null)
+        {
+            PlotlyHtml = null;
+            return;
+        }
+
+        // Reuse PreparePlotlyHtml to get traces/layout JSON
+        // We'll reconstruct payload same way as PreparePlotlyHtml but inline JS
+        var traces = new List<object>();
+        foreach (var ds in graphData.Datasets)
+        {
+            string? colorStr = null;
+            if (ds.BorderColor is string s) colorStr = s;
+            else if (ds.BorderColor is IEnumerable<object> arr)
+            {
+                var first = arr.FirstOrDefault();
+                if (first != null) colorStr = first.ToString();
+            }
+
+            if (key == "radar")
+            {
+                var tracePolar = new Dictionary<string, object>
+                {
+                    ["type"] = "scatterpolar",
+                    ["r"] = ds.Data,
+                    ["theta"] = graphData.Labels,
+                    ["name"] = ds.Label ?? string.Empty,
+                    ["fill"] = "toself"
+                };
+                if (!string.IsNullOrEmpty(colorStr))
+                {
+                    tracePolar["marker"] = new Dictionary<string, object> { ["color"] = colorStr };
+                    tracePolar["line"] = new Dictionary<string, object> { ["color"] = colorStr };
+                }
+                traces.Add(tracePolar);
+                continue;
+            }
+
+            var trace = new Dictionary<string, object> { ["name"] = ds.Label ?? string.Empty };
+            if (SelectedDataView == "match_by_match")
+            {
+                trace["x"] = graphData.Labels;
+                trace["y"] = ds.Data;
+            }
+            else
+            {
+                trace["y"] = ds.Data;
+            }
+            if (key == "bar") trace["type"] = "bar";
+            else { trace["type"] = "scatter"; trace["mode"] = key == "line" ? "lines+markers" : "markers"; }
+            if (!string.IsNullOrEmpty(colorStr)) { trace["marker"] = new Dictionary<string, object> { ["color"] = colorStr }; trace["line"] = new Dictionary<string, object> { ["color"] = colorStr }; }
+            traces.Add(trace);
+        }
+
+        var layout = new Dictionary<string, object>
+        {
+            ["title"] = ComparisonData.MetricDisplayName ?? ComparisonData.Metric,
+            ["xaxis"] = new { title = "", tickvals = graphData.Labels, ticktext = graphData.Labels },
+            ["yaxis"] = new { title = ComparisonData.MetricDisplayName ?? ComparisonData.Metric }
+        };
+
+        var payload = new Dictionary<string, object>
+        {
+            ["data"] = traces,
+            ["layout"] = layout
+        };
+
+        var jsonOptions = new JsonSerializerOptions 
+        { 
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+        };
+        var dataJson = JsonSerializer.Serialize(payload, jsonOptions);
+
+        // Attempt to read bundled plotly JS from Resources/Raw/plotly-latest.min.js
+        string? plotlyJs = null;
+        try
+        {
+            using var stream = await FileSystem.OpenAppPackageFileAsync("plotly-latest.min.js");
+            using var sr = new StreamReader(stream);
+            plotlyJs = await sr.ReadToEndAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Local plotly not found: {ex.Message}");
+            plotlyJs = null;
+        }
+
+        string html;
+
+        if (!string.IsNullOrEmpty(plotlyJs))
+        {
+            try
+            {
+                // On Android inline JS (file:// blocked). On other platforms write files to cache and load via file:// URI.
+                if (DeviceInfo.Platform == DevicePlatform.Android)
+                {
+                    // Use a small HTML that references the bundled asset by relative path and rely on WebView BaseUrl to resolve it
+                    html = "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <script src=\"plotly-latest.min.js\"></script>\n  </head>\n  <body style=\"margin:0;padding:0;height:100%;\">\n    <div id=\"plot\" style=\"width:100%;height:100%;\"></div>\n    <script>const payload = " + dataJson + "; Plotly.newPlot('plot', payload.data, payload.layout, {responsive:true});</script>\n  </body>\n</html>\n";
+
+                    PlotlyHtml = html;
+                    return;
+                }
+
+                // Non-Android: write files and choose platform-appropriate URI
+                if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                {
+                    // Write files to AppDataDirectory and load via ms-appdata:///local/ which WebView2 supports
+                    var appDir = Path.Combine(FileSystem.AppDataDirectory, "plotly_bundle");
+                    if (!Directory.Exists(appDir)) Directory.CreateDirectory(appDir);
+
+                    var jsPath = Path.Combine(appDir, "plotly-latest.min.js");
+                    await File.WriteAllTextAsync(jsPath, plotlyJs);
+
+                    html = "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <script src=\"plotly-latest.min.js\"></script>\n  </head>\n  <body style=\"margin:0;padding:0;height:100%;\">\n    <div id=\"plot\" style=\"width:100%;height:100%;\"></div>\n    <script>const payload = " + dataJson + "; Plotly.newPlot('plot', payload.data, payload.layout, {responsive:true});</script>\n  </body>\n</html>\n";
+
+                    var htmlPath = Path.Combine(appDir, "plot.html");
+                    await File.WriteAllTextAsync(htmlPath, html);
+
+                    // Use file:// URI pointing at the AppData file - WebView2 can navigate to local file paths.
+                    PlotlyHtml = new Uri(htmlPath).AbsoluteUri;
+                    return;
+                }
+
+                else
+                {
+                    var cacheDir = Path.Combine(FileSystem.CacheDirectory, "plotly_bundle");
+                    if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
+                    var jsPath = Path.Combine(cacheDir, "plotly-latest.min.js");
+                    await File.WriteAllTextAsync(jsPath, plotlyJs);
+                    html = "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <script src=\"plotly-latest.min.js\"></script>\n  </head>\n  <body style=\"margin:0;padding:0;height:100%;\">\n    <div id=\"plot\" style=\"width:100%;height:100%;\"></div>\n    <script>const payload = " + dataJson + "; Plotly.newPlot('plot', payload.data, payload.layout, {responsive:true});</script>\n  </body>\n</html>\n";
+                    var htmlPath = Path.Combine(cacheDir, "plot.html");
+                    await File.WriteAllTextAsync(htmlPath, html);
+                    PlotlyHtml = new Uri(htmlPath).AbsoluteUri;
+                }
+                return;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Preparing local plotly bundle failed: {ex.Message}");
+                // fall back to CDN below
+            }
+        }
+
+        // Fallback: load Plotly from CDN
+        html = "<!doctype html>\n<html>\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <script src=\"https://cdn.plot.ly/plotly-latest.min.js\"></script>\n  </head>\n  <body>\n    <div id=\"plot\" style=\"width:100%;height:100%;\"></div>\n    <script>const payload = " + dataJson + "; Plotly.newPlot('plot', payload.data, payload.layout, {responsive:true});</script>\n  </body>\n</html>\n";
+
+        PlotlyHtml = html;
     }
 }

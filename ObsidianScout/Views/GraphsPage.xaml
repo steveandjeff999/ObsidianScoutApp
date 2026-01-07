@@ -19,7 +19,7 @@
                            FontSize="24"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-                    <Label Text="Compare team performance metrics and visualize data (Powered by LiveChartsCore - Free!)"
+                    <Label Text="Compare team performance metrics and visualize data (Powered by Microcharts - Free!)"
                            FontSize="14"
                            TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}" />
                 </VerticalStackLayout>
@@ -397,70 +397,21 @@ Style="{StaticResource OutlineGlassButton}" />
                         </CollectionView.ItemTemplate>
                     </CollectionView>
 
-                    <!-- Team Charts Display - Shows ALL team charts for match-by-match - ONLY FOR LOCAL CHARTS -->
-                    <CollectionView ItemsSource="{Binding TeamChartsWithInfo}"
-                                   IsVisible="{Binding ShowMicrocharts}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:TeamChartInfo">
-                                <VerticalStackLayout Spacing="10" Margin="0,10">
-                                    <!-- Team Header -->
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                        <BoxView Grid.Column="0"
-                                                WidthRequest="4"
-                                                HeightRequest="30"
-                                                Color="{Binding Color}"
-                                                CornerRadius="2"
-                                                VerticalOptions="Center" />
-                                        
-                                        <Label Grid.Column="1"
-                                               FontSize="18"
-                                               FontAttributes="Bold"
-                                               VerticalOptions="Center"
-                                               TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
-                                            <Label.FormattedText>
-                                                <FormattedString>
-                                                    <Span Text="Team #" />
-                                                    <Span Text="{Binding TeamNumber}" />
-                                                    <Span Text=" - " />
-                                                    <Span Text="{Binding TeamName}" />
-                                                </FormattedString>
-                                            </Label.FormattedText>
-                                        </Label>
-                                    </Grid>
+                    <!-- Local Microcharts UI removed; Plotly WebView used for interactive graphs -->
 
-                                    <!-- Team Chart -->
-                                    <Border Style="{StaticResource ElevatedGlassCard}"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
-                                            Padding="10"
-                                            HeightRequest="350">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10" />
-                                        </Border.StrokeShape>
-                                        
-                                        <microcharts:ChartView Chart="{Binding Chart}"
-                                                              HeightRequest="330" />
-                                    </Border>
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
-                    <!-- Single Chart Display (for non-match-by-match views) - ONLY FOR LOCAL CHARTS -->
+                    <!-- Plotly WebView for advanced interactive web graphs -->
                     <Border Style="{StaticResource ElevatedGlassCard}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
                             Padding="10"
-                            HeightRequest="350"
-                            IsVisible="{Binding ShowMicrocharts}">
+                            HeightRequest="480"
+                            IsVisible="{Binding UsePlotlyWebView}">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="10" />
                         </Border.StrokeShape>
-                        
-                        <microcharts:ChartView x:Name="chartView"
-                                              Chart="{Binding CurrentChart}"
-                                              HeightRequest="330" />
+                        <WebView x:Name="PlotlyWebView" HeightRequest="460" />
                     </Border>
 
-                    <Label Text="{Binding SelectedMetric.Name, StringFormat='Metric: {0} (Using Microcharts - Free!)'}"
+                    <Label Text="{Binding SelectedMetric.Name, StringFormat='Metric: {0}'}"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
                            HorizontalTextAlignment="Center"

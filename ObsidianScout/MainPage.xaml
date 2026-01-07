@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     xmlns:viewmodels="clr-namespace:ObsidianScout.ViewModels"
     x:Class="ObsidianScout.MainPage"
     x:DataType="viewmodels:MainViewModel"
@@ -9,168 +10,45 @@
     <ScrollView>
    <VerticalStackLayout Padding="20" Spacing="20">
 
-            <!-- Hero Section -->
-     <Border Padding="24" 
-       Shadow="{StaticResource ShadowLg}"
-       BackgroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}">
-       <Border.StrokeShape>
-        <RoundRectangle CornerRadius="20" />
-    </Border.StrokeShape>
-    
+    <!-- Hero Section (rounded purple block) -->
+    <Border Padding="0" Margin="0,0,0,4" Background="{AppThemeBinding Light={StaticResource PrimaryGradient}, Dark={StaticResource PrimaryGradientDark}}" Shadow="{StaticResource ShadowLg}">
+      <Border.StrokeShape>
+        <shapes:RoundRectangle CornerRadius="20" />
+      </Border.StrokeShape>
+      <VerticalStackLayout Padding="28" Spacing="18" HorizontalOptions="Fill" VerticalOptions="Center">
+        <!-- Title in hero head (no badge) -->
+        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center">
+          <Label Text="ObsidianScout" FontSize="34" FontFamily="OpenSansSemibold" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center" HorizontalOptions="Center" />
+        </HorizontalStackLayout>
 
-        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="20">
+        <!-- Subtitle -->
+        <Label Text="FRC Scouting Platform" FontSize="14" TextColor="White" Opacity="0.9" HorizontalTextAlignment="Center" HorizontalOptions="Center" />
 
-           <!-- Logo and Brand -->
-    <VerticalStackLayout Grid.Row="0" Spacing="16" HorizontalOptions="Center">
-                 <Border 
-        BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#1AFFFFFF}"
-       WidthRequest="72"
-     HeightRequest="72"
-   HorizontalOptions="Center">
-    <Border.StrokeShape>
-         <RoundRectangle CornerRadius="18" />
-       </Border.StrokeShape>
-     <Border.StrokeThickness>0</Border.StrokeThickness>
-    <Label Text="OS"
-         FontSize="32"
-           FontFamily="OpenSansSemibold"
-       FontAttributes="Bold"
-      TextColor="White"
-           HorizontalOptions="Center"
-         VerticalOptions="Center" />
-            </Border>
-
-     <VerticalStackLayout Spacing="4">
-         <Label Text="ObsidianScout"
-             FontSize="28"
-                FontFamily="OpenSansSemibold"
- FontAttributes="Bold"
-         TextColor="White"
-      HorizontalTextAlignment="Center" />
-     <Label Text="FRC Scouting Platform"
-    FontSize="14"
-            TextColor="White"
-  Opacity="0.85"
-      HorizontalTextAlignment="Center" />
+        <!-- Compact stats row -->
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12" IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
+          <Frame Padding="10" CornerRadius="12" BackgroundColor="{AppThemeBinding Light=#40FFFFFF, Dark=#20FFFFFF}">
+            <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+              <Label Text="EVENT" FontSize="10" FontFamily="OpenSansSemibold" CharacterSpacing="1" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+              <Label Text="{Binding CurrentEventName}" FontSize="13" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" />
             </VerticalStackLayout>
-    </VerticalStackLayout>
+          </Frame>
 
-    <!-- User Welcome Badge -->
-    <Border Grid.Row="1"
-           BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#1AFFFFFF}"
-          Padding="16,12"
-            HorizontalOptions="Center"
- IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
-        <Border.StrokeShape>
-         <RoundRectangle CornerRadius="24" />
-        </Border.StrokeShape>
-          <Border.StrokeThickness>0</Border.StrokeThickness>
-           <HorizontalStackLayout Spacing="12">
-      <Border 
-          BackgroundColor="White"
-             WidthRequest="36"
-       HeightRequest="36"
-  VerticalOptions="Center">
-     <Border.StrokeShape>
- <RoundRectangle CornerRadius="18" />
-             </Border.StrokeShape>
-        <Border.StrokeThickness>0</Border.StrokeThickness>
-         <Image Source="{StaticResource IconUser}" WidthRequest="16" HeightRequest="16" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
-          </Border>
-          <VerticalStackLayout Spacing="2">
-      <Label Text="{Binding WelcomeMessage}"
-         FontSize="15"
- FontFamily="OpenSansSemibold"
-       TextColor="White" />
-          <Label Text="{Binding CurrentUser.TeamNumber, StringFormat='Team {0}'}"
-                FontSize="12"
-         TextColor="White"
-           Opacity="0.8" />
-  </VerticalStackLayout>
-   </HorizontalStackLayout>
-        </Border>
+          <Frame Padding="10" CornerRadius="12" BackgroundColor="{AppThemeBinding Light=#40FFFFFF, Dark=#20FFFFFF}">
+            <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+              <Label Text="TEAMS" FontSize="10" FontFamily="OpenSansSemibold" CharacterSpacing="1" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+              <Label Text="{Binding TeamCount}" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+          </Frame>
 
-    <!-- Stats Row -->
-    <Grid Grid.Row="2"
-      ColumnDefinitions="*,*,*"
-         ColumnSpacing="12"
-      IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
-
-  <!-- Current Event -->
-        <Border Grid.Column="0" 
- BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#1AFFFFFF}"
-           Padding="12,10">
-      <Border.StrokeShape>
-     <RoundRectangle CornerRadius="12" />
-   </Border.StrokeShape>
-      <Border.StrokeThickness>0</Border.StrokeThickness>
-        <VerticalStackLayout Spacing="4">
-     <Label Text="EVENT"
-           FontSize="10"
-            FontFamily="OpenSansSemibold"
-      CharacterSpacing="1"
-           TextColor="White"
-         Opacity="0.7"
-     HorizontalTextAlignment="Center" />
-          <Label Text="{Binding CurrentEventName}"
-         FontSize="13"
-        FontFamily="OpenSansSemibold"
-        TextColor="White"
-    HorizontalTextAlignment="Center"
-     LineBreakMode="TailTruncation" />
-        </VerticalStackLayout>
-       </Border>
-
-     <!-- Teams Count -->
-     <Border Grid.Column="1" 
-        BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#1AFFFFFF}"
-Padding="12,10">
-      <Border.StrokeShape>
-   <RoundRectangle CornerRadius="12" />
-   </Border.StrokeShape>
-           <Border.StrokeThickness>0</Border.StrokeThickness>
-<VerticalStackLayout Spacing="4">
-              <Label Text="TEAMS"
-        FontSize="10"
-     FontFamily="OpenSansSemibold"
-        CharacterSpacing="1"
-     TextColor="White"
-    Opacity="0.7"
-    HorizontalTextAlignment="Center" />
-   <Label Text="{Binding TeamCount}"
-           FontSize="20"
-      FontFamily="OpenSansSemibold"
-      TextColor="White"
-          HorizontalTextAlignment="Center" />
-       </VerticalStackLayout>
-  </Border>
-
-       <!-- Matches Count -->
-      <Border Grid.Column="2" 
-     BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#1AFFFFFF}"
-         Padding="12,10">
-      <Border.StrokeShape>
-        <RoundRectangle CornerRadius="12" />
-          </Border.StrokeShape>
-  <Border.StrokeThickness>0</Border.StrokeThickness>
-       <VerticalStackLayout Spacing="4">
-                  <Label Text="MATCHES"
-      FontSize="10"
-      FontFamily="OpenSansSemibold"
-             CharacterSpacing="1"
-         TextColor="White"
-     Opacity="0.7"
-       HorizontalTextAlignment="Center" />
-          <Label Text="{Binding MatchCount}"
-    FontSize="20"
-         FontFamily="OpenSansSemibold"
-            TextColor="White"
-     HorizontalTextAlignment="Center" />
-          </VerticalStackLayout>
-          </Border>
-       </Grid>
-       </Grid>
-         </Border>
+          <Frame Padding="10" CornerRadius="12" BackgroundColor="{AppThemeBinding Light=#40FFFFFF, Dark=#20FFFFFF}">
+            <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+              <Label Text="MATCHES" FontSize="10" FontFamily="OpenSansSemibold" CharacterSpacing="1" TextColor="White" Opacity="0.8" HorizontalTextAlignment="Center" />
+              <Label Text="{Binding MatchCount}" FontSize="18" FontFamily="OpenSansSemibold" TextColor="White" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+          </Frame>
+        </Grid>
+      </VerticalStackLayout>
+    </Border>
 
     <!-- Quick Actions Section -->
             <Label Text="QUICK ACTIONS"
@@ -186,7 +64,7 @@ Padding="12,10">
         Background="{AppThemeBinding Light={StaticResource PrimaryGradient}, Dark={StaticResource PrimaryGradientDark}}">
 
         <Border.StrokeShape>
-            <RoundRectangle CornerRadius="12" />
+            <shapes:RoundRectangle CornerRadius="12" />
         </Border.StrokeShape>
 
         <Border.GestureRecognizers>
@@ -231,7 +109,7 @@ Padding="12,10">
                HeightRequest="48"
         HorizontalOptions="Start">
        <Border.StrokeShape>
-          <RoundRectangle CornerRadius="12" />
+          <shapes:RoundRectangle CornerRadius="12" />
        </Border.StrokeShape>
        <Border.StrokeThickness>0</Border.StrokeThickness>
         <Image Source="{StaticResource IconClipboard}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
@@ -261,8 +139,8 @@ Padding="12,10">
             HeightRequest="48"
       HorizontalOptions="Start">
             <Border.StrokeShape>
-<RoundRectangle CornerRadius="12" />
-        </Border.StrokeShape>
+ <shapes:RoundRectangle CornerRadius="12" />
+          </Border.StrokeShape>
              <Border.StrokeThickness>0</Border.StrokeThickness>
            <Image Source="{StaticResource IconTeams}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
      </Border>
@@ -290,9 +168,9 @@ Padding="12,10">
     WidthRequest="48"
            HeightRequest="48"
    VerticalOptions="Center">
-       <Border.StrokeShape>
- <RoundRectangle CornerRadius="12" />
-          </Border.StrokeShape>
+            <Border.StrokeShape>
+              <shapes:RoundRectangle CornerRadius="12" />
+            </Border.StrokeShape>
            <Border.StrokeThickness>0</Border.StrokeThickness>
    <Image Source="{StaticResource IconEvents}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
   </Border>
@@ -306,41 +184,40 @@ Padding="12,10">
               </VerticalStackLayout>
          </HorizontalStackLayout>
        </Border>
+
+      <!-- Graphs Card -->
+      <Border Grid.Row="0" Grid.Column="1"
+                  Style="{StaticResource GlassCard}"
+          Padding="16"
+          IsVisible="{Binding CurrentUser, Converter={StaticResource IsNotNullConverter}}">
+         <Border.GestureRecognizers>
+    <TapGestureRecognizer Command="{Binding NavigateToGraphsCommand}" />
+      </Border.GestureRecognizers>
+
+    <VerticalStackLayout Spacing="12">
+    <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSecondary}, Dark={StaticResource DarkSecondary}}"
+        WidthRequest="48"
+            HeightRequest="48"
+      HorizontalOptions="Start">
+            <Border.StrokeShape>
+ <shapes:RoundRectangle CornerRadius="12" />
+          </Border.StrokeShape>
+             <Border.StrokeThickness>0</Border.StrokeThickness>
+           <Image Source="{StaticResource IconGraphs}" WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+     </Border>
+       <VerticalStackLayout Spacing="4">
+      <Label Text="Graphs"
+       Style="{StaticResource SubheaderLabel}"
+         FontSize="16" />
+   <Label Text="View offline analytics"
+      Style="{StaticResource CaptionLabel}"
+       FontSize="12" />
+               </VerticalStackLayout>
+     </VerticalStackLayout>
+        </Border>
         </Grid>
 
-       <!-- Info Card -->
-    <Border 
-Style="{StaticResource CompactGlassCard}"
-      BackgroundColor="{AppThemeBinding Light={StaticResource LightInfoBg}, Dark={StaticResource DarkInfoBg}}"
-           Stroke="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
-     StrokeThickness="1">
-                <HorizontalStackLayout Spacing="12">
-      <Border 
- BackgroundColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}"
-        WidthRequest="36"
-       HeightRequest="36"
-                VerticalOptions="Start">
-                <Border.StrokeShape>
-    <RoundRectangle CornerRadius="10" />
-         </Border.StrokeShape>
-         <Border.StrokeThickness>0</Border.StrokeThickness>
-      <Image Source="{StaticResource IconLightbulb}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
-       </Border>
-             <VerticalStackLayout Spacing="4" VerticalOptions="Center">
-    <Label Text="Navigation Tip"
-      FontSize="14"
-           FontFamily="OpenSansSemibold"
-      TextColor="{AppThemeBinding Light={StaticResource LightInfo}, Dark={StaticResource DarkInfo}}" />
-                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                  <Image Source="{StaticResource IconMenu}" WidthRequest="16" HeightRequest="16" VerticalOptions="Center" Aspect="AspectFit" />
-                  <Label Text="Use the menu in the top left to access all features"
-                         FontSize="13"
-                         TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                         LineBreakMode="WordWrap" />
-                </HorizontalStackLayout>
-                    </VerticalStackLayout>
- </HorizontalStackLayout>
-            </Border>
+    <!-- Navigation tip removed -->
 
    <!-- Bottom Spacing -->
             <BoxView HeightRequest="20" BackgroundColor="Transparent" />
