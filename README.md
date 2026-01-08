@@ -7,7 +7,7 @@ This repository contains the .NET MAUI application targeting Android and Windows
 
 ## [Download](https://github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/)
 
-* [For Android: Select version and install here](https://github.com/steveandjeff999/ObsidianScoutApp/tree/master/ObsidianScout/apks/)
+* [For Android: Select version and install here](https://github.com/steveandjeff999/ObsidianScoutApp/releases)
 * [For Windows: Install here](https://apps.microsoft.com/store/detail/9P2M37N8Z9VL)
 
 ## What this project is
