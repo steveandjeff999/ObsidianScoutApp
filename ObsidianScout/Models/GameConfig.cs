@@ -120,6 +120,9 @@ public class ScoringElement : INotifyPropertyChanged
     private ObservableCollection<ScoringOption>? _options;
     private int? _min;
     private int? _max;
+    private int _step = 1;
+    private int? _altStep;
+    private bool _altStepEnabled;
 
     [JsonPropertyName("id")]
     public string Id
@@ -200,6 +203,27 @@ public class ScoringElement : INotifyPropertyChanged
     {
         get => _max;
         set { _max = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("step")]
+    public int Step
+    {
+        get => _step;
+        set { _step = value <= 0 ? 1 : value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("alt_step")]
+    public int? AltStep
+    {
+        get => _altStep;
+        set { _altStep = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("alt_step_enabled")]
+    public bool AltStepEnabled
+    {
+        get => _altStepEnabled;
+        set { _altStepEnabled = value; OnPropertyChanged(); }
     }
 
     [JsonIgnore]

@@ -192,6 +192,108 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Data View Selector - BEFORE Generate Button -->
+            <Border Style="{StaticResource CompactGlassCard}"
+                    Margin="0,0,0,10"
+                    Padding="10"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="View Mode"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                    
+                    <!-- Dropdown picker for selecting data view -->
+                    <Picker x:Name="DataViewPicker"
+                            Title="Select view"
+                            Style="{StaticResource ModernPicker}"
+                            TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
+                        <Picker.Items>
+                            <x:String>Match-by-Match</x:String>
+                            <x:String>Team Averages</x:String>
+                        </Picker.Items>
+                    </Picker>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Graph Type Selector - BEFORE Generate Button -->
+            <Border Style="{StaticResource CompactGlassCard}"
+                    Margin="0,0,0,10"
+                    Padding="15"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Select Graph Types (Multiple)"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                    
+                    <!-- All graph types (checkboxes) with conditional visibility -->
+                    <VerticalStackLayout Spacing="8">
+                        <!-- Line Chart - Both modes -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowLineChart}">
+                            <CheckBox IsChecked="{Binding IsLineSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Line Chart (Trends)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        
+                        <!-- Bar Chart - Averages only -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowBarChart}">
+                            <CheckBox IsChecked="{Binding IsBarSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Bar Chart (Team Comparison)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        
+                        <!-- Radar Chart - Averages only -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowRadarChart}">
+                            <CheckBox IsChecked="{Binding IsRadarSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Radar Chart (Multi-dimensional)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        
+                        <!-- Scatter Plot - Averages only (team distribution) -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowScatterChart}">
+                            <CheckBox IsChecked="{Binding IsScatterSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Scatter Plot (Team Distribution)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        
+                        
+                        
+                        <!-- Sunburst - Averages only -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowSunburstChart}">
+                            <CheckBox IsChecked="{Binding IsSunburstSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Sunburst (Hierarchical)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        <!-- Violin - Averages only -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowViolinChart}">
+                            <CheckBox IsChecked="{Binding IsViolinSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Violin Plot (Distribution)"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                        <!-- Waterfall - Averages only -->
+                        <HorizontalStackLayout Spacing="10" IsVisible="{Binding ShowWaterfallChart}">
+                            <CheckBox IsChecked="{Binding IsWaterfallSelected}" Color="{StaticResource Primary}" />
+                            <Label Text="Waterfall (Cascade)" 
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                    
+                    <Label Text="Graph types shown depend on selected view mode"
+                           FontSize="11"
+                           TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Italic" />
+                </VerticalStackLayout>
+            </Border>
+
             <!-- Generate Button -->
             <Button Text="Generate Comparison Graphs"
                     Command="{Binding GenerateGraphsCommand}"
@@ -230,130 +332,6 @@
                                    HorizontalOptions="FillAndExpand" />
                         </VerticalStackLayout>
                     </Border>
-
-                    <!-- Data View Selector - ALWAYS VISIBLE -->
-                    <Border Style="{StaticResource CompactGlassCard}"
-                            Margin="0,0,0,10"
-                            Padding="10"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="View Mode"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-                            
-                            <Grid ColumnDefinitions="*,10,*" ColumnSpacing="10">
-                                <Button Grid.Column="0"
-                                        Text="Match-by-Match"
-                                        Command="{Binding ChangeDataViewCommand}"
-                                        CommandParameter="match_by_match"
-                                        Style="{StaticResource OutlineGlassButton}"
-                                        FontSize="13"
-                                        Padding="8"
-                                        BackgroundColor="{Binding SelectedDataView, Converter={StaticResource DataViewToColorConverter}, ConverterParameter='match_by_match'}" />
-                                
-                                <Button Grid.Column="2"
-                                        Text="Team Averages"
-                                        Command="{Binding ChangeDataViewCommand}"
-                                        CommandParameter="averages"
-                                        Style="{StaticResource OutlineGlassButton}"
-                                        FontSize="13"
-                                        Padding="8"
-                                        BackgroundColor="{Binding SelectedDataView, Converter={StaticResource DataViewToColorConverter}, ConverterParameter='averages'}" />
-                            </Grid>
-                            
-                            <Label Text="{Binding SelectedDataView, StringFormat='Current: {0}'}"
-                                   FontSize="11"
-                                   TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-                                   HorizontalTextAlignment="Center" />
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- Graph Type Selector - ALWAYS VISIBLE -->
-          <!-- Shows all types when online, only line/radar when offline -->
-          <VerticalStackLayout Spacing="10">
-    <Label Text="Graph Type"
-        FontSize="14"
-     FontAttributes="Bold"
-     TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
-       
-            <!-- All graph types (online server mode) -->
-  <Grid ColumnDefinitions="*,*,*" 
-              RowDefinitions="Auto,Auto"
-            ColumnSpacing="10"
-         RowSpacing="10"
-       IsVisible="{Binding UseServerImage}">
-         <Button Grid.Row="0" Grid.Column="0"
-   Text="Line"
-               Command="{Binding ChangeGraphTypeCommand}"
-       CommandParameter="line"
-          Style="{StaticResource OutlineGlassButton}"
-       FontSize="12"
-               Padding="8,10" />
-      
-               <Button Grid.Row="0" Grid.Column="1"
- Text="Bar"
-           Command="{Binding ChangeGraphTypeCommand}"
-         CommandParameter="bar"
-       Style="{StaticResource OutlineGlassButton}"
-     FontSize="12"
-   Padding="8,10" />
-         
-  <Button Grid.Row="0" Grid.Column="2"
-       Text="Radar"
-        Command="{Binding ChangeGraphTypeCommand}"
-       CommandParameter="radar"
-     Style="{StaticResource OutlineGlassButton}"
-   FontSize="12"
-   Padding="8,10" />
-                
-      <Button Grid.Row="1" Grid.Column="0"
-             Text="Scatter"
-       Command="{Binding ChangeGraphTypeCommand}"
-      CommandParameter="scatter"
-      Style="{StaticResource OutlineGlassButton}"
-      FontSize="12"
-           Padding="8,10" />
-    
-           <Button Grid.Row="1" Grid.Column="1"
-     Text="Histogram"
-           Command="{Binding ChangeGraphTypeCommand}"
-       CommandParameter="hist"
-    Style="{StaticResource OutlineGlassButton}"
-     FontSize="12"
-    Padding="8,10" />
-     
-    <Button Grid.Row="1" Grid.Column="2"
-           Text="Box Plot"
-    Command="{Binding ChangeGraphTypeCommand}"
-                 CommandParameter="box"
-      Style="{StaticResource OutlineGlassButton}"
-        FontSize="12"
-       Padding="8,10" />
-       </Grid>
-     
-    <!-- Limited graph types (offline Microcharts mode) -->
-       <Grid ColumnDefinitions="*,*" 
-                ColumnSpacing="10"
-     IsVisible="{Binding ShowMicrocharts}">
-      <Button Grid.Column="0"
-       Text="Line Chart"
-   Command="{Binding ChangeGraphTypeCommand}"
-            CommandParameter="line"
-Style="{StaticResource OutlineGlassButton}" />
-    
-         <Button Grid.Column="1"
-         Text="Radar Chart"
-                  Command="{Binding ChangeGraphTypeCommand}"
-          CommandParameter="radar"
-             Style="{StaticResource OutlineGlassButton}" />
-  </Grid>
-  
-           <Label Text="{Binding SelectedGraphType, StringFormat='Current: {0}'}"
-        FontSize="11"
-         TextColor="{AppThemeBinding Light={StaticResource LightTextSecondary}, Dark={StaticResource DarkTextSecondary}}"
-         HorizontalTextAlignment="Center" />
-     </VerticalStackLayout>
 
                     <!-- Team Comparison Summary - ALWAYS VISIBLE -->
                     <CollectionView ItemsSource="{Binding ComparisonData.Teams}">
@@ -399,17 +377,33 @@ Style="{StaticResource OutlineGlassButton}" />
 
                     <!-- Local Microcharts UI removed; Plotly WebView used for interactive graphs -->
 
-                    <!-- Plotly WebView for advanced interactive web graphs -->
-                    <Border Style="{StaticResource ElevatedGlassCard}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
-                            Padding="10"
-                            HeightRequest="480"
-                            IsVisible="{Binding UsePlotlyWebView}">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
-                        <WebView x:Name="PlotlyWebView" HeightRequest="460" />
-                    </Border>
+                    <!-- Multiple Plotly WebViews for selected graph types -->
+                    <CollectionView ItemsSource="{Binding PlotlyHtmlGraphs}"
+                                   IsVisible="{Binding UsePlotlyWebView}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:GraphHtmlInfo">
+                                <Border Style="{StaticResource ElevatedGlassCard}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource GlassOverlayDark}}"
+                                        Padding="10"
+                                        Margin="0,0,0,15">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label Text="{Binding DisplayName}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               HorizontalTextAlignment="Center"
+                                               TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+                                        <Border HeightRequest="480"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource GlassOverlayLight}, Dark={StaticResource DarkSurfaceVariant}}">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
+                                            <WebView Source="{Binding WebViewSource}" HeightRequest="460" />
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
 
                     <Label Text="{Binding SelectedMetric.Name, StringFormat='Metric: {0}'}"
                            FontSize="12"

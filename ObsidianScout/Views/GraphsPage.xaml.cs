@@ -25,9 +25,32 @@ public partial class GraphsPage : ContentPage
     {
         base.OnAppearing();
         await _viewModel.InitializeAsync();
+        // Force immediate refresh of server data when page appears
+        try { await _viewModel.RefreshServerDataAsync(); } catch { }
+        // Ensure auto-refresh is running
+        try { _viewModel.StartAutoRefresh(); } catch { }
         // If already prepared, load the Plotly HTML
         if (!string.IsNullOrEmpty(_viewModel.PlotlyHtml))
             LoadPlotlyHtml(_viewModel.PlotlyHtml);
+
+        // Initialize data view picker selection based on view model
+        try
+        {
+            var picker = this.FindByName<Picker>("DataViewPicker");
+            if (picker != null)
+            {
+                picker.SelectedIndex = _viewModel.SelectedDataView == "match_by_match" ? 0 : 1;
+            }
+
+        }
+        catch { }
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        // Stop background auto-refresh when page is not visible to save resources
+        try { _viewModel.StopAutoRefresh(); } catch { }
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -53,6 +76,28 @@ public partial class GraphsPage : ContentPage
                         });
                     }
                 });
+            }
+        }
+    }
+
+    private void DataViewPicker_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        // Update view model property but don't trigger regeneration
+        // Regeneration will happen when user clicks Generate button
+        if (BindingContext is GraphsViewModel vm && sender is Picker picker)
+        {
+            try
+            {
+                if (picker.SelectedIndex == 0)
+                    vm.SelectedDataView = "match_by_match";
+                else if (picker.SelectedIndex == 1)
+                    vm.SelectedDataView = "averages";
+                
+                System.Diagnostics.Debug.WriteLine($"[GraphsPage] Data view changed to: {vm.SelectedDataView} (no auto-regeneration)");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GraphsPage] DataViewPicker handler error: {ex.Message}");
             }
         }
     }

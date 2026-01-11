@@ -833,18 +833,21 @@ FontSize = 24,
 
         grid.Add(labelLayout, 0, 0);
 
-        var decrementBtn = new Button
+        // Primary and alternate decrement/increment buttons
+        var decrementPrimary = new Button
         {
-            Text = "-",
-            WidthRequest = 50,
+            Text = "-1",
+            WidthRequest = 60,
             HeightRequest = 40,
-            CornerRadius = 5
+            CornerRadius = 6,
+            FontSize = 14,
+            Padding = new Thickness(0),
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold
         };
-        decrementBtn.Clicked += (s, e) => 
-        {
-            _viewModel.DecrementCounter(element.Id);
-        };
-        grid.Add(decrementBtn, 1, 0);
+
+        Button? decrementAlt = null;
+        Button? incrementAlt = null;
 
         var valueLabel = new Label
         {
@@ -852,7 +855,7 @@ FontSize = 24,
             FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center,
             HorizontalOptions = LayoutOptions.Center,
-            WidthRequest = 50,
+            WidthRequest = 60,
             TextColor = GetTextColor()
         };
         
@@ -860,21 +863,85 @@ FontSize = 24,
         _counterLabels[element.Id] = valueLabel;
         var currentValue = _viewModel.GetFieldValue(element.Id);
         valueLabel.Text = currentValue?.ToString() ?? "0";
-        
-        grid.Add(valueLabel, 2, 0);
+
+        // Build controls layout (buttons + value) so alt buttons are placed correctly
+        var controlsLayout = new HorizontalStackLayout { Spacing = 5 };
+
+        // Primary decrement first
+        decrementPrimary.Clicked += (s, e) =>
+        {
+            _viewModel.DecrementCounter(element.Id, 1);
+        };
+        controlsLayout.Add(decrementPrimary);
+
+        // Alt decrement next (if enabled)
+        if (element.AltStepEnabled)
+        {
+            var altVal = element.AltStep ?? element.Step;
+            decrementAlt = new Button
+            {
+                Text = $"-{altVal}",
+                WidthRequest = 80,
+                HeightRequest = 40,
+                CornerRadius = 6,
+                FontSize = 14,
+                Padding = new Thickness(0),
+                TextColor = Colors.White,
+                FontAttributes = FontAttributes.Bold
+            };
+            decrementAlt.Clicked += (s, e) =>
+            {
+                var step = element.AltStep ?? element.Step;
+                _viewModel.DecrementCounter(element.Id, step);
+            };
+            controlsLayout.Add(decrementAlt);
+        }
+
+        // valueLabel in center
+        controlsLayout.Add(valueLabel);
+
+        // Alt increment first (if enabled)
+        if (element.AltStepEnabled)
+        {
+            var altVal2 = element.AltStep ?? element.Step;
+            incrementAlt = new Button
+            {
+                Text = $"+{altVal2}",
+                WidthRequest = 80,
+                HeightRequest = 40,
+                CornerRadius = 6,
+                FontSize = 14,
+                Padding = new Thickness(0),
+                TextColor = Colors.White,
+                FontAttributes = FontAttributes.Bold
+            };
+            incrementAlt.Clicked += (s, e) =>
+            {
+                var step = element.AltStep ?? element.Step;
+                _viewModel.IncrementCounter(element.Id, step);
+            };
+            controlsLayout.Add(incrementAlt);
+        }
 
         var incrementBtn = new Button
         {
-            Text = "+",
-            WidthRequest = 50,
+            Text = "+1",
+            WidthRequest = 60,
             HeightRequest = 40,
-            CornerRadius = 5
+            CornerRadius = 6,
+            FontSize = 14,
+            Padding = new Thickness(0),
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold
         };
-        incrementBtn.Clicked += (s, e) => 
+        incrementBtn.Clicked += (s, e) =>
         {
-            _viewModel.IncrementCounter(element.Id);
+            _viewModel.IncrementCounter(element.Id, 1);
         };
-        grid.Add(incrementBtn, 3, 0);
+        controlsLayout.Add(incrementBtn);
+
+        // Place controls together in the right columns area
+        grid.Add(controlsLayout, 1, 0);
 
         mainLayout.Add(grid);
 

@@ -879,6 +879,12 @@ public partial class ScoutingViewModel : ObservableObject
 
     public void IncrementCounter(string fieldId)
     {
+        IncrementCounter(fieldId, 1);
+    }
+
+    public void IncrementCounter(string fieldId, int step)
+    {
+        if (step <= 0) step = 1;
         if (fieldValues.TryGetValue(fieldId, out var value))
         {
             var intValue = value switch
@@ -888,15 +894,23 @@ public partial class ScoutingViewModel : ObservableObject
                 _ => 0
             };
 
- // Find the element to check max value
-   var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
-              ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
-         ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
+            // Find the element to check max value and default step
+            var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
+                       ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
+                  ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
 
-     if (element != null && element.Max.HasValue && intValue >= element.Max.Value)
-           return;
+            var useStep = step;
+            if (element != null)
+            {
+                // prefer element step if step==1 (default call), otherwise use provided step
+                if (step == 1 && element.Step > 0) useStep = element.Step;
+                // If element alt-step enabled and provided step matches alt, allow it
+                // Max check
+                if (element.Max.HasValue && intValue >= element.Max.Value)
+                    return;
+            }
 
-       fieldValues[fieldId] = intValue + 1;
+            fieldValues[fieldId] = intValue + useStep;
      OnPropertyChanged("FieldValuesChanged");
     
             // Recalculate points
@@ -906,29 +920,43 @@ public partial class ScoutingViewModel : ObservableObject
 
     public void DecrementCounter(string fieldId)
     {
+        DecrementCounter(fieldId, 1);
+    }
+
+    public void DecrementCounter(string fieldId, int step)
+    {
+        if (step <= 0) step = 1;
         if (fieldValues.TryGetValue(fieldId, out var value))
         {
-var intValue = value switch
-    {
-      int i => i,
-                string s when int.TryParse(s, out var parsed) => parsed,
-       _ => 0
-  };
-
-   // Find the element to check min value
-      var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
-            ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
-         ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
-
-        var minValue = element?.Min ?? 0;
-   if (intValue > minValue)
+            var intValue = value switch
             {
-        fieldValues[fieldId] = intValue - 1;
-          OnPropertyChanged("FieldValuesChanged");
- 
-             // Recalculate points
-             CalculatePoints();
-    }
+                int i => i,
+                string s when int.TryParse(s, out var parsed) => parsed,
+                _ => 0
+            };
+
+            // Find the element to check min value and default step
+            var element = AutoElements.FirstOrDefault(e => e.Id == fieldId)
+                       ?? TeleopElements.FirstOrDefault(e => e.Id == fieldId)
+                  ?? EndgameElements.FirstOrDefault(e => e.Id == fieldId);
+
+            var useStep = step;
+            if (element != null)
+            {
+                if (step == 1 && element.Step > 0) useStep = element.Step;
+            }
+
+            var minValue = element?.Min ?? 0;
+            if (intValue > minValue)
+            {
+                var newValue = intValue - useStep;
+                if (newValue < minValue) newValue = minValue;
+                fieldValues[fieldId] = newValue;
+                OnPropertyChanged("FieldValuesChanged");
+
+                // Recalculate points
+                CalculatePoints();
+            }
         }
     }
   

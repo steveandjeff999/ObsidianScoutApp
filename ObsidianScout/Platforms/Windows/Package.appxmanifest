@@ -7,7 +7,7 @@
   xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
   IgnorableNamespaces="uap rescap uap18">
 
-  <Identity Name="NWAHistoricDance.ObsidianScout" Publisher="CN=742DCFDA-512B-4D09-8939-0F58205D12CD" Version="1.2.6.0" />
+  <Identity Name="NWAHistoricDance.ObsidianScout" Publisher="CN=742DCFDA-512B-4D09-8939-0F58205D12CD" Version="1.2.7.0" />
 
   <mp:PhoneIdentity PhoneProductId="A9EFEADB-9FE1-4BC8-B344-4100764B970F" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
