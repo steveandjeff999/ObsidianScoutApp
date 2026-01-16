@@ -59,7 +59,7 @@ public class SettingsService : ISettingsService
     private const string AutoUpdateCheckKey = "auto_update_check";
 
     private const string DefaultProtocol = "https";
-    private static readonly string DefaultServerAddress = "beta.obsidianscout.com";
+    private static readonly string DefaultServerAddress = "obsidianscout.com";
     private const string DefaultServerPort = "";
     private const string DefaultTheme = "Light";
     private const int DefaultNetworkTimeout = 8; // 8 seconds default
