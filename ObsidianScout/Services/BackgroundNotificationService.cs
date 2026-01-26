@@ -1039,8 +1039,11 @@ private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
             
    if (eventsResponse.Success && eventsResponse.Events != null)
             {
+        // Try exact match first, then suffix fallback (to handle year-prefixed codes like 2026OKTU)
         var matchingEvent = eventsResponse.Events.FirstOrDefault(e => 
-            e.Code?.Equals(eventCode, StringComparison.OrdinalIgnoreCase) == true);
+            e.Code?.Equals(eventCode, StringComparison.OrdinalIgnoreCase) == true)
+            ?? eventsResponse.Events.FirstOrDefault(e => 
+            e.Code?.EndsWith(eventCode, StringComparison.OrdinalIgnoreCase) == true);
     
         if (matchingEvent != null)
        {

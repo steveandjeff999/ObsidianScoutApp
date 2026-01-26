@@ -106,7 +106,11 @@ public partial class MainViewModel : ObservableObject
                 var eventsResp = await _apiService.GetEventsAsync();
                 if (eventsResp.Success && eventsResp.Events != null)
                 {
-                    var ev = eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, configResp.Config.CurrentEventCode, System.StringComparison.OrdinalIgnoreCase));
+                    // Try exact match first, then year+code combination, then suffix fallback
+                    var yearCodeCombined = configResp.Config.Season > 0 ? $"{configResp.Config.Season}{configResp.Config.CurrentEventCode}" : null;
+                    var ev = eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, configResp.Config.CurrentEventCode, System.StringComparison.OrdinalIgnoreCase))
+                        ?? (yearCodeCombined != null ? eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, yearCodeCombined, System.StringComparison.OrdinalIgnoreCase)) : null)
+                        ?? eventsResp.Events.FirstOrDefault(e => e.Code.EndsWith(configResp.Config.CurrentEventCode, System.StringComparison.OrdinalIgnoreCase));
                     if (ev != null)
                     {
                         currentEventId = ev.Id;

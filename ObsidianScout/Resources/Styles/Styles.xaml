@@ -144,6 +144,19 @@
         <GradientStop Color="{StaticResource DarkSurfaceVariant}" Offset="1" />
     </LinearGradientBrush>
 
+    <!-- Flyout (sidebar) background brushes - translucent glass look -->
+    <LinearGradientBrush x:Key="FlyoutBackgroundBrushLight" StartPoint="0,0" EndPoint="0,1">
+        <!-- Increased transparency for a lighter translucent effect -->
+        <GradientStop Color="#80FFFFFF" Offset="0" />
+        <GradientStop Color="#60F5F7F9" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="FlyoutBackgroundBrushDark" StartPoint="0,0" EndPoint="0,1">
+        <!-- Increased transparency for a darker translucent effect -->
+        <GradientStop Color="#801E1E1E" Offset="0" />
+        <GradientStop Color="#6016181A" Offset="1" />
+    </LinearGradientBrush>
+
     <!-- Selection Brushes -->
     <SolidColorBrush x:Key="FlyoutSelectionBrushLight" Color="#E6DBEAFE" />
     <SolidColorBrush x:Key="FlyoutSelectionBrushDark" Color="#332563EB" />
@@ -268,23 +281,25 @@
 
     <!-- CARD STYLES -->
     
-    <!-- Modern Card - Clean with subtle shadow -->
+    <!-- Modern Card - Clean with subtle shadow and translucent gradient background -->
     <Style x:Key="ModernCard" TargetType="Border">
-      <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurfaceVariant}}" />
+        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LiquidGlassBrushLight}, Dark={StaticResource LiquidGlassBrushDark}}" />
+        <Setter Property="Opacity" Value="0.95" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource GlassStrokeLight}, Dark={StaticResource GlassStrokeDark}}" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
-   <Setter Property="StrokeShape">
-  <RoundRectangle CornerRadius="12" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="12" />
         </Setter>
     </Style>
 
-    <!-- Glass Card - Elevated with more padding -->
+    <!-- Glass Card - Elevated with more padding, translucent gradient and subtle stroke -->
     <Style x:Key="GlassCard" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurfaceVariant}}" />
+        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource LiquidGlassBrushLight}, Dark={StaticResource LiquidGlassBrushDark}}" />
+        <Setter Property="Opacity" Value="0.92" />
         <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource LightBorder}, Dark={StaticResource DarkBorder}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource GlassStrokeLight}, Dark={StaticResource GlassStrokeDark}}" />
         <Setter Property="Padding" Value="20" />
         <Setter Property="Shadow" Value="{StaticResource ShadowMd}" />
         <Setter Property="StrokeShape">
@@ -293,8 +308,9 @@
     </Style>
 
     <Style x:Key="ElevatedGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
-        <Setter Property="Shadow" Value="{StaticResource ShadowLg}" />
+        <Setter Property="Shadow" Value="{StaticResource ShadowXl}" />
         <Setter Property="Padding" Value="24" />
+        <Setter Property="Opacity" Value="0.95" />
         <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="20" />
         </Setter>
@@ -302,8 +318,9 @@
 
     <Style x:Key="CompactGlassCard" TargetType="Border" BasedOn="{StaticResource GlassCard}">
         <Setter Property="Padding" Value="16" />
-<Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
-     <Setter Property="StrokeShape">
+        <Setter Property="Shadow" Value="{StaticResource ShadowSm}" />
+        <Setter Property="Opacity" Value="0.94" />
+        <Setter Property="StrokeShape">
             <RoundRectangle CornerRadius="12" />
         </Setter>
     </Style>

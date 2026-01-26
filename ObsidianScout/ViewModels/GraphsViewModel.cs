@@ -338,9 +338,12 @@ public partial class GraphsViewModel : ObservableObject
                 
                 if (_gameConfig != null && !string.IsNullOrEmpty(_gameConfig.CurrentEventCode))
                 {
-                    // Find event matching current event code
+                    // Find event matching current event code: try exact match, then year+code, then suffix fallback
+                    var yearCodeCombined = _gameConfig.Season > 0 ? $"{_gameConfig.Season}{_gameConfig.CurrentEventCode}" : null;
                     eventToSelect = Events.FirstOrDefault(e => 
-                        e.Code.Equals(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+                        e.Code.Equals(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
+                        ?? (yearCodeCombined != null ? Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
+                        ?? Events.FirstOrDefault(e => e.Code.EndsWith(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
                     
                     if (eventToSelect != null)
                     {

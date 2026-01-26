@@ -505,8 +505,12 @@ public partial class ScoutingViewModel : ObservableObject
             
             if (eventsResponse.Success && eventsResponse.Events != null && eventsResponse.Events.Count > 0)
             {
+                // Try exact match first, then year+code combination, then suffix fallback
+                var yearCodeCombined = GameConfig.Season > 0 ? $"{GameConfig.Season}{GameConfig.CurrentEventCode}" : null;
                 var currentEvent = eventsResponse.Events
-                    .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
+                    ?? (yearCodeCombined != null ? eventsResponse.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
+                    ?? eventsResponse.Events.FirstOrDefault(e => e.Code.EndsWith(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
                 
                 if (currentEvent != null)
                 {
@@ -591,9 +595,12 @@ public partial class ScoutingViewModel : ObservableObject
 
             StatusMessage = $"🔍 Searching {eventsResponse.Events.Count} events...";
 
-            // Find event by code (case-insensitive)
+            // Find event by code: try exact match, then year+code, then suffix fallback
+            var yearCodeCombined = GameConfig.Season > 0 ? $"{GameConfig.Season}{GameConfig.CurrentEventCode}" : null;
             var currentEvent = eventsResponse.Events
-                .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
+                ?? (yearCodeCombined != null ? eventsResponse.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
+                ?? eventsResponse.Events.FirstOrDefault(e => e.Code.EndsWith(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
             
             if (currentEvent == null)
             {

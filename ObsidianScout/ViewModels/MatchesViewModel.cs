@@ -80,8 +80,12 @@ await LoadMatchesAsync();
     var eventsResult = await _apiService.GetEventsAsync();
          if (eventsResult.Success && eventsResult.Events?.Any() == true)
            {
+     // Try exact match first, then year+code combination, then suffix fallback
+     var yearCodeCombined = configResponse.Config.Season > 0 ? $"{configResponse.Config.Season}{configResponse.Config.CurrentEventCode}" : null;
      var currentEvent = eventsResult.Events.FirstOrDefault(e => 
-          e.Code.Equals(configResponse.Config.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+          e.Code.Equals(configResponse.Config.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
+          ?? (yearCodeCombined != null ? eventsResult.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
+          ?? eventsResult.Events.FirstOrDefault(e => e.Code.EndsWith(configResponse.Config.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
             
           if (currentEvent != null)
           {

@@ -7,7 +7,7 @@
     xmlns:views="clr-namespace:ObsidianScout.Views"
     Title="ObsidianScout"
     FlyoutBehavior="Flyout"
-    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkBackground}}"
+    FlyoutBackground="{AppThemeBinding Light={StaticResource FlyoutBackgroundBrushLight}, Dark={StaticResource FlyoutBackgroundBrushDark}}"
     FlyoutHeaderBehavior="Fixed"
     Shell.TabBarBackgroundColor="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}"
     Shell.TabBarForegroundColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
@@ -63,9 +63,10 @@ FontSize="15"
             </DataTemplate>
 
      <Style TargetType="FlyoutItem" ApplyToDerivedTypes="True">
- <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
-     <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource LightSurface}, Dark={StaticResource DarkSurface}}" />
-            </Style>
+   <Setter Property="Shell.ItemTemplate" Value="{StaticResource FlyoutItemTemplate}" />
+        <!-- Keep individual items transparent so the flyout background gradient shows through -->
+        <Setter Property="Shell.BackgroundColor" Value="Transparent" />
+     </Style>
 
        <Style x:Key="FlyoutSectionHeader" TargetType="Label">
        <Setter Property="FontAttributes" Value="Bold" />

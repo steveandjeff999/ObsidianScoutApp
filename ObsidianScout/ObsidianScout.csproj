@@ -246,6 +246,9 @@
 	 <MauiXaml Update="Resources\Styles\GlassStyles.xaml">
 	   <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
+	 <MauiXaml Update="Resources\Styles\GlassStylesBackup.xaml">
+	   <Generator>MSBuild:Compile</Generator>
+	 </MauiXaml>
 	 <MauiXaml Update="Resources\Styles\IconFonts.xaml">
 	 <Generator>MSBuild:Compile</Generator>
 	 </MauiXaml>
