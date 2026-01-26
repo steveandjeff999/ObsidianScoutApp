@@ -17,116 +17,97 @@ public class UpdateService : IUpdateService
         _http = http;
     }
 
-    private const string BaseContentsUrl = "https://api.github.com/repos/steveandjeff999/ObsidianScoutApp/contents/ObsidianScout/apks";
+    private const string ReleasesApiUrl = "https://api.github.com/repos/steveandjeff999/ObsidianScoutApp/releases/latest";
+    private const string RepoOwner = "steveandjeff999";
+    private const string RepoName = "ObsidianScoutApp";
 
     public async Task<UpdateInfo?> GetLatestApkAsync(bool useAlternatePackage = false)
     {
         try
         {
-            var req = new HttpRequestMessage(HttpMethod.Get, BaseContentsUrl);
+            var req = new HttpRequestMessage(HttpMethod.Get, ReleasesApiUrl);
             req.Headers.UserAgent.ParseAdd("ObsidianScoutAppUpdateChecker/1.0");
             req.Headers.Accept.ParseAdd("application/vnd.github.v3+json");
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Requesting contents list: {BaseContentsUrl}");
+            System.Diagnostics.Debug.WriteLine($"[UpdateService] Requesting latest release: {ReleasesApiUrl}");
+
             // Use a dedicated HttpClient instance without default headers to ensure
             // no Authorization header from the shared HttpClient is sent.
             using var client = new HttpClient() { Timeout = _http.Timeout };
             var resp = await client.SendAsync(req);
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Contents list response: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+            System.Diagnostics.Debug.WriteLine($"[UpdateService] Releases response: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+
             if (!resp.IsSuccessStatusCode)
             {
                 var err = await resp.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine($"[UpdateService] Contents list error body: {err}");
+                System.Diagnostics.Debug.WriteLine($"[UpdateService] Releases error body: {err}");
                 return null;
             }
 
             var json = await resp.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Contents list json length: {json?.Length}");
-            var items = JsonSerializer.Deserialize<List<GitHubContentEntry>>(json);
-            if (items == null || items.Count == 0)
+            System.Diagnostics.Debug.WriteLine($"[UpdateService] Releases json length: {json?.Length}");
+
+            var release = JsonSerializer.Deserialize<GitHubRelease>(json);
+            if (release == null)
             {
-                System.Diagnostics.Debug.WriteLine("[UpdateService] No items found in contents response");
+                System.Diagnostics.Debug.WriteLine("[UpdateService] Failed to deserialize release");
                 return null;
             }
 
-            // Choose the folder representing the latest version.
-            // Try to parse semantic version-like folder names (e.g., "1.2.1" or "v1.2.1").
-            var dirs = items.Where(i => i.Type == "dir").ToList();
-            if (dirs.Count == 0) return null;
+            // Get version from tag_name (e.g., "1.2.8" or "v1.2.8")
+            var version = release.TagName ?? string.Empty;
+            System.Diagnostics.Debug.WriteLine($"[UpdateService] Found release: {version}");
 
-            GitHubContentEntry? best = null;
-            Version? bestVer = null;
+            // Determine the APK filename to look for
+            var preferredApk = useAlternatePackage ? "com.herodcorp.obsidianscout.apk" : "com.obsidian.obsidianscout.apk";
+            var fallbackApk = useAlternatePackage ? "com.obsidian.obsidianscout.apk" : "com.herodcorp.obsidianscout.apk";
 
-            foreach (var d in dirs)
+            // Try to find the APK in the release assets
+            GitHubReleaseAsset? asset = null;
+            string? downloadUrl = null;
+            string? fileName = null;
+
+            if (release.Assets != null && release.Assets.Count > 0)
             {
-                var name = d.Name.Trim();
-                if (name.StartsWith("v", StringComparison.OrdinalIgnoreCase)) name = name.Substring(1);
-                if (Version.TryParse(name, out var v))
+                // Look for preferred APK first
+                asset = release.Assets.FirstOrDefault(a =>
+                    a.Name.Equals(preferredApk, StringComparison.OrdinalIgnoreCase));
+
+                // Fallback to alternate APK
+                if (asset == null)
                 {
-                    if (bestVer == null || v > bestVer)
-                    {
-                        bestVer = v;
-                        best = d;
-                    }
+                    asset = release.Assets.FirstOrDefault(a =>
+                        a.Name.Equals(fallbackApk, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Fallback to any .apk file
+                if (asset == null)
+                {
+                    asset = release.Assets.FirstOrDefault(a =>
+                        a.Name.EndsWith(".apk", StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (asset != null)
+                {
+                    downloadUrl = asset.BrowserDownloadUrl;
+                    fileName = asset.Name;
+                    System.Diagnostics.Debug.WriteLine($"[UpdateService] Found asset: {fileName} -> {downloadUrl}");
                 }
             }
 
-            // Fallback to lexicographic latest if no semantic versions found
-            if (best == null)
+            // If no asset found, construct the expected download URL
+            // Format: https://github.com/{owner}/{repo}/releases/download/{tag}/{filename}
+            if (string.IsNullOrWhiteSpace(downloadUrl))
             {
-                best = dirs.OrderByDescending(d => d.Name).FirstOrDefault();
-            }
-            if (best == null) return null;
-            if (best == null) return null;
-
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Selected version folder: {best.Name} - URL: {best.Url}");
-            var folderReq = new HttpRequestMessage(HttpMethod.Get, best.Url);
-            folderReq.Headers.UserAgent.ParseAdd("ObsidianScoutAppUpdateChecker/1.0");
-            folderReq.Headers.Accept.ParseAdd("application/vnd.github.v3+json");
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Requesting folder contents: {best.Url}");
-            var folderResp = await client.SendAsync(folderReq);
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Folder contents response: {(int)folderResp.StatusCode} {folderResp.ReasonPhrase}");
-            if (!folderResp.IsSuccessStatusCode)
-            {
-                var err2 = await folderResp.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine($"[UpdateService] Folder list error body: {err2}");
-                return null;
-            }
-            var folderJson = await folderResp.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"[UpdateService] Folder json length: {folderJson?.Length}");
-            var files = JsonSerializer.Deserialize<List<GitHubContentEntry>>(folderJson);
-            if (files == null)
-            {
-                System.Diagnostics.Debug.WriteLine("[UpdateService] No files found in folder response");
-                return null;
-            }
-            var want = useAlternatePackage ? "com.obsidian.obsidianscout.apk" : "com.herodcorp.obsidianscout.apk";
-            var file = files.FirstOrDefault(f => f.Type == "file" && f.Name.Equals(want, StringComparison.OrdinalIgnoreCase))
-                       ?? files.FirstOrDefault(f => f.Type == "file");
-
-            // Return info with version name and optional download url
-            // Ensure we provide a usable download URL. GitHub API sometimes omits "download_url"
-            // for certain entries (e.g., symlinks). Fall back to constructing a raw.githubusercontent URL
-            // using the known repo and branch.
-            string? downloadUrl = file?.DownloadUrl;
-            if (string.IsNullOrWhiteSpace(downloadUrl) && file != null && !string.IsNullOrWhiteSpace(file.Path))
-            {
-                try
-                {
-                    // Repo and branch are known for this project
-                    var raw = $"https://raw.githubusercontent.com/steveandjeff999/ObsidianScoutApp/master/{file.Path}";
-                    downloadUrl = raw;
-                    System.Diagnostics.Debug.WriteLine($"[UpdateService] Fallback download URL constructed: {downloadUrl}");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[UpdateService] Failed to construct fallback download URL: {ex.Message}");
-                }
+                var tagForUrl = version;
+                downloadUrl = $"https://github.com/{RepoOwner}/{RepoName}/releases/download/{tagForUrl}/{preferredApk}";
+                fileName = preferredApk;
+                System.Diagnostics.Debug.WriteLine($"[UpdateService] Constructed download URL: {downloadUrl}");
             }
 
             var info = new UpdateInfo
             {
-                Version = best.Name,
-                FileName = file?.Name,
+                Version = version,
+                FileName = fileName,
                 DownloadUrl = downloadUrl
             };
 
@@ -139,36 +120,45 @@ public class UpdateService : IUpdateService
         }
     }
 
-    private class GitHubContentEntry
+    private class GitHubRelease
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("tag_name")]
+        public string TagName { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("body")]
+        public string Body { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("draft")]
+        public bool Draft { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("prerelease")]
+        public bool Prerelease { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("published_at")]
+        public string PublishedAt { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("html_url")]
+        public string HtmlUrl { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("assets")]
+        public List<GitHubReleaseAsset>? Assets { get; set; }
+    }
+
+    private class GitHubReleaseAsset
     {
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("path")]
-        public string Path { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("sha")]
-        public string Sha { get; set; } = string.Empty;
-
         [System.Text.Json.Serialization.JsonPropertyName("size")]
-        public int Size { get; set; }
+        public long Size { get; set; }
 
-        // API url for this content (folder/file) - use this to list folder contents
-        [System.Text.Json.Serialization.JsonPropertyName("url")]
-        public string Url { get; set; } = string.Empty;
+        [System.Text.Json.Serialization.JsonPropertyName("browser_download_url")]
+        public string BrowserDownloadUrl { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("html_url")]
-        public string Html_Url { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("git_url")]
-        public string Git_Url { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("download_url")]
-        public string DownloadUrl { get; set; } = string.Empty;
-
-        [System.Text.Json.Serialization.JsonPropertyName("type")]
-        public string Type { get; set; } = string.Empty;
+        [System.Text.Json.Serialization.JsonPropertyName("content_type")]
+        public string ContentType { get; set; } = string.Empty;
     }
-
-    // UpdateInfo now defined in UpdateInfo.cs
 }

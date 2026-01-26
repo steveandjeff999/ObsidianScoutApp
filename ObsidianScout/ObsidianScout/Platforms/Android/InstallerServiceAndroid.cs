@@ -16,10 +16,24 @@ namespace ObsidianScout.Platforms.Android
             {
                 var context = global::Android.App.Application.Context;
 
-                // Download with a short timeout and stream to file to avoid large memory allocations
-                using var handler = new global::System.Net.Http.HttpClientHandler();
-                using var http = new global::System.Net.Http.HttpClient(handler) { Timeout = global::System.TimeSpan.FromSeconds(20) };
+                // Download with proper redirect handling and headers for GitHub
+                using var handler = new global::System.Net.Http.HttpClientHandler
+                {
+                    AllowAutoRedirect = true,
+                    MaxAutomaticRedirections = 10
+                };
+                using var http = new global::System.Net.Http.HttpClient(handler) { Timeout = global::System.TimeSpan.FromMinutes(5) };
+                
+                // GitHub requires a User-Agent header
+                http.DefaultRequestHeaders.UserAgent.ParseAdd("ObsidianScoutApp/1.0");
+                http.DefaultRequestHeaders.Accept.ParseAdd("application/octet-stream");
+                
+                System.Diagnostics.Debug.WriteLine($"[InstallerServiceAndroid] Downloading APK from: {url}");
+                
                 using var resp = await http.GetAsync(url, global::System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                
+                System.Diagnostics.Debug.WriteLine($"[InstallerServiceAndroid] Response: {resp.StatusCode}");
+                
                 if (!resp.IsSuccessStatusCode)
                 {
                     System.Diagnostics.Debug.WriteLine($"[InstallerServiceAndroid] Download failed: {resp.StatusCode}");
@@ -29,10 +43,16 @@ namespace ObsidianScout.Platforms.Android
                 // Save to cache
                 var cacheDir = context.CacheDir.AbsolutePath;
                 var filePath = global::System.IO.Path.Combine(cacheDir, "update.apk");
+                
+                System.Diagnostics.Debug.WriteLine($"[InstallerServiceAndroid] Saving APK to: {filePath}");
+                
                 using (var fs = global::System.IO.File.Create(filePath))
                 {
                     await resp.Content.CopyToAsync(fs);
                 }
+                
+                var fileInfo = new global::System.IO.FileInfo(filePath);
+                System.Diagnostics.Debug.WriteLine($"[InstallerServiceAndroid] Downloaded APK size: {fileInfo.Length} bytes");
 
                 global::Android.Net.Uri uri;
                 var fileJava = new global::Java.IO.File(filePath);

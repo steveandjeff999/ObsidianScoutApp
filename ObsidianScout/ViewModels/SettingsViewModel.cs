@@ -291,11 +291,20 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            var url = StatusMessage; // we stored the download url here after check
-            if (string.IsNullOrEmpty(url))
+            // Prefer the download URL from _lastUpdateInfo if available
+            var url = _lastUpdateInfo?.DownloadUrl ?? StatusMessage;
+            if (string.IsNullOrEmpty(url) || !url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                await Shell.Current.DisplayAlert("Install", "No download URL available. Run 'Check for Updates' first.", "OK");
-                return;
+                // Try to construct the GitHub Releases download URL
+                if (_lastUpdateInfo != null && !string.IsNullOrEmpty(_lastUpdateInfo.Version) && !string.IsNullOrEmpty(_lastUpdateInfo.FileName))
+                {
+                    url = $"https://github.com/steveandjeff999/ObsidianScoutApp/releases/download/{_lastUpdateInfo.Version}/{_lastUpdateInfo.FileName}";
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert("Install", "No download URL available. Run 'Check for Updates' first.", "OK");
+                    return;
+                }
             }
 
             // If we have last fetched update info and it contains a version, compare with installed version
@@ -334,24 +343,7 @@ public partial class SettingsViewModel : ObservableObject
                 return;
             }
 
-            // Ensure URL is a valid http(s) URL. If not, try to construct a raw.githubusercontent fallback
-            string finalUrl = url;
-            try
-            {
-                if (!finalUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    // try to construct from last update info
-                    if (_lastUpdateInfo != null && !string.IsNullOrEmpty(_lastUpdateInfo.FileName))
-                    {
-                        var v = _lastUpdateInfo.Version ?? string.Empty;
-                        if (v.StartsWith("v", StringComparison.OrdinalIgnoreCase)) v = v.Substring(1);
-                        finalUrl = $"https://raw.githubusercontent.com/steveandjeff999/ObsidianScoutApp/master/ObsidianScout/apks/{v}/{_lastUpdateInfo.FileName}";
-                    }
-                }
-            }
-            catch { }
-
-            var ok = await installer.DownloadAndInstallApkAsync(finalUrl);
+            var ok = await installer.DownloadAndInstallApkAsync(url);
             if (ok)
             {
                 await Shell.Current.DisplayAlert("Install", "Installer launched.", "OK");
