@@ -34,7 +34,7 @@
  <DataTemplate x:DataType="models:Event">
  <Border Style="{StaticResource ModernCard}" Padding="14" Margin="0,0,0,8">
  <VerticalStackLayout Spacing="6">
- <Label Text="{Binding Name}" Style="{StaticResource SubheaderLabel}" FontSize="15" />
+ <Label Text="{Binding DisplayName}" Style="{StaticResource SubheaderLabel}" FontSize="15" />
           <HorizontalStackLayout Spacing="8">
             <Image Source="{StaticResource IconMapMarker}" WidthRequest="14" HeightRequest="14" VerticalOptions="Center" />
             <Label Text="{Binding Location}" Style="{StaticResource CaptionLabel}" FontSize="12" VerticalOptions="Center" />
@@ -262,8 +262,8 @@ HorizontalOptions="Center"
  <Border.StrokeShape>
  <RoundRectangle CornerRadius="12" />
  </Border.StrokeShape>
- <Picker ItemsSource="{Binding Events}" 
- ItemDisplayBinding="{Binding Name}" 
+  <Picker ItemsSource="{Binding Events}" 
+ ItemDisplayBinding="{Binding DisplayName}" 
  SelectedItem="{Binding SelectedEvent}"
  Style="{StaticResource ModernPicker}"
  BackgroundColor="Transparent"

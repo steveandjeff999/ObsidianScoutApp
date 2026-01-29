@@ -234,6 +234,7 @@ private Event? selectedEvent;
     private static bool MatchesEvent(Event ev, string q)
     {
   if (ev == null) return false;
+        if (!string.IsNullOrEmpty(ev.DisplayName) && ev.DisplayName.ToLowerInvariant().Contains(q)) return true;
         if (!string.IsNullOrEmpty(ev.Name) && ev.Name.ToLowerInvariant().Contains(q)) return true;
         if (!string.IsNullOrEmpty(ev.Code) && ev.Code.ToLowerInvariant().Contains(q)) return true;
         if (!string.IsNullOrEmpty(ev.Location) && ev.Location.ToLowerInvariant().Contains(q)) return true;
@@ -459,8 +460,8 @@ IsLoadingMatches = true;
 
        if (mResp.Success && mResp.Matches != null)
       {
-   foreach (var m in mResp.Matches.OrderBy(mm => mm.MatchNumber))
-      _allMatches.Add(new MatchCard { EventName = SelectedEvent.Name, Match = m });
+                foreach (var m in mResp.Matches.OrderBy(mm => mm.MatchNumber))
+      _allMatches.Add(new MatchCard { EventName = SelectedEvent.DisplayName, Match = m });
  }
     }
             else
@@ -486,7 +487,7 @@ IsLoadingMatches = true;
      if (mResp.Success && mResp.Matches != null)
          {
                foreach (var m in mResp.Matches.OrderBy(mm => mm.MatchNumber).Take(50)) // Limit matches per event
-       _allMatches.Add(new MatchCard { EventName = ev.Name, Match = m });
+       _allMatches.Add(new MatchCard { EventName = ev.DisplayName, Match = m });
     }
 
  // Small delay between requests to prevent server overload

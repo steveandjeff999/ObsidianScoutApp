@@ -115,7 +115,7 @@ public partial class MainViewModel : ObservableObject
                     {
                         currentEventId = ev.Id;
                         // set backing field and notify property changed
-                        currentEventName = ev.Name ?? ev.Code ?? "Current Event";
+                        currentEventName = ev.DisplayName ?? ev.Code ?? "Current Event";
                         OnPropertyChanged("CurrentEventName");
                     }
                 }
@@ -129,7 +129,7 @@ public partial class MainViewModel : ObservableObject
                 {
                     var first = eventsResp.Events.First();
                     currentEventId = first.Id;
-                    currentEventName = first.Name ?? first.Code ?? "Event";
+                    currentEventName = first.DisplayName ?? first.Code ?? "Event";
                     OnPropertyChanged("CurrentEventName");
                 }
             }

@@ -52,7 +52,7 @@
                             Style="{StaticResource ModernPicker}"
                             TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}">
                         <Picker.ItemDisplayBinding>
-                            <Binding Path="Name" />
+                            <Binding Path="DisplayName" />
                         </Picker.ItemDisplayBinding>
                     </Picker>
                 </VerticalStackLayout>

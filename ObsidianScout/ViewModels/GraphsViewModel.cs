@@ -347,7 +347,7 @@ public partial class GraphsViewModel : ObservableObject
                     
                     if (eventToSelect != null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Auto-selected current event: {eventToSelect.Name} ({eventToSelect.Code})");
+                        System.Diagnostics.Debug.WriteLine($"Auto-selected current event: {eventToSelect.DisplayName} ({eventToSelect.Code})");
                     }
                     else
                     {
@@ -359,7 +359,7 @@ public partial class GraphsViewModel : ObservableObject
                 if (eventToSelect == null && Events.Count > 0)
                 {
                     eventToSelect = Events[0];
-                    System.Diagnostics.Debug.WriteLine($"Falling back to first event: {eventToSelect.Name}");
+                    System.Diagnostics.Debug.WriteLine($"Falling back to first event: {eventToSelect.DisplayName}");
                 }
                 
                 if (eventToSelect != null)

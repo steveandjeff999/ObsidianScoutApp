@@ -27,6 +27,12 @@ public class Event
     
     [JsonPropertyName("team_count")]
     public int TeamCount { get; set; }
+
+    [JsonPropertyName("is_alliance")]
+    public bool IsAlliance { get; set; }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DisplayName => IsAlliance ? Name + " (alliance)" : Name;
 }
 
 public class EventsResponse
