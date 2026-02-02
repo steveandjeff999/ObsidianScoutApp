@@ -1039,11 +1039,26 @@ private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
             
    if (eventsResponse.Success && eventsResponse.Events != null)
             {
-        // Try exact match first, then suffix fallback (to handle year-prefixed codes like 2026OKTU)
+        // Try to get season from game config for proper event code matching
+        var configResponse = await _apiService.GetGameConfigAsync();
+        string seasonCode = eventCode;
+        
+        if (configResponse.Success && configResponse.Config != null && configResponse.Config.Season > 0)
+        {
+            var seasonStr = configResponse.Config.Season.ToString();
+            // If the event code already starts with the season, use it as-is
+            if (!eventCode.StartsWith(seasonStr, StringComparison.OrdinalIgnoreCase))
+            {
+                seasonCode = $"{configResponse.Config.Season}{eventCode}";
+            }
+        }
+
+        // Try exact match with season+code (primary), then raw code only (fallback)
+        // No suffix matching to avoid wrong year events (e.g., 2026arli instead of 2025arli)
         var matchingEvent = eventsResponse.Events.FirstOrDefault(e => 
-            e.Code?.Equals(eventCode, StringComparison.OrdinalIgnoreCase) == true)
+            string.Equals(e.Code, seasonCode, StringComparison.OrdinalIgnoreCase))
             ?? eventsResponse.Events.FirstOrDefault(e => 
-            e.Code?.EndsWith(eventCode, StringComparison.OrdinalIgnoreCase) == true);
+            string.Equals(e.Code, eventCode, StringComparison.OrdinalIgnoreCase));
     
         if (matchingEvent != null)
        {

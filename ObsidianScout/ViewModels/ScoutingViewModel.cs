@@ -505,12 +505,33 @@ public partial class ScoutingViewModel : ObservableObject
             
             if (eventsResponse.Success && eventsResponse.Events != null && eventsResponse.Events.Count > 0)
             {
-                // Try exact match first, then year+code combination, then suffix fallback
-                var yearCodeCombined = GameConfig.Season > 0 ? $"{GameConfig.Season}{GameConfig.CurrentEventCode}" : null;
+                // Build the event code - check if it already includes the season prefix
+                var rawEventCode = GameConfig.CurrentEventCode;
+                string seasonCode;
+
+                if (GameConfig.Season > 0)
+                {
+                    var seasonStr = GameConfig.Season.ToString();
+                    // If the event code already starts with the season, use it as-is
+                    if (rawEventCode.StartsWith(seasonStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        seasonCode = rawEventCode;
+                    }
+                    else
+                    {
+                        seasonCode = $"{GameConfig.Season}{rawEventCode}";
+                    }
+                }
+                else
+                {
+                    seasonCode = rawEventCode;
+                }
+
+                // Try exact match with season+code (primary), then raw code only (fallback)
+                // No suffix matching to avoid wrong year events (e.g., 2026arli instead of 2025arli)
                 var currentEvent = eventsResponse.Events
-                    .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
-                    ?? (yearCodeCombined != null ? eventsResponse.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
-                    ?? eventsResponse.Events.FirstOrDefault(e => e.Code.EndsWith(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(e => string.Equals(e.Code, seasonCode, StringComparison.OrdinalIgnoreCase))
+                    ?? eventsResponse.Events.FirstOrDefault(e => string.Equals(e.Code, rawEventCode, StringComparison.OrdinalIgnoreCase));
                 
                 if (currentEvent != null)
                 {
@@ -568,6 +589,7 @@ public partial class ScoutingViewModel : ObservableObject
                 return;
             }
 
+
             // Check if we have an event code
             if (string.IsNullOrEmpty(GameConfig.CurrentEventCode))
             {
@@ -595,12 +617,33 @@ public partial class ScoutingViewModel : ObservableObject
 
             StatusMessage = $"🔍 Searching {eventsResponse.Events.Count} events...";
 
-            // Find event by code: try exact match, then year+code, then suffix fallback
-            var yearCodeCombined = GameConfig.Season > 0 ? $"{GameConfig.Season}{GameConfig.CurrentEventCode}" : null;
+            // Build the event code - check if it already includes the season prefix
+            var rawEventCode = GameConfig.CurrentEventCode;
+            string seasonCode;
+
+            if (GameConfig.Season > 0)
+            {
+                var seasonStr = GameConfig.Season.ToString();
+                // If the event code already starts with the season, use it as-is
+                if (rawEventCode.StartsWith(seasonStr, StringComparison.OrdinalIgnoreCase))
+                {
+                    seasonCode = rawEventCode;
+                }
+                else
+                {
+                    seasonCode = $"{GameConfig.Season}{rawEventCode}";
+                }
+            }
+            else
+            {
+                seasonCode = rawEventCode;
+            }
+
+            // Try exact match with season+code (primary), then raw code only (fallback)
+            // No suffix matching to avoid wrong year events (e.g., 2026arli instead of 2025arli)
             var currentEvent = eventsResponse.Events
-                .FirstOrDefault(e => e.Code.Equals(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
-                ?? (yearCodeCombined != null ? eventsResponse.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
-                ?? eventsResponse.Events.FirstOrDefault(e => e.Code.EndsWith(GameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(e => string.Equals(e.Code, seasonCode, StringComparison.OrdinalIgnoreCase))
+                ?? eventsResponse.Events.FirstOrDefault(e => string.Equals(e.Code, rawEventCode, StringComparison.OrdinalIgnoreCase));
             
             if (currentEvent == null)
             {

@@ -68,42 +68,109 @@ await LoadMatchesAsync();
     }
     }
 
+
   private async Task LoadCurrentEventAsync()
   {
         try
         {
+            System.Diagnostics.Debug.WriteLine("=== [MatchesViewModel] LoadCurrentEventAsync START ===");
+            
             // Get game config to find current event
             var configResponse = await _apiService.GetGameConfigAsync();
+            System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] GameConfig Success: {configResponse.Success}");
+            
+            if (configResponse.Success && configResponse.Config != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] GameConfig.Season: {configResponse.Config.Season}");
+                System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] GameConfig.CurrentEventCode: '{configResponse.Config.CurrentEventCode}'");
+            }
+            
   if (configResponse.Success && configResponse.Config != null && !string.IsNullOrEmpty(configResponse.Config.CurrentEventCode))
         {
          // Get events and find the current one
     var eventsResult = await _apiService.GetEventsAsync();
+    System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Events Success: {eventsResult.Success}, Count: {eventsResult.Events?.Count ?? 0}");
+    
          if (eventsResult.Success && eventsResult.Events?.Any() == true)
            {
-     // Try exact match first, then year+code combination, then suffix fallback
-     var yearCodeCombined = configResponse.Config.Season > 0 ? $"{configResponse.Config.Season}{configResponse.Config.CurrentEventCode}" : null;
+     // Log all available events
+     System.Diagnostics.Debug.WriteLine("[MatchesViewModel] Available events:");
+     foreach (var e in eventsResult.Events)
+     {
+         System.Diagnostics.Debug.WriteLine($"  - ID: {e.Id}, Code: '{e.Code}', Name: '{e.Name}'");
+     }
+
+     // Build the event code - check if it already includes the season prefix
+     var rawEventCode = configResponse.Config.CurrentEventCode;
+     string seasonCode;
+
+     System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Raw event code: '{rawEventCode}'");
+     System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Season: {configResponse.Config.Season}");
+
+     if (configResponse.Config.Season > 0)
+     {
+         var seasonStr = configResponse.Config.Season.ToString();
+         System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Season string: '{seasonStr}'");
+         
+         // If the event code already starts with the season, use it as-is
+         bool alreadyHasSeason = rawEventCode.StartsWith(seasonStr, StringComparison.OrdinalIgnoreCase);
+         System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Already has season prefix: {alreadyHasSeason}");
+         
+         if (alreadyHasSeason)
+         {
+             seasonCode = rawEventCode;
+         }
+         else
+         {
+             seasonCode = $"{configResponse.Config.Season}{rawEventCode}";
+         }
+     }
+     else
+     {
+         seasonCode = rawEventCode;
+     }
+
+     System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Final seasonCode to search: '{seasonCode}'");
+
+     // Try exact match with season+code (primary)
      var currentEvent = eventsResult.Events.FirstOrDefault(e => 
-          e.Code.Equals(configResponse.Config.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
-          ?? (yearCodeCombined != null ? eventsResult.Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
-          ?? eventsResult.Events.FirstOrDefault(e => e.Code.EndsWith(configResponse.Config.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+          string.Equals(e.Code, seasonCode, StringComparison.OrdinalIgnoreCase));
+     System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Match on seasonCode '{seasonCode}': {(currentEvent != null ? $"ID={currentEvent.Id}, Code='{currentEvent.Code}'" : "NULL")}");
+     
+     // Fallback to raw code only
+     if (currentEvent == null)
+     {
+         currentEvent = eventsResult.Events.FirstOrDefault(e => string.Equals(e.Code, rawEventCode, StringComparison.OrdinalIgnoreCase));
+         System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Match on rawEventCode '{rawEventCode}': {(currentEvent != null ? $"ID={currentEvent.Id}, Code='{currentEvent.Code}'" : "NULL")}");
+     }
             
           if (currentEvent != null)
           {
+         System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] *** SELECTED EVENT: ID={currentEvent.Id}, Code='{currentEvent.Code}', Name='{currentEvent.Name}' ***");
          EventId = currentEvent.Id;
             SelectedEvent = currentEvent;
+            System.Diagnostics.Debug.WriteLine("=== [MatchesViewModel] LoadCurrentEventAsync END (found event) ===");
   return;
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] *** NO EVENT MATCHED! ***");
         }
      }
      }
           
     // Fallback: load first available event
+    System.Diagnostics.Debug.WriteLine("[MatchesViewModel] No event found from config, falling back to first event...");
           var fallbackEventsResult = await _apiService.GetEventsAsync();
        if (fallbackEventsResult.Success && fallbackEventsResult.Events?.Any() == true)
     {
          var firstEvent = fallbackEventsResult.Events.First();
        EventId = firstEvent.Id;
               SelectedEvent = firstEvent;
+              System.Diagnostics.Debug.WriteLine($"[MatchesViewModel] Fallback to first event: ID={firstEvent.Id}, Code='{firstEvent.Code}'");
       }
+      
+      System.Diagnostics.Debug.WriteLine("=== [MatchesViewModel] LoadCurrentEventAsync END ===");
         }
     catch (Exception ex)
         {

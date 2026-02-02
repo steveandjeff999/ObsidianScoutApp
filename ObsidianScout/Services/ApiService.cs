@@ -1071,7 +1071,7 @@ var errorContent = await response.Content.ReadAsStringAsync();
 
     }
 
-    public async Task<SyncTriggerResponse> TriggerSyncAsync()
+    public async Task<SyncTriggerResponse> TriggerSyncAsync(string? eventCode = null)
     {
         if (!await ShouldUseNetworkAsync())
         {
@@ -1083,6 +1083,10 @@ var errorContent = await response.Content.ReadAsStringAsync();
             await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
             var endpoint = $"{baseUrl}/sync/trigger";
+            if (!string.IsNullOrEmpty(eventCode))
+            {
+                endpoint += $"?eventCode={Uri.EscapeDataString(eventCode)}";
+            }
             var request = await CreateRequestMessageAsync(HttpMethod.Post, endpoint);
             var response = await _httpClient.SendAsync(request);
 

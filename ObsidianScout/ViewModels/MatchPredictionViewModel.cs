@@ -200,12 +200,33 @@ var response = await _apiService.GetEventsAsync();
           {
          if (_gameConfig != null && !string.IsNullOrEmpty(_gameConfig.CurrentEventCode))
      {
-   // Try exact match first, then year+code combination, then suffix fallback
-   var yearCodeCombined = _gameConfig.Season > 0 ? $"{_gameConfig.Season}{_gameConfig.CurrentEventCode}" : null;
+   // Build the event code - check if it already includes the season prefix
+   var rawEventCode = _gameConfig.CurrentEventCode;
+   string seasonCode;
+
+   if (_gameConfig.Season > 0)
+   {
+       var seasonStr = _gameConfig.Season.ToString();
+       // If the event code already starts with the season, use it as-is
+       if (rawEventCode.StartsWith(seasonStr, StringComparison.OrdinalIgnoreCase))
+       {
+           seasonCode = rawEventCode;
+       }
+       else
+       {
+           seasonCode = $"{_gameConfig.Season}{rawEventCode}";
+       }
+   }
+   else
+   {
+       seasonCode = rawEventCode;
+   }
+
+   // Try exact match with season+code (primary), then raw code only (fallback)
+   // No suffix matching to avoid wrong year events (e.g., 2026arli instead of 2025arli)
    eventToSelect = Events.FirstOrDefault(e => 
-    e.Code.Equals(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase))
-    ?? (yearCodeCombined != null ? Events.FirstOrDefault(e => e.Code.Equals(yearCodeCombined, StringComparison.OrdinalIgnoreCase)) : null)
-    ?? Events.FirstOrDefault(e => e.Code.EndsWith(_gameConfig.CurrentEventCode, StringComparison.OrdinalIgnoreCase));
+    string.Equals(e.Code, seasonCode, StringComparison.OrdinalIgnoreCase))
+    ?? Events.FirstOrDefault(e => string.Equals(e.Code, rawEventCode, StringComparison.OrdinalIgnoreCase));
          
        if (eventToSelect != null)
       {

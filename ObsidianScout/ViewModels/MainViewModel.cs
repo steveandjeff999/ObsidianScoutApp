@@ -51,7 +51,34 @@ public partial class MainViewModel : ObservableObject
         {
             IsLoading = true;
             WelcomeMessage = "Triggering server sync...";
-            var resp = await _apiService.TriggerSyncAsync();
+
+            // Build the combined season+code event code from game config
+            string? eventCode = null;
+            var configResp = await _apiService.GetGameConfigAsync();
+            if (configResp.Success && configResp.Config != null && !string.IsNullOrEmpty(configResp.Config.CurrentEventCode))
+            {
+                var rawEventCode = configResp.Config.CurrentEventCode;
+
+                if (configResp.Config.Season > 0)
+                {
+                    var seasonStr = configResp.Config.Season.ToString();
+                    // If the event code already starts with the season, use it as-is
+                    if (rawEventCode.StartsWith(seasonStr, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        eventCode = rawEventCode;
+                    }
+                    else
+                    {
+                        eventCode = $"{configResp.Config.Season}{rawEventCode}";
+                    }
+                }
+                else
+                {
+                    eventCode = rawEventCode;
+                }
+            }
+
+            var resp = await _apiService.TriggerSyncAsync(eventCode);
             if (resp.Success)
             {
                 WelcomeMessage = "Server sync triggered successfully.";
@@ -100,23 +127,85 @@ public partial class MainViewModel : ObservableObject
             // Attempt to find current event from game config
             int? currentEventId = null;
 
+            System.Diagnostics.Debug.WriteLine("=== [MainViewModel] LoadDashboardData START ===");
+
             var configResp = await _apiService.GetGameConfigAsync();
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] GameConfig Success: {configResp.Success}");
+            
+            if (configResp.Success && configResp.Config != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] GameConfig.Season: {configResp.Config.Season}");
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] GameConfig.CurrentEventCode: '{configResp.Config.CurrentEventCode}'");
+            }
+
             if (configResp.Success && configResp.Config != null && !string.IsNullOrEmpty(configResp.Config.CurrentEventCode))
             {
                 var eventsResp = await _apiService.GetEventsAsync();
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Events Success: {eventsResp.Success}, Count: {eventsResp.Events?.Count ?? 0}");
+                
                 if (eventsResp.Success && eventsResp.Events != null)
                 {
-                    // Try exact match first, then year+code combination, then suffix fallback
-                    var yearCodeCombined = configResp.Config.Season > 0 ? $"{configResp.Config.Season}{configResp.Config.CurrentEventCode}" : null;
-                    var ev = eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, configResp.Config.CurrentEventCode, System.StringComparison.OrdinalIgnoreCase))
-                        ?? (yearCodeCombined != null ? eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, yearCodeCombined, System.StringComparison.OrdinalIgnoreCase)) : null)
-                        ?? eventsResp.Events.FirstOrDefault(e => e.Code.EndsWith(configResp.Config.CurrentEventCode, System.StringComparison.OrdinalIgnoreCase));
+                    // Log all available events
+                    System.Diagnostics.Debug.WriteLine("[MainViewModel] Available events:");
+                    foreach (var e in eventsResp.Events)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  - ID: {e.Id}, Code: '{e.Code}', Name: '{e.Name}'");
+                    }
+
+                    // Build the event code - check if it already includes the season prefix
+                    var rawEventCode = configResp.Config.CurrentEventCode;
+                    string seasonCode;
+
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Raw event code: '{rawEventCode}'");
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Season: {configResp.Config.Season}");
+
+                    if (configResp.Config.Season > 0)
+                    {
+                        var seasonStr = configResp.Config.Season.ToString();
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Season string: '{seasonStr}'");
+                        
+                        // If the event code already starts with the season, use it as-is
+                        bool alreadyHasSeason = rawEventCode.StartsWith(seasonStr, System.StringComparison.OrdinalIgnoreCase);
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Already has season prefix: {alreadyHasSeason}");
+                        
+                        if (alreadyHasSeason)
+                        {
+                            seasonCode = rawEventCode;
+                        }
+                        else
+                        {
+                            seasonCode = $"{configResp.Config.Season}{rawEventCode}";
+                        }
+                    }
+                    else
+                    {
+                        seasonCode = rawEventCode;
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Final seasonCode to search: '{seasonCode}'");
+
+                    // Try exact match with season+code (primary)
+                    var ev = eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, seasonCode, System.StringComparison.OrdinalIgnoreCase));
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Match on seasonCode '{seasonCode}': {(ev != null ? $"ID={ev.Id}, Code='{ev.Code}'" : "NULL")}");
+                    
+                    // Fallback to raw code only
+                    if (ev == null)
+                    {
+                        ev = eventsResp.Events.FirstOrDefault(e => string.Equals(e.Code, rawEventCode, System.StringComparison.OrdinalIgnoreCase));
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Match on rawEventCode '{rawEventCode}': {(ev != null ? $"ID={ev.Id}, Code='{ev.Code}'" : "NULL")}");
+                    }
+                    
                     if (ev != null)
                     {
                         currentEventId = ev.Id;
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] *** SELECTED EVENT: ID={ev.Id}, Code='{ev.Code}', Name='{ev.Name}' ***");
                         // set backing field and notify property changed
                         currentEventName = ev.DisplayName ?? ev.Code ?? "Current Event";
                         OnPropertyChanged("CurrentEventName");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] *** NO EVENT MATCHED! ***");
                     }
                 }
             }
@@ -124,6 +213,7 @@ public partial class MainViewModel : ObservableObject
             // If no current event found, try to pick a first event
             if (currentEventId == null)
             {
+                System.Diagnostics.Debug.WriteLine("[MainViewModel] No event found from config, falling back to first event...");
                 var eventsResp = await _apiService.GetEventsAsync();
                 if (eventsResp.Success && eventsResp.Events != null && eventsResp.Events.Any())
                 {
@@ -131,8 +221,11 @@ public partial class MainViewModel : ObservableObject
                     currentEventId = first.Id;
                     currentEventName = first.DisplayName ?? first.Code ?? "Event";
                     OnPropertyChanged("CurrentEventName");
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Fallback to first event: ID={first.Id}, Code='{first.Code}'");
                 }
             }
+
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Final currentEventId: {currentEventId}");
 
             // Load team count (for current event if available)
             int countTeams = 0;
@@ -155,6 +248,9 @@ public partial class MainViewModel : ObservableObject
             }
             matchCount = countMatches;
             OnPropertyChanged("MatchCount");
+
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Teams: {countTeams}, Matches: {countMatches}");
+            System.Diagnostics.Debug.WriteLine("=== [MainViewModel] LoadDashboardData END ===");
         }
         catch (System.Exception ex)
         {

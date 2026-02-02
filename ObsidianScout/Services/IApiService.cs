@@ -89,5 +89,5 @@ public interface IApiService
     Task UpdateHttpClientTimeoutAsync();
 
     // Trigger server sync for teams and matches
-    Task<SyncTriggerResponse> TriggerSyncAsync();
+    Task<SyncTriggerResponse> TriggerSyncAsync(string? eventCode = null);
 }

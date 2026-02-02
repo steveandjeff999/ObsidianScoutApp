@@ -784,6 +784,7 @@ FontSize = 24,
             "counter" => CreateCounterView(element),
             "boolean" => CreateBooleanView(element),
             "multiple_choice" => CreateMultipleChoiceView(element),
+            "rating" => CreateRatingViewForScoringElement(element),
             _ => new Label
             {
                 Text = $"Unsupported type: {element.Type} ({element.Name})",
@@ -1127,34 +1128,192 @@ FontSize = 24,
         };
         layout.Add(label);
 
-        var slider = new Slider
-        {
-            Minimum = element.Min,
-            Maximum = element.Max,
-            Value = element.Default
-        };
+        // Ensure we use a 0..5 star control regardless of provided min/max, but clamp values to valid range
+        const int starCount = 5;
+        var starsLayout = new HorizontalStackLayout { Spacing = 6, HorizontalOptions = LayoutOptions.Center };
+        var starButtons = new List<Button>();
 
-        var valueLabel = new Label
+        var numericLabel = new Label
         {
-            Text = element.Default.ToString(),
+            Text = "0",
             HorizontalOptions = LayoutOptions.Center,
             FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             TextColor = GetTextColor()
         };
 
-        slider.ValueChanged += (s, e) =>
+        // Initialize field in viewmodel (clamped)
+        var initial = Math.Clamp(element.Default, 0, starCount);
+        _viewModel.SetFieldValue(element.Id, initial);
+        numericLabel.Text = initial.ToString();
+
+        void UpdateStarsVisuals(int currentValue)
         {
-            var intValue = (int)Math.Round(e.NewValue);
-            valueLabel.Text = intValue.ToString();
-            _viewModel.SetFieldValue(element.Id, intValue);
+            for (int i = 0; i < starCount; i++)
+            {
+                var btn = starButtons[i];
+                if (i < currentValue)
+                {
+                    btn.Text = "★"; // filled
+                    btn.TextColor = Color.FromArgb("#FFD700"); // gold
+                }
+                else
+                {
+                    btn.Text = "☆"; // empty
+                    btn.TextColor = GetSecondaryTextColor();
+                }
+            }
+            numericLabel.Text = currentValue.ToString();
+        }
+
+        for (int i = 1; i <= starCount; i++)
+        {
+            var starIndex = i; // 1-based value
+            var btn = new Button
+            {
+                Text = "☆",
+                FontSize = 30,
+                BackgroundColor = Colors.Transparent,
+                CornerRadius = 6,
+                Padding = new Thickness(4),
+                WidthRequest = 44,
+                HeightRequest = 44
+            };
+
+            btn.Clicked += (s, e) =>
+            {
+                // Current value stored in viewmodel
+                var current = ConvertToInt(_viewModel.GetFieldValue(element.Id), 0);
+                // Clamp to 0..starCount and also respect any explicit element min/max if desired
+                var minAllowed = Math.Clamp(element.Min, 0, starCount);
+                var maxAllowed = Math.Clamp(element.Max == 0 ? starCount : element.Max, 0, starCount);
+
+                // Desired new value is the star index, but if tapping the already-selected value, clear to 0
+                var desired = starIndex;
+                if (desired == current)
+                {
+                    desired = 0; // allow clearing back to zero
+                }
+
+                // Enforce min/max
+                if (desired < minAllowed) desired = minAllowed;
+                if (desired > maxAllowed) desired = maxAllowed;
+
+                _viewModel.SetFieldValue(element.Id, desired);
+                UpdateStarsVisuals(desired);
+            };
+
+            starButtons.Add(btn);
+            starsLayout.Add(btn);
+        }
+
+        // Set initial visuals
+        UpdateStarsVisuals(initial);
+
+        layout.Add(starsLayout);
+        layout.Add(numericLabel);
+
+        return layout;
+    }
+
+    private View CreateRatingViewForScoringElement(ScoringElement element)
+    {
+        var layout = new VerticalStackLayout { Spacing = 10 };
+
+        var label = new Label
+        {
+            Text = element.Name,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = GetTextColor()
+        };
+        layout.Add(label);
+
+        // Always use 5 stars for rating elements
+        const int starCount = 5;
+        var starsLayout = new HorizontalStackLayout { Spacing = 6, HorizontalOptions = LayoutOptions.Center };
+        var starButtons = new List<Button>();
+
+        var numericLabel = new Label
+        {
+            Text = "0",
+            HorizontalOptions = LayoutOptions.Center,
+            FontSize = 18,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = GetTextColor()
         };
 
-        // Set initial value
-        _viewModel.SetFieldValue(element.Id, element.Default);
+        // Initialize field in viewmodel with default value (clamped to 0-5)
+        var defaultVal = ConvertToInt(element.Default, 0);
+        var initial = Math.Clamp(defaultVal, 0, starCount);
+        _viewModel.SetFieldValue(element.Id, initial);
+        numericLabel.Text = initial.ToString();
 
-        layout.Add(slider);
-        layout.Add(valueLabel);
+        void UpdateStarsVisuals(int currentValue)
+        {
+            for (int i = 0; i < starCount; i++)
+            {
+                var btn = starButtons[i];
+                if (i < currentValue)
+                {
+                    btn.Text = "★"; // filled
+                    btn.TextColor = Color.FromArgb("#FFD700"); // gold
+                }
+                else
+                {
+                    btn.Text = "☆"; // empty
+                    btn.TextColor = GetSecondaryTextColor();
+                }
+            }
+            numericLabel.Text = currentValue.ToString();
+        }
+
+        for (int i = 1; i <= starCount; i++)
+        {
+            var starIndex = i; // 1-based value
+            var btn = new Button
+            {
+                Text = "☆",
+                FontSize = 30,
+                BackgroundColor = Colors.Transparent,
+                CornerRadius = 6,
+                Padding = new Thickness(4),
+                WidthRequest = 44,
+                HeightRequest = 44
+            };
+
+            btn.Clicked += (s, e) =>
+            {
+                // Current value stored in viewmodel
+                var current = ConvertToInt(_viewModel.GetFieldValue(element.Id), 0);
+                
+                // Use element Min/Max if available, otherwise default to 0-5
+                var minAllowed = element.Min.HasValue ? Math.Clamp(element.Min.Value, 0, starCount) : 0;
+                var maxAllowed = element.Max.HasValue ? Math.Clamp(element.Max.Value, 0, starCount) : starCount;
+
+                // Desired new value is the star index, but if tapping the already-selected value, clear to 0
+                var desired = starIndex;
+                if (desired == current)
+                {
+                    desired = 0; // allow clearing back to zero
+                }
+
+                // Enforce min/max
+                if (desired < minAllowed) desired = minAllowed;
+                if (desired > maxAllowed) desired = maxAllowed;
+
+                _viewModel.SetFieldValue(element.Id, desired);
+                UpdateStarsVisuals(desired);
+            };
+
+            starButtons.Add(btn);
+            starsLayout.Add(btn);
+        }
+
+        // Set initial visuals
+        UpdateStarsVisuals(initial);
+
+        layout.Add(starsLayout);
+        layout.Add(numericLabel);
 
         return layout;
     }
