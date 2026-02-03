@@ -65,6 +65,29 @@
  </Border>
  </VerticalStackLayout>
 
+<!-- Team Number -->
+ <VerticalStackLayout Spacing="8">
+ <Label Text="Team Number"
+ FontSize="14"
+ FontFamily="OpenSansSemibold"
+ TextColor="{StaticResource TextSecondary}"
+ LineBreakMode="NoWrap" />
+ <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
+ StrokeThickness="0">
+ <Border.StrokeShape>
+ <RoundRectangle CornerRadius="12" />
+ </Border.StrokeShape>
+ <Entry x:Name="TeamNumberEntry" Placeholder="Enter team number"
+ Text="{Binding TeamNumber}"
+ Keyboard="Numeric"
+ Style="{StaticResource GlassEntry}"
+ BackgroundColor="Transparent"
+ IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+ MaxLength="10"
+ ReturnType="Next" />
+ </Border>
+ </VerticalStackLayout>
+
  <!-- Password -->
  <VerticalStackLayout Spacing="8">
  <Label Text="Password"
@@ -84,29 +107,6 @@
  BackgroundColor="Transparent"
  IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
  MaxLength="100"
- ReturnType="Next" />
- </Border>
- </VerticalStackLayout>
-
- <!-- Team Number -->
- <VerticalStackLayout Spacing="8">
- <Label Text="Team Number"
- FontSize="14"
- FontFamily="OpenSansSemibold"
- TextColor="{StaticResource TextSecondary}"
- LineBreakMode="NoWrap" />
- <Border BackgroundColor="{AppThemeBinding Light={StaticResource LightSurfaceVariant}, Dark={StaticResource DarkSurfaceVariant}}"
- StrokeThickness="0">
- <Border.StrokeShape>
- <RoundRectangle CornerRadius="12" />
- </Border.StrokeShape>
- <Entry x:Name="TeamNumberEntry" Placeholder="Enter team number"
- Text="{Binding TeamNumber}"
- Keyboard="Numeric"
- Style="{StaticResource GlassEntry}"
- BackgroundColor="Transparent"
- IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
- MaxLength="10"
  ReturnType="Go" />
  </Border>
  </VerticalStackLayout>

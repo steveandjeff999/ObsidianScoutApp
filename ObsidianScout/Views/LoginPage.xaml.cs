@@ -19,20 +19,23 @@ public partial class LoginPage : ContentPage
 
         if (username != null)
         {
+            // After username, move to team number
             username.Completed += OnUsernameCompleted;
             username.ReturnType = ReturnType.Next;
         }
 
-        if (password != null)
-        {
-            password.Completed += OnPasswordCompleted;
-            password.ReturnType = ReturnType.Next;
-        }
-
         if (team != null)
         {
+            // After team number, move to password
             team.Completed += OnTeamNumberCompleted;
-            team.ReturnType = ReturnType.Go;
+            team.ReturnType = ReturnType.Next;
+        }
+
+        if (password != null)
+        {
+            // After password, submit login
+            password.Completed += OnPasswordCompleted;
+            password.ReturnType = ReturnType.Go;
         }
 
         if (openWeb != null)
@@ -41,22 +44,22 @@ public partial class LoginPage : ContentPage
         }
     }
 
-    // Move focus from username to password
+    // Move focus from username to team number
     public void OnUsernameCompleted(object sender, System.EventArgs e)
-    {
-        var pwd = this.FindByName<Entry>("PasswordEntry");
-        pwd?.Focus();
-    }
-
-    // Move focus from password to team number
-    public void OnPasswordCompleted(object sender, System.EventArgs e)
     {
         var team = this.FindByName<Entry>("TeamNumberEntry");
         team?.Focus();
     }
 
-    // Trigger login when completed on team number
+    // Move focus from team number to password
     public void OnTeamNumberCompleted(object sender, System.EventArgs e)
+    {
+        var pwd = this.FindByName<Entry>("PasswordEntry");
+        pwd?.Focus();
+    }
+
+    // Trigger login when completed on password
+    public void OnPasswordCompleted(object sender, System.EventArgs e)
     {
         // Invoke the bound login command if available
         if (BindingContext is ViewModels.LoginViewModel vm)
