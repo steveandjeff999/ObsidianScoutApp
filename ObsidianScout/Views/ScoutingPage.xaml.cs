@@ -2,6 +2,7 @@
 using ObsidianScout.ViewModels;
 using ObsidianScout.Converters;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Devices;
 using System.Text.Json;
@@ -799,12 +800,12 @@ FontSize = 24,
 
         var grid = new Grid
         {
+            // Two main columns: label and controls. Give controls a star width so it can
+            // expand on narrow screens instead of clipping child content.
             ColumnDefinitions =
             {
                 new ColumnDefinition { Width = GridLength.Star },
-                new ColumnDefinition { Width = GridLength.Auto },
-                new ColumnDefinition { Width = GridLength.Auto },
-                new ColumnDefinition { Width = GridLength.Auto }
+                new ColumnDefinition { Width = GridLength.Star }
             },
             ColumnSpacing = 5
         };
@@ -865,24 +866,25 @@ FontSize = 24,
         var currentValue = _viewModel.GetFieldValue(element.Id);
         valueLabel.Text = currentValue?.ToString() ?? "0";
 
-        // Build controls layout (buttons + value) so alt buttons are placed correctly
-        var controlsLayout = new HorizontalStackLayout { Spacing = 5 };
-
-        // Primary decrement first
-        decrementPrimary.Clicked += (s, e) =>
+        // Use a wrapping FlexLayout so buttons will wrap to the next line on narrow screens.
+        // Order: -alt | -1 | value | +1 | +alt
+        var controlsLayout = new FlexLayout
         {
-            _viewModel.DecrementCounter(element.Id, 1);
+            Direction = FlexDirection.Row,
+            Wrap = FlexWrap.Wrap,
+            JustifyContent = FlexJustify.End,
+            AlignItems = FlexAlignItems.Center,
+            HorizontalOptions = LayoutOptions.End
         };
-        controlsLayout.Add(decrementPrimary);
 
-        // Alt decrement next (if enabled)
+        // Alt decrement (leftmost) if enabled
         if (element.AltStepEnabled)
         {
             var altVal = element.AltStep ?? element.Step;
             decrementAlt = new Button
             {
                 Text = $"-{altVal}",
-                WidthRequest = 80,
+                WidthRequest = 60,
                 HeightRequest = 40,
                 CornerRadius = 6,
                 FontSize = 14,
@@ -895,20 +897,45 @@ FontSize = 24,
                 var step = element.AltStep ?? element.Step;
                 _viewModel.DecrementCounter(element.Id, step);
             };
+            decrementAlt.Margin = new Thickness(4, 6);
             controlsLayout.Add(decrementAlt);
         }
 
-        // valueLabel in center
+        // Primary decrement
+        decrementPrimary.Clicked += (s, e) => _viewModel.DecrementCounter(element.Id, 1);
+        decrementPrimary.Margin = new Thickness(4, 6);
+        controlsLayout.Add(decrementPrimary);
+
+        // Value in center (make it center-aligned and allow the center column to expand)
+        valueLabel.HorizontalTextAlignment = TextAlignment.Center;
+        valueLabel.WidthRequest = 60;
+        valueLabel.Margin = new Thickness(6, 6);
         controlsLayout.Add(valueLabel);
 
-        // Alt increment first (if enabled)
+        // Primary increment
+        var incrementBtn = new Button
+        {
+            Text = "+1",
+            WidthRequest = 60,
+            HeightRequest = 40,
+            CornerRadius = 6,
+            FontSize = 14,
+            Padding = new Thickness(0),
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold
+        };
+        incrementBtn.Clicked += (s, e) => _viewModel.IncrementCounter(element.Id, 1);
+        incrementBtn.Margin = new Thickness(4, 6);
+        controlsLayout.Add(incrementBtn);
+
+        // Alt increment (rightmost) if enabled
         if (element.AltStepEnabled)
         {
             var altVal2 = element.AltStep ?? element.Step;
             incrementAlt = new Button
             {
                 Text = $"+{altVal2}",
-                WidthRequest = 80,
+                WidthRequest = 60,
                 HeightRequest = 40,
                 CornerRadius = 6,
                 FontSize = 14,
@@ -921,27 +948,11 @@ FontSize = 24,
                 var step = element.AltStep ?? element.Step;
                 _viewModel.IncrementCounter(element.Id, step);
             };
+            incrementAlt.Margin = new Thickness(4, 6);
             controlsLayout.Add(incrementAlt);
         }
 
-        var incrementBtn = new Button
-        {
-            Text = "+1",
-            WidthRequest = 60,
-            HeightRequest = 40,
-            CornerRadius = 6,
-            FontSize = 14,
-            Padding = new Thickness(0),
-            TextColor = Colors.White,
-            FontAttributes = FontAttributes.Bold
-        };
-        incrementBtn.Clicked += (s, e) =>
-        {
-            _viewModel.IncrementCounter(element.Id, 1);
-        };
-        controlsLayout.Add(incrementBtn);
-
-        // Place controls together in the right columns area
+        // Place controls layout into the parent grid's second column
         grid.Add(controlsLayout, 1, 0);
 
         mainLayout.Add(grid);
