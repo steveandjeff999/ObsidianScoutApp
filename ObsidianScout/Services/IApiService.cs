@@ -30,7 +30,7 @@ public interface IApiService
     Task<ScoutingListResponse> GetAllScoutingDataAsync(int? teamNumber = null, int? eventId = null, int? matchId = null, int limit =200, int offset =0, bool ignoreOfflineMode = false);
     Task<byte[]?> GetGraphsImageAsync(GraphImageRequest request);
     Task<ScheduledNotificationsResponse> GetScheduledNotificationsAsync(int limit =200, int offset =0);
-    Task<PastNotificationsResponse> GetPastNotificationsAsync(int limit =200, int offset =0);
+    Task<UnreadNotificationsResponse> GetUnreadNotificationsAsync();
     Task<ChatMessagesResponse> GetChatMessagesAsync(string type = "dm", string? user = null, string? group = null, int? allianceId = null, int limit =50, int offset =0);
     Task<ChatSendResponse> SendChatAsync(ChatSendRequest request);
     Task<ChatMembersResponse> GetChatMembersAsync(string scope = "team");

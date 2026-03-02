@@ -38,9 +38,8 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
     // Tracking data file path
     private readonly string _trackingFilePath;
     private NotificationTrackingData _trackingData = new();
-    
+
     // Constants
-    private const int CATCHUP_WINDOW_HOURS = 36; // Send missed notifications from last 36 hours
     private const int CLEANUP_RETENTION_DAYS = 7; // Keep sent records for 7 days
     private const int NOTIFICATION_BUFFER_MINUTES = 5; // Show notifications 5 minutes before scheduled time
 
@@ -80,7 +79,7 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
      System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeLoadTrackingDataAsync error: {ex.Message}");
             _trackingData = new NotificationTrackingData
             {
-         LastPollTime = DateTime.UtcNow.AddHours(-CATCHUP_WINDOW_HOURS),
+         LastPollTime = DateTime.UtcNow,
   LastCleanupTime = DateTime.UtcNow
  };
     }
@@ -299,19 +298,12 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
             System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] === POLL START ===");
             System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Current interval: {_currentPollInterval.TotalSeconds}s");
             var pollStartTime = DateTime.UtcNow;
-    
+
             int notificationsFound = 0;
-  
-            // Parallel execution for efficiency - reduces radio active time
-            var missedTask = SafeCheckMissedNotificationsAsync();
-            var scheduledTask = SafeCheckScheduledNotificationsAsync();
-            var chatTask = SafeCheckUnreadChatMessagesAsync();
 
-            await Task.WhenAll(missedTask, scheduledTask, chatTask);
-
-            notificationsFound += await missedTask;
-            notificationsFound += await scheduledTask;
-            notificationsFound += await chatTask;
+            // OPTIMIZED: Use single combined endpoint to fetch chat state and scheduled notifications
+            // This minimizes battery usage by reducing radio active time to a single API call
+            notificationsFound = await SafeCheckUnreadNotificationsAsync();
             
             // Step 4: Update last poll time
             _trackingData.LastPollTime = pollStartTime;
@@ -346,44 +338,18 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
  }
     }
 
-    private async Task<int> SafeCheckMissedNotificationsAsync()
-    {
-        try
- {
-  return await Task.Run(async () => await CheckMissedNotificationsAsync());
-        }
-        catch (Exception ex)
-        {
-         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckMissedNotificationsAsync error: {ex.Message}");
-            return 0;
-   }
-    }
-
-  private async Task<int> SafeCheckScheduledNotificationsAsync()
-    {
-        try
-        {
-            return await Task.Run(async () => await CheckScheduledNotificationsAsync());
-        }
-        catch (Exception ex)
- {
-       System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckScheduledNotificationsAsync error: {ex.Message}");
-            return 0;
-        }
-    }
-
-    private async Task<int> SafeCheckUnreadChatMessagesAsync()
-    {
-    try
+    private async Task<int> SafeCheckUnreadNotificationsAsync()
+  {
+      try
       {
-  return await Task.Run(async () => await CheckUnreadChatMessagesAsync());
-     }
-        catch (Exception ex)
-        {
-        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckUnreadChatMessagesAsync error: {ex.Message}");
-    return 0;
-        }
-    }
+          return await Task.Run(async () => await CheckUnreadNotificationsAsync());
+      }
+      catch (Exception ex)
+      {
+          System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] SafeCheckUnreadNotificationsAsync error: {ex.Message}");
+          return 0;
+      }
+  }
 
     private void SafeCleanupOldRecords()
     {
@@ -409,154 +375,99 @@ public class BackgroundNotificationService : IBackgroundNotificationService, IDi
         }
     }
 
-    private async Task<int> CheckMissedNotificationsAsync()
+    private async Task<int> CheckUnreadNotificationsAsync()
     {
         try
         {
-       System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Checking for missed notifications...");
-      
-     var pastResponse = await _apiService.GetPastNotificationsAsync(limit: 1000);
-     
-   if (!pastResponse.Success || pastResponse.Notifications == null || pastResponse.Notifications.Count == 0)
-            {
-         System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] No past notifications found");
-          return 0;
-   }
-   
-    var now = DateTime.UtcNow;
-            var cutoffTime = now.AddHours(-CATCHUP_WINDOW_HOURS);
-          
-     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {pastResponse.Notifications.Count} past notifications");
-     
-     var missedNotifications = pastResponse.Notifications
- .Where(n => 
-   n.SentAt >= cutoffTime && // Within catch-up window
-    !WasNotificationSent(n.Id)) // Not already sent locally
-      .OrderBy(n => n.SentAt) // Send in chronological order
-       .ToList();
-   
-     if (missedNotifications.Count > 0)
-            {
-    System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {missedNotifications.Count} MISSED notifications to send now!");
-  
-     foreach (var notification in missedNotifications)
-     {
-          await ShowNotificationAsync(notification, isCatchUp: true);
-        }
-            }
-     
-            return missedNotifications.Count;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error checking missed notifications: {ex.Message}");
-   return 0;
-        }
-    }
+            System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Checking unread notifications (combined endpoint)...");
 
-    private async Task<int> CheckScheduledNotificationsAsync()
-    {
-   try
-        {
-            System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Checking scheduled notifications...");
-     
-    var scheduledResponse = await _apiService.GetScheduledNotificationsAsync(limit: 1000);
-     
-   if (!scheduledResponse.Success || scheduledResponse.Notifications == null || scheduledResponse.Notifications.Count == 0)
-       {
-   System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] No scheduled notifications found");
-    return 0;
-      }
-    
-            var now = DateTime.UtcNow;
-var bufferTime = now.AddMinutes(NOTIFICATION_BUFFER_MINUTES);
-      
-    System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {scheduledResponse.Notifications.Count} scheduled notifications");
-    
-  var dueNotifications = scheduledResponse.Notifications
-    .Where(n =>
-   {
-   // Check if push delivery is enabled (REQUIRED!)
-      if (n.DeliveryMethods == null || !n.DeliveryMethods.TryGetValue("push", out var pushEnabled) || !pushEnabled)
- {
-                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Skipping notification {n.Id} - push not enabled");
-   return false;
-   }
-       
-         // Check if notification is pending
-      if (n.Status != "pending")
-  return false;
-   
-          // Check if already sent locally
-   if (WasNotificationSent(n.Id))
-             return false;
- 
-   // Check if notification is due (within buffer time)
-    var scheduledUtc = n.ScheduledFor.Kind == DateTimeKind.Utc ? n.ScheduledFor : n.ScheduledFor.ToUniversalTime();
-             return scheduledUtc <= bufferTime;
-       })
-  .OrderBy(n => n.ScheduledFor) // Send in chronological order
-   .ToList();
-     
-   if (dueNotifications.Count > 0)
-         {
-     System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {dueNotifications.Count} DUE notifications to send now!");
-   
-         foreach (var notification in dueNotifications)
- {
-    await ShowNotificationAsync(notification, isCatchUp: false);
- }
-         }
- 
-        return dueNotifications.Count;
-        }
-    catch (Exception ex)
-        {
-          System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error checking scheduled notifications: {ex.Message}");
-     return 0;
-        }
-    }
+            // Use combined endpoint - fetches both chat state and scheduled notifications in one API call
+            var unreadResponse = await _apiService.GetUnreadNotificationsAsync();
 
-    private async Task<int> CheckUnreadChatMessagesAsync()
-    {
-        try
-        {
-  System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] Checking for unread chat messages...");
-         
-            var chatStateResponse = await _apiService.GetChatStateAsync();
-     
-        if (!chatStateResponse.Success || chatStateResponse.State == null)
+            if (!unreadResponse.Success)
             {
-                System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] No chat state available");
-    return 0;
+                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to fetch unread notifications: {unreadResponse.Error}");
+                return 0;
             }
 
-          var unreadCount = chatStateResponse.State.UnreadCount;
-            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Unread messages: {unreadCount}");
+            int notificationsFound = 0;
 
-            if (unreadCount > 0)
-        {
-        // Fetch actual unread messages to show individual notifications
-    var notificationsSent = await FetchAndShowUnreadMessagesAsync(chatStateResponse.State);
-     
-    if (notificationsSent > 0)
+            // Process scheduled notifications
+            if (unreadResponse.Scheduled?.Notifications != null && unreadResponse.Scheduled.Notifications.Count > 0)
+            {
+                var now = DateTime.UtcNow;
+                var bufferTime = now.AddMinutes(NOTIFICATION_BUFFER_MINUTES);
+
+                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {unreadResponse.Scheduled.Notifications.Count} scheduled notifications");
+
+                var dueNotifications = unreadResponse.Scheduled.Notifications
+                    .Where(n =>
+                    {
+                        // Check if push delivery is enabled (REQUIRED!)
+                        if (n.DeliveryMethods == null || !n.DeliveryMethods.TryGetValue("push", out var pushEnabled) || !pushEnabled)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Skipping notification {n.Id} - push not enabled");
+                            return false;
+                        }
+
+                        // Check if notification is pending
+                        if (n.Status != "pending")
+                            return false;
+
+                        // Check if already sent locally
+                        if (WasNotificationSent(n.Id))
+                            return false;
+
+                        // Check if notification is due (within buffer time)
+                        var scheduledUtc = n.ScheduledFor.Kind == DateTimeKind.Utc ? n.ScheduledFor : n.ScheduledFor.ToUniversalTime();
+                        return scheduledUtc <= bufferTime;
+                    })
+                    .OrderBy(n => n.ScheduledFor) // Send in chronological order
+                    .ToList();
+
+                if (dueNotifications.Count > 0)
                 {
-      // Update tracking
-         _trackingData.LastChatUnreadCount = unreadCount;
-      return notificationsSent;
-     }
-            }
-            else
-  {
-   // Reset tracking when no unread messages
-           _trackingData.LastChatUnreadCount = 0;
+                    System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Found {dueNotifications.Count} DUE scheduled notifications to send now!");
+
+                    foreach (var notification in dueNotifications)
+                    {
+                        await ShowNotificationAsync(notification, isCatchUp: false);
+                        notificationsFound++;
+                    }
+                }
             }
 
-       return 0;
-     }
+            // Process chat messages
+            if (unreadResponse.ChatState != null)
+            {
+                var chatState = unreadResponse.ChatState;
+                var unreadCount = chatState.UnreadCount;
+                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Unread messages: {unreadCount}");
+
+                if (unreadCount > 0)
+                {
+                    // Fetch actual unread messages to show individual notifications
+                    var chatNotificationsSent = await FetchAndShowUnreadMessagesAsync(chatState);
+
+                    if (chatNotificationsSent > 0)
+                    {
+                        // Update tracking
+                        _trackingData.LastChatUnreadCount = unreadCount;
+                        notificationsFound += chatNotificationsSent;
+                    }
+                }
+                else
+                {
+                    // Reset tracking when no unread messages
+                    _trackingData.LastChatUnreadCount = 0;
+                }
+            }
+
+            return notificationsFound;
+        }
         catch (Exception ex)
-     {
-         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error checking chat messages: {ex.Message}");
+        {
+            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error checking unread notifications: {ex.Message}");
             return 0;
         }
     }
@@ -908,126 +819,6 @@ var message = FormatNotificationMessage(notification);
     }
 }
 
-private async Task ShowNotificationAsync(PastNotification notification, bool isCatchUp)
-{
-    try
-    {
-        var title = FormatNotificationTitle(notification, isCatchUp);
-    var message = FormatNotificationMessage(notification);
-    
-    // Try to append match teams if available
-   try
-   {
-   int? eventIdForMatch = notification.EventId;
-   if (!eventIdForMatch.HasValue && !string.IsNullOrEmpty(notification.EventCode))
-   {
-   eventIdForMatch = await TryGetEventIdFromCodeAsync(notification.EventCode);
-   }
-   
-   if (notification.MatchNumber.HasValue && eventIdForMatch.HasValue)
- {
- var matchesResp = await _apiService.GetMatchesAsync(eventIdForMatch.Value);
- if (matchesResp != null && matchesResp.Success && matchesResp.Matches != null)
- {
- var match = matchesResp.Matches.FirstOrDefault(m => m.MatchNumber == notification.MatchNumber.Value);
- if (match != null)
- {
- var red = ExtractTeamList(match.RedAlliance);
- var blue = ExtractTeamList(match.BlueAlliance);
-
- var teamsText = $"\n\nRed: {red}\nBlue: {blue}";
- message += teamsText;
- System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Appended teams to past message for match {notification.MatchNumber}: Red='{red}' Blue='{blue}'");
- }
- else
- {
- System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Past match not found: number {notification.MatchNumber} event {eventIdForMatch}");
- }
- }
- else
- {
- System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Failed to load matches for event {eventIdForMatch}");
- }
- }
-   }
-   catch (Exception ex)
-   {
-   System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error fetching match teams for past notification: {ex.Message}");
-   }
-   
-        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Showing past notification: {title}");
-        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Message: {message}");
-    
-        // Show notification using platform service
-if (_localNotificationService != null)
-        {
-            // CRITICAL: Always add deep link data for match notifications
-            // Even if eventCode/eventId are missing, we still want tap to open the app
-            var deepLinkData = new Dictionary<string, string>
-    {
-       { "type", "match" }
-      };
-         
-         if (!string.IsNullOrEmpty(notification.EventCode))
-            {
-      deepLinkData["eventCode"] = notification.EventCode;
-   }
-  
-            // Try to add eventId - if missing, try to look up
-        int? eventId = notification.EventId;
-     if (!eventId.HasValue && !string.IsNullOrEmpty(notification.EventCode))
-            {
-      // Try to look up eventId from eventCode
-eventId = await TryGetEventIdFromCodeAsync(notification.EventCode);
-   if (eventId.HasValue)
-       {
- System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications]   ✓ Looked up eventId {eventId} from eventCode {notification.EventCode}");
-                }
-       }
-
-            if (eventId.HasValue)
-            {
-                deepLinkData["eventId"] = eventId.Value.ToString();
-            }
-          
-    if (notification.MatchNumber.HasValue)
-       {
-    deepLinkData["matchNumber"] = notification.MatchNumber.ToString();
-      }
-     
-       System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Adding deep link data to past match notification:");
-        foreach (var kvp in deepLinkData)
-     {
-                System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications]   {kvp.Key} = {kvp.Value}");
-   }
-   
-            // Always use ShowWithDataAsync so notification is tappable
-      await _localNotificationService.ShowWithDataAsync(title, message, notification.Id, deepLinkData);
-        }
-   else
-        {
-            // Fallback to UI alert if notification service not available
-      MainThread.BeginInvokeOnMainThread(async () =>
- {
-   try
-                {
-            await Shell.Current.DisplayAlert(title, message, "OK");
-                }
-catch { }
-          });
-    }
-       
-        // Record that we sent this notification
-        RecordSentNotification(notification, isCatchUp);
-   
-      System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] ✓ Notification shown and recorded");
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error showing past notification {notification.Id}: {ex.Message}");
-    }
-}
-
 private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
 {
  try
@@ -1089,21 +880,6 @@ private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
       {
      return FormatNotificationType(notification.NotificationType);
    }
-        
-        return "Notification";
-    }
-
-    private string FormatNotificationTitle(PastNotification notification, bool isCatchUp)
-    {
-        if (!string.IsNullOrEmpty(notification.Title))
-        {
-     return notification.Title;
-     }
-
-   if (!string.IsNullOrEmpty(notification.NotificationType))
-        {
-            return FormatNotificationType(notification.NotificationType);
-        }
         
         return "Notification";
     }
@@ -1184,58 +960,6 @@ private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
         return $"{timeText}\n{scheduledLine}";
     }
 
-    private string FormatNotificationMessage(PastNotification notification)
-  {
-    if (!string.IsNullOrEmpty(notification.Message))
-        {
-            return notification.Message;
-        }
-        
-        // Calculate how long ago this was sent
-        var now = DateTime.UtcNow;
-        var sentUtc = notification.SentAt.Kind == DateTimeKind.Utc 
-         ? notification.SentAt 
-         : notification.SentAt.ToUniversalTime();
-    
-  var timeSinceSent = now - sentUtc;
-        
-  // Format time since sent
-      string timeText;
-        if (timeSinceSent.TotalMinutes < 1)
- {
-            timeText = "Sent just now";
-        }
-        else if (timeSinceSent.TotalMinutes < 60)
-        {
-            var minutes = (int)Math.Round(timeSinceSent.TotalMinutes);
-      timeText = $"Sent {minutes} minute{(minutes != 1 ? "s" : "")} ago";
-        }
-        else if (timeSinceSent.TotalHours < 24)
-        {
-            System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Time since sent: {timeSinceSent.TotalHours} hours");
-        var hours = (int)Math.Round(timeSinceSent.TotalHours);
- timeText = $"Sent {hours} hour{(hours != 1 ? "s" : "")} ago";
-     }
-     else
-      {
-            var days = (int)Math.Floor(timeSinceSent.TotalDays);
-      timeText = $"Sent {days} day{(days != 1 ? "s" : "")} ago";
-    }
-    
-        // Build full message with match details
-        if (notification.MatchNumber.HasValue && !string.IsNullOrEmpty(notification.EventCode))
-        {
-      return $"{timeText}\n\n{notification.EventCode} - Match #{notification.MatchNumber}";
-        }
-   
-    if (notification.MatchNumber.HasValue)
-        {
-          return $"{timeText}\n\nMatch #{notification.MatchNumber}";
-    }
-
-        return timeText;
-    }
-
     private string FormatNotificationType(string notificationType)
     {
   return notificationType switch
@@ -1270,24 +994,6 @@ private async Task<int?> TryGetEventIdFromCodeAsync(string eventCode)
         System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent notification {notification.Id} (missed: {isCatchUp})");
     }
 
-    private void RecordSentNotification(PastNotification notification, bool isCatchUp)
-    {
-        var record = new SentNotificationRecord
-        {
-     NotificationId = notification.Id,
-            SentAt = DateTime.UtcNow,
-  ScheduledFor = notification.SentAt,
-            NotificationType = notification.NotificationType,
-    MatchNumber = notification.MatchNumber,
-            EventCode = notification.EventCode,
-   WasMissed = isCatchUp
-        };
-
-        _trackingData.SentNotifications.Add(record);
-        
-System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent notification {notification.Id} (missed: {isCatchUp})");
-    }
-
     private void CleanupOldRecords()
     {
       var cutoffDate = DateTime.UtcNow.AddDays(-CLEANUP_RETENTION_DAYS);
@@ -1311,7 +1017,7 @@ System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent not
    System.Diagnostics.Debug.WriteLine("[BackgroundNotifications] No tracking file found, starting fresh");
         _trackingData = new NotificationTrackingData
             {
-   LastPollTime = DateTime.UtcNow.AddHours(-CATCHUP_WINDOW_HOURS),
+   LastPollTime = DateTime.UtcNow,
       LastCleanupTime = DateTime.UtcNow
        };
          return;
@@ -1331,7 +1037,7 @@ System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Recorded sent not
      System.Diagnostics.Debug.WriteLine($"[BackgroundNotifications] Error loading tracking data: {ex.Message}");
     _trackingData = new NotificationTrackingData
             {
-                LastPollTime = DateTime.UtcNow.AddHours(-CATCHUP_WINDOW_HOURS),
+                LastPollTime = DateTime.UtcNow,
    LastCleanupTime = DateTime.UtcNow
          };
     }

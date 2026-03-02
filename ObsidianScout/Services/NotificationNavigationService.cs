@@ -252,14 +252,14 @@ public class NotificationNavigationService : INotificationNavigationService
 
         try
         {
-    // Wait for Shell to be available
+    // Wait for Shell to be available AND fully initialized
      var shellCurrent = Shell.Current;
             if (shellCurrent == null)
          {
                 System.Diagnostics.Debug.WriteLine("[NotificationNavigation] Shell.Current is null, waiting...");
-            
-          // Wait up to 3 seconds for Shell to become available
-          for (int i = 0; i < 30; i++)
+
+          // Wait up to 5 seconds for Shell to become available
+          for (int i = 0; i < 50; i++)
    {
            await Task.Delay(100);
    shellCurrent = Shell.Current;
@@ -272,6 +272,9 @@ if (shellCurrent != null) break;
         return false;
                 }
             }
+
+            // Extra delay to ensure Shell is fully ready for navigation
+            await Task.Delay(500);
 
           // Raise navigation event before navigating
  var notificationType = data.TryGetValue("type", out var t) ? t : "unknown";

@@ -31,35 +31,6 @@ namespace ObsidianScout.Models
  [JsonPropertyName("error")] public string? Error { get; set; }
  }
 
- // Past notification model
- public class PastNotification
- {
- [JsonPropertyName("id")] public int Id { get; set; }
- [JsonPropertyName("subscription_id")] public int SubscriptionId { get; set; }
- [JsonPropertyName("notification_type")] public string NotificationType { get; set; } = string.Empty;
- [JsonPropertyName("match_id")] public int? MatchId { get; set; }
- [JsonPropertyName("match_number")] public int? MatchNumber { get; set; }
- [JsonPropertyName("event_id")] public int? EventId { get; set; }  // NEW: For deep linking
- [JsonPropertyName("event_code")] public string? EventCode { get; set; }
- [JsonPropertyName("sent_at")] public DateTime SentAt { get; set; }
- [JsonPropertyName("email_sent")] public bool EmailSent { get; set; }
- [JsonPropertyName("push_sent_count")] public int PushSentCount { get; set; }
- [JsonPropertyName("email_error")] public string? EmailError { get; set; }
- [JsonPropertyName("push_error")] public string? PushError { get; set; }
- [JsonPropertyName("title")] public string? Title { get; set; }
- [JsonPropertyName("message")] public string? Message { get; set; }
- [JsonPropertyName("target_team_number")] public int? TargetTeamNumber { get; set; }
- }
-
- public class PastNotificationsResponse
- {
- [JsonPropertyName("success")] public bool Success { get; set; }
- [JsonPropertyName("count")] public int Count { get; set; }
- [JsonPropertyName("total")] public int Total { get; set; }
- [JsonPropertyName("notifications")] public List<PastNotification>? Notifications { get; set; }
- [JsonPropertyName("error")] public string? Error { get; set; }
- }
-
  // Local tracking of sent notifications
  public class SentNotificationRecord
  {
@@ -140,8 +111,39 @@ namespace ObsidianScout.Models
  {
  [JsonPropertyName("type")]
  public string Type { get; set; } = string.Empty; // "dm", "group", etc.
- 
+
  [JsonPropertyName("id")]
  public string? Id { get; set; } // username for DM, group name for groups
+ }
+
+ // Combined unread notifications response (chat + scheduled in one call)
+ public class UnreadNotificationsResponse
+ {
+ [JsonPropertyName("success")]
+ public bool Success { get; set; }
+
+ [JsonPropertyName("chat_state")]
+ public ChatState? ChatState { get; set; }
+
+ [JsonPropertyName("scheduled")]
+ public ScheduledSection? Scheduled { get; set; }
+
+ [JsonPropertyName("error")]
+ public string? Error { get; set; }
+
+ [JsonPropertyName("error_code")]
+ public string? ErrorCode { get; set; }
+ }
+
+ public class ScheduledSection
+ {
+ [JsonPropertyName("count")]
+ public int Count { get; set; }
+
+ [JsonPropertyName("total")]
+ public int Total { get; set; }
+
+ [JsonPropertyName("notifications")]
+ public List<ScheduledNotification>? Notifications { get; set; }
  }
 }

@@ -1562,36 +1562,36 @@ var errorContent = await response.Content.ReadAsStringAsync();
         catch (Exception ex)
         {
             return new ScheduledNotificationsResponse { Success = false, Error = ex.Message };
+            }
         }
-    }
 
-    public async Task<PastNotificationsResponse> GetPastNotificationsAsync(int limit =200, int offset =0)
+        public async Task<UnreadNotificationsResponse> GetUnreadNotificationsAsync()
     {
         if (!await ShouldUseNetworkAsync())
         {
-            return new PastNotificationsResponse { Success = false, Error = "Offline - cannot fetch past notifications" };
+            return new UnreadNotificationsResponse { Success = false, Error = "Offline - cannot fetch unread notifications", ErrorCode = "OFFLINE" };
         }
 
         try
         {
             var baseUrl = await GetBaseUrlAsync();
-            var url = $"{baseUrl}/notifications/past?limit={limit}&offset={offset}";
-            
+            var url = $"{baseUrl}/notifications/unread";
+
             var request = await CreateRequestMessageAsync(HttpMethod.Get, url);
             var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<PastNotificationsResponse>(_jsonOptions);
-                return result ?? new PastNotificationsResponse { Success = false, Error = "Invalid response" };
+                var result = await response.Content.ReadFromJsonAsync<UnreadNotificationsResponse>(_jsonOptions);
+                return result ?? new UnreadNotificationsResponse { Success = false, Error = "Invalid response" };
             }
 
             var err = await response.Content.ReadAsStringAsync();
-            return new PastNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+            return new UnreadNotificationsResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
         }
         catch (Exception ex)
         {
-            return new PastNotificationsResponse { Success = false, Error = ex.Message };
+            return new UnreadNotificationsResponse { Success = false, Error = ex.Message };
         }
     }
 
