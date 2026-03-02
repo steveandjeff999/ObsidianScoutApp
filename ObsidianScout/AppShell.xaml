@@ -278,6 +278,13 @@ Source="{Binding ProfilePictureSource}"
         <ShellContent ContentTemplate="{DataTemplate views:PitScoutingPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Qualitative" IsVisible="{Binding IsLoggedIn}" Route="QualitativeScoutingPage">
+        <FlyoutItem.Icon>
+            <FontImageSource Glyph="⭐" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:QualitativeScoutingPage}" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Settings" IsVisible="{Binding IsLoggedIn}">
         <FlyoutItem.Icon>
             <FontImageSource Glyph="⚙" FontFamily="OpenSansSemibold" Size="20" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />

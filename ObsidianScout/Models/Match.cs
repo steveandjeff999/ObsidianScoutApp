@@ -121,6 +121,8 @@ var time = PredictedTime ?? ScheduledTime;
     }
 
     public bool IsCompleted => RedScore.HasValue || BlueScore.HasValue || !string.IsNullOrEmpty(Winner);
+
+    public override string ToString() => $"{MatchType} {MatchNumber}";
 }
 
 // Custom JSON converter to safely handle integer conversion

@@ -244,12 +244,12 @@ public class BoolToColorConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-  return value is bool b && b ? Colors.Green : Colors.Red;
+        return value is bool b && b ? Color.FromArgb("#0D6EFD") : Color.FromArgb("#6C757D");
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-     throw new NotImplementedException();
+        throw new NotImplementedException();
     }
 }
 

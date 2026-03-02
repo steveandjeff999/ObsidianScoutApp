@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ObsidianScout.ViewModels"
+             x:Class="ObsidianScout.Views.QualitativeScoutingPage"
+             x:DataType="vm:QualitativeScoutingViewModel"
+             Title="Qualitative Scouting">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="RedAllianceColor">#DC3545</Color>
+            <Color x:Key="BlueAllianceColor">#0D6EFD</Color>
+            <Color x:Key="WarningColor">#FFC107</Color>
+            <Color x:Key="SuccessColor">#198754</Color>
+            <Color x:Key="DangerColor">#DC3545</Color>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <!-- Main content -->
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <!-- Page Title -->
+                <Label Text="⭐ Qualitative Scouting"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#333333, Dark=#E6E6E6}" />
+
+                <!-- Status Message -->
+                <Label Text="{Binding StatusMessage}"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}"
+                       TextColor="{AppThemeBinding Light=#0D6EFD, Dark=#6EA8FE}"
+                       FontSize="14"
+                       Margin="0,0,0,4" />
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   IsVisible="{Binding IsLoading}"
+                                   Color="{AppThemeBinding Light=#0D6EFD, Dark=#6EA8FE}"
+                                   HorizontalOptions="Center" />
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- SCOUT MODE TOGGLE -->
+                <!-- ═══════════════════════════════════════════ -->
+                <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A1A1A}"
+                        Stroke="{AppThemeBinding Light=#DEE2E6, Dark=#444444}"
+                        StrokeThickness="1"
+                        Padding="16">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Scouting Mode" FontAttributes="Bold" FontSize="15"
+                               TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    Text="📋 From Match"
+                                    Command="{Binding SetMatchModeCommand}"
+                                    BackgroundColor="{Binding IsMatchMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=MatchMode}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontSize="14"
+                                    HeightRequest="44" />
+                            <Button Grid.Column="1"
+                                    Text="👤 Individual Team"
+                                    Command="{Binding SetTeamModeCommand}"
+                                    BackgroundColor="{Binding IsTeamMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter=TeamMode}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    FontSize="14"
+                                    HeightRequest="44" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- PREDICTED WINNER -->
+                <!-- ═══════════════════════════════════════════ -->
+                <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A1A1A}"
+                        Stroke="{AppThemeBinding Light=#DEE2E6, Dark=#444444}"
+                        StrokeThickness="1"
+                        Padding="16">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Predicted Winner" FontAttributes="Bold" FontSize="15"
+                               TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                        <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                            <Button Text="Red" Command="{Binding SetPredictionCommand}" CommandParameter="red"
+                                    BackgroundColor="#DC3545" TextColor="White" CornerRadius="6"
+                                    FontSize="13" HeightRequest="36" Margin="0,0,6,6" Padding="12,0" />
+                            <Button Text="Blue" Command="{Binding SetPredictionCommand}" CommandParameter="blue"
+                                    BackgroundColor="#0D6EFD" TextColor="White" CornerRadius="6"
+                                    FontSize="13" HeightRequest="36" Margin="0,0,6,6" Padding="12,0" />
+                            <Button Text="Tie" Command="{Binding SetPredictionCommand}" CommandParameter="tie"
+                                    BackgroundColor="#6C757D" TextColor="White" CornerRadius="6"
+                                    FontSize="13" HeightRequest="36" Margin="0,0,6,6" Padding="12,0" />
+                            <Button Text="No Prediction" Command="{Binding SetPredictionCommand}" CommandParameter=""
+                                    BackgroundColor="#6C757D" TextColor="White" CornerRadius="6"
+                                    FontSize="13" HeightRequest="36" Margin="0,0,6,6" Padding="12,0" />
+                        </FlexLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- MATCH SELECTOR -->
+                <!-- ═══════════════════════════════════════════ -->
+                <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1A1A1A}"
+                        Stroke="{AppThemeBinding Light=#DEE2E6, Dark=#444444}"
+                        StrokeThickness="1"
+                        Padding="16">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Select Match" FontAttributes="Bold" FontSize="15"
+                               TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                        <Picker x:Name="MatchPicker"
+                                Title="-- Select a Match --"
+                                ItemsSource="{Binding Matches}"
+                                SelectedItem="{Binding SelectedMatch}"
+                                ItemDisplayBinding="{Binding ., StringFormat='{0}'}"
+                                TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}"
+                                BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2A2A2A}" />
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsMatchMode}">
+                            <Label Text="Alliance to Scout" FontAttributes="Bold" FontSize="14"
+                                   TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                                <Button Grid.Column="0" Text="🔴 Red"
+                                        Clicked="OnAllianceClicked" AutomationId="red"
+                                        BackgroundColor="#DC3545" TextColor="White"
+                                        CornerRadius="8" FontSize="13" HeightRequest="40" />
+                                <Button Grid.Column="1" Text="🔵 Blue"
+                                        Clicked="OnAllianceClicked" AutomationId="blue"
+                                        BackgroundColor="#0D6EFD" TextColor="White"
+                                        CornerRadius="8" FontSize="13" HeightRequest="40" />
+                                <Button Grid.Column="2" Text="Both"
+                                        Clicked="OnAllianceClicked" AutomationId="both"
+                                        BackgroundColor="#6C757D" TextColor="White"
+                                        CornerRadius="8" FontSize="13" HeightRequest="40" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <!-- Team selection (team mode only) -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding IsTeamMode}">
+                            <Label Text="Select Team" FontAttributes="Bold" FontSize="14"
+                                   TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                            <Picker x:Name="TeamPicker"
+                                    Title="-- Select a Team --"
+                                    ItemsSource="{Binding AvailableTeams}"
+                                    SelectedItem="{Binding SelectedTeamPickerItem}"
+                                    ItemDisplayBinding="{Binding Display}"
+                                    TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}"
+                                    BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2A2A2A}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- TEAM CARDS (dynamically generated in code-behind) -->
+                <!-- ═══════════════════════════════════════════ -->
+                <VerticalStackLayout x:Name="TeamCardsContainer" Spacing="16" />
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- ACTION BUTTONS -->
+                <!-- ═══════════════════════════════════════════ -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12"
+                      IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                    <Button Grid.Column="0"
+                            Text="💾 Save"
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding IsSaving, Converter={StaticResource InvertedBoolConverter}}"
+                            BackgroundColor="{StaticResource SuccessColor}"
+                            TextColor="White"
+                            CornerRadius="12"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="52" />
+                    <Button Grid.Column="1"
+                            Text="📱 QR Code"
+                            Command="{Binding GenerateQRCodeCommand}"
+                            BackgroundColor="#0D6EFD"
+                            TextColor="White"
+                            CornerRadius="12"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="52" />
+                </Grid>
+
+                <!-- Saving indicator -->
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" IsVisible="{Binding IsSaving}">
+                    <ActivityIndicator IsRunning="True" Color="{StaticResource SuccessColor}" WidthRequest="20" HeightRequest="20" />
+                    <Label Text="Saving..." TextColor="{StaticResource SuccessColor}" FontSize="14" />
+                </HorizontalStackLayout>
+
+                <!-- Bottom spacing -->
+                <BoxView HeightRequest="40" Color="Transparent" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- QR Code Overlay -->
+        <Grid IsVisible="{Binding IsQRCodeVisible}"
+              BackgroundColor="#CC000000"
+              ZIndex="100">
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#555}"
+                    StrokeThickness="1"
+                    Padding="24"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    MaximumWidthRequest="400">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
+                    <Label Text="📱 Qualitative Scouting QR Code"
+                           FontSize="18" FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light=#333, Dark=#E6E6E6}" />
+                    <Image Source="{Binding QrCodeImage}"
+                           WidthRequest="300" HeightRequest="300"
+                           Aspect="AspectFit"
+                           BackgroundColor="White"
+                           HorizontalOptions="Center" />
+                    <Button Text="Close"
+                            Command="{Binding CloseQRCodeCommand}"
+                            BackgroundColor="#6C757D"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="44"
+                            HorizontalOptions="Fill" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

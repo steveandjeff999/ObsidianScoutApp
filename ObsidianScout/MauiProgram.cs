@@ -190,7 +190,8 @@ namespace ObsidianScout
  builder.Services.AddTransient<ManageUsersViewModel>();
  builder.Services.AddTransient<ManageUserEditViewModel>();
  builder.Services.AddTransient<AlliancesViewModel>();
- 
+ builder.Services.AddTransient<QualitativeScoutingViewModel>();
+
  // Register Pages
  builder.Services.AddTransient<LoginPage>();
  builder.Services.AddTransient<MainPage>();
@@ -219,6 +220,7 @@ namespace ObsidianScout
 // History
 builder.Services.AddTransient<HistoryViewModel>();
 builder.Services.AddTransient<HistoryPage>();
+ builder.Services.AddTransient<QualitativeScoutingPage>();
 
  var app = builder.Build();
 

@@ -260,6 +260,7 @@ namespace ObsidianScout
 				Routing.RegisterRoute("ChatPage", typeof(ChatPage));
 				Routing.RegisterRoute("MatchPredictionPage", typeof(MatchPredictionPage));
 				Routing.RegisterRoute("HistoryPage", typeof(Views.HistoryPage));
+				Routing.RegisterRoute("QualitativeScoutingPage", typeof(QualitativeScoutingPage));
 			}
 			catch (Exception ex)
 			{
