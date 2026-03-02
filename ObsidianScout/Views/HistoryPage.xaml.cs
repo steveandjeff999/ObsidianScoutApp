@@ -73,11 +73,21 @@ public partial class HistoryPage : ContentPage
                         se.UploadInProgress = true;
                         if (BindingContext is HistoryViewModel vm1)
                         {
+                            // Check both AllScouting and AllQualitative for the entry
                             var existing1 = vm1.AllScouting.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
                             if (existing1 != null)
                             {
                                 var i1 = vm1.AllScouting.IndexOf(existing1);
                                 vm1.AllScouting[i1] = se;
+                            }
+                            else
+                            {
+                                var qualExisting1 = vm1.AllQualitative.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
+                                if (qualExisting1 != null)
+                                {
+                                    var i1 = vm1.AllQualitative.IndexOf(qualExisting1);
+                                    vm1.AllQualitative[i1] = se;
+                                }
                             }
                         }
 
@@ -107,13 +117,28 @@ public partial class HistoryPage : ContentPage
                             // update UI
                             if (BindingContext is HistoryViewModel vm)
                             {
+                                // Try AllScouting first, then AllQualitative
                                 var existing = vm.AllScouting.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
                                 if (existing != null)
                                 {
                                     var i = vm.AllScouting.IndexOf(existing);
                                     vm.AllScouting[i] = se;
                                 }
-                                else vm.AllScouting.Insert(0, se);
+                                else
+                                {
+                                    var qualExisting = vm.AllQualitative.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
+                                    if (qualExisting != null)
+                                    {
+                                        var i = vm.AllQualitative.IndexOf(qualExisting);
+                                        vm.AllQualitative[i] = se;
+                                    }
+                                    else
+                                    {
+                                        // entry is new to both collections
+                                        if (se.IsQualitative) vm.AllQualitative.Insert(0, se);
+                                        else vm.AllScouting.Insert(0, se);
+                                    }
+                                }
                             }
                         }
                         else
@@ -127,6 +152,15 @@ public partial class HistoryPage : ContentPage
                                 {
                                     var i2 = vm2.AllScouting.IndexOf(existing2);
                                     vm2.AllScouting[i2] = se;
+                                }
+                                else
+                                {
+                                    var qualExisting2 = vm2.AllQualitative.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
+                                    if (qualExisting2 != null)
+                                    {
+                                        var i2 = vm2.AllQualitative.IndexOf(qualExisting2);
+                                        vm2.AllQualitative[i2] = se;
+                                    }
                                 }
                             }
 
@@ -705,6 +739,7 @@ public partial class HistoryPage : ContentPage
                         // Update UI collection
                         if (BindingContext is HistoryViewModel vm)
                         {
+                            // Check AllScouting first, then AllQualitative
                             var existing = vm.AllScouting.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
                             if (existing != null)
                             {
@@ -713,7 +748,17 @@ public partial class HistoryPage : ContentPage
                             }
                             else
                             {
-                                vm.AllScouting.Insert(0, se);
+                                var qualExisting = vm.AllQualitative.FirstOrDefault(x => (!string.IsNullOrEmpty(se.OfflineId) && x.OfflineId == se.OfflineId) || (se.Id > 0 && x.Id == se.Id) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
+                                if (qualExisting != null)
+                                {
+                                    var idx = vm.AllQualitative.IndexOf(qualExisting);
+                                    vm.AllQualitative[idx] = se;
+                                }
+                                else
+                                {
+                                    if (se.IsQualitative) vm.AllQualitative.Insert(0, se);
+                                    else vm.AllScouting.Insert(0, se);
+                                }
                             }
                         }
 
@@ -1110,8 +1155,17 @@ public partial class HistoryPage : ContentPage
                             }
                             else
                             {
-                                // Fallback: reload from cache
-                                await vm.LoadAsync();
+                                // Also check qualitative collection
+                                var qualItem = vm.AllQualitative.FirstOrDefault(x => x.OfflineId == se.OfflineId || (x.Id == se.Id && se.Id > 0) || (x.Timestamp == se.Timestamp && x.TeamId == se.TeamId && x.MatchId == se.MatchId));
+                                if (qualItem != null)
+                                {
+                                    vm.AllQualitative.Remove(qualItem);
+                                }
+                                else
+                                {
+                                    // Fallback: reload from cache
+                                    await vm.LoadAsync();
+                                }
                             }
                         }
                     }
@@ -1199,6 +1253,52 @@ public partial class HistoryPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[History] OnDeletePitEntryClicked error: {ex.Message}");
+        }
+    }
+
+    public async void OnExportQualEntryClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            if (sender is Button btn && btn.CommandParameter is ScoutingEntry se)
+            {
+                var exportData = new Dictionary<string, object?>
+                {
+                    ["qualitative"] = true,
+                    ["team_number"] = se.TeamNumber,
+                    ["match_number"] = se.MatchNumber,
+                    ["match_type"] = se.MatchType,
+                    ["event_code"] = se.EventCode,
+                    ["alliance"] = se.Alliance,
+                    ["scout_name"] = se.ScoutName,
+                    ["timestamp"] = se.Timestamp.ToString("O"),
+                    ["generated_at"] = DateTime.UtcNow.ToString("O")
+                };
+
+                // Merge the entry's data into the export
+                if (se.Data != null)
+                {
+                    foreach (var kvp in se.Data)
+                        exportData[kvp.Key] = kvp.Value;
+                }
+
+                var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions { WriteIndented = true });
+
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var exportsFolder = Path.Combine(documentsPath, "ObsidianScout", "Exports", "Qualitative");
+                Directory.CreateDirectory(exportsFolder);
+
+                var fileName = $"qual_team{se.TeamNumber}_match{se.MatchNumber}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+                var filePath = Path.Combine(exportsFolder, fileName);
+                await File.WriteAllTextAsync(filePath, json);
+
+                await DisplayAlert("Exported", $"Qualitative data saved to:\n{fileName}", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[History] OnExportQualEntryClicked error: {ex.Message}");
+            await DisplayAlert("Error", $"Export failed: {ex.Message}", "OK");
         }
     }
 }

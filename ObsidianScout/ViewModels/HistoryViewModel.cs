@@ -23,8 +23,9 @@ public partial class HistoryViewModel : ObservableObject
     // Combined server + pending lists shown in tabs
     public ObservableCollection<ScoutingEntry> AllScouting { get; } = new();
     public ObservableCollection<PitScoutingEntry> AllPit { get; } = new();
+    public ObservableCollection<ScoutingEntry> AllQualitative { get; } = new();
 
-    private int _selectedTab = 0; // 0 = Match, 1 = Pit
+    private int _selectedTab = 0; // 0 = Match, 1 = Pit, 2 = Qualitative
     public int SelectedTab
     {
         get => _selectedTab;
@@ -35,14 +36,17 @@ public partial class HistoryViewModel : ObservableObject
             OnPropertyChanged(nameof(SelectedTab));
             OnPropertyChanged(nameof(IsMatchTabSelected));
             OnPropertyChanged(nameof(IsPitTabSelected));
+            OnPropertyChanged(nameof(IsQualitativeTabSelected));
         }
     }
 
     public bool IsMatchTabSelected => SelectedTab == 0;
     public bool IsPitTabSelected => SelectedTab == 1;
+    public bool IsQualitativeTabSelected => SelectedTab == 2;
 
     public IRelayCommand SwitchToMatchCommand => new RelayCommand(() => SelectedTab = 0);
     public IRelayCommand SwitchToPitCommand => new RelayCommand(() => SelectedTab = 1);
+    public IRelayCommand SwitchToQualitativeCommand => new RelayCommand(() => SelectedTab = 2);
 
     [ObservableProperty]
     private string statusMessage = string.Empty;
@@ -60,6 +64,7 @@ public partial class HistoryViewModel : ObservableObject
         PendingPit.Clear();
         AllScouting.Clear();
         AllPit.Clear();
+        AllQualitative.Clear();
         // server entries cache used for comparison
         List<ScoutingEntry> serverEntries = new();
 
@@ -144,31 +149,28 @@ public partial class HistoryViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine($"[History] Failed to load server scouting: {ex.Message}");
         }
 
-        // If server returned nothing, fall back to cached scouting data
-        if (AllScouting.Count == 0)
+        // Always merge cached scouting data (includes locally-saved qualitative entries)
+        try
         {
-            try
+            var cached = await _cacheService.GetCachedScoutingDataAsync();
+            if (cached != null && cached.Count > 0)
             {
-                var cached = await _cacheService.GetCachedScoutingDataAsync();
-                if (cached != null && cached.Count > 0)
+                foreach (var e in cached.OrderByDescending(x => x.Timestamp))
                 {
-                    foreach (var e in cached.OrderByDescending(x => x.Timestamp))
-                    {
-                        if (!string.IsNullOrEmpty(e.OfflineId) && deletedOfflineIds.Contains(e.OfflineId)) continue;
-                        if (e.Id > 0 && deletedScoutingIds.Contains(e.Id)) continue;
-                        bool exists = AllScouting.Any(x =>
-                            (!string.IsNullOrEmpty(e.OfflineId) && !string.IsNullOrEmpty(x.OfflineId) && x.OfflineId == e.OfflineId) ||
-                            (e.Id > 0 && x.Id == e.Id) ||
-                            (x.Timestamp == e.Timestamp && x.TeamId == e.TeamId && x.MatchId == e.MatchId)
-                        );
-                        if (!exists) AllScouting.Add(e);
-                    }
+                    if (!string.IsNullOrEmpty(e.OfflineId) && deletedOfflineIds.Contains(e.OfflineId)) continue;
+                    if (e.Id > 0 && deletedScoutingIds.Contains(e.Id)) continue;
+                    bool exists = AllScouting.Any(x =>
+                        (!string.IsNullOrEmpty(e.OfflineId) && !string.IsNullOrEmpty(x.OfflineId) && x.OfflineId == e.OfflineId) ||
+                        (e.Id > 0 && x.Id == e.Id) ||
+                        (x.Timestamp == e.Timestamp && x.TeamId == e.TeamId && x.MatchId == e.MatchId)
+                    );
+                    if (!exists) AllScouting.Add(e);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[History] Failed to load cached scouting: {ex.Message}");
-            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[History] Failed to load cached scouting: {ex.Message}");
         }
 
         // Merge pending on top of server/cache data (avoid duplicates)
@@ -266,49 +268,6 @@ public partial class HistoryViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine($"[History] Error loading exported JSON files: {ex.Message}");
         }
 
-        // Load server pit entries
-        try
-        {
-            var pitRes = await _apiService.GetPitScoutingDataAsync();
-            if (pitRes != null && pitRes.Success && pitRes.Entries != null)
-            {
-                foreach (var e in pitRes.Entries.OrderByDescending(x => x.Timestamp))
-                {
-                    if (e.Id > 0 && deletedPitIds.Contains(e.Id)) continue;
-                    AllPit.Add(e);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[History] Failed to load server pit scouting: {ex.Message}");
-        }
-
-        // If server returned nothing, fall back to cached pit data
-        if (AllPit.Count == 0)
-        {
-            try
-            {
-                var cachedPit = await _cacheService.GetCachedPitScoutingDataAsync();
-                if (cachedPit != null && cachedPit.Count > 0)
-                {
-                    foreach (var e in cachedPit.OrderByDescending(x => x.Timestamp))
-                    {
-                        if (e.Id > 0 && deletedPitIds.Contains(e.Id)) continue;
-                        // avoid duplicates
-                        bool exists = AllPit.Any(x => (e.Id > 0 && x.Id == e.Id) || (x.Timestamp == e.Timestamp && x.TeamId == e.TeamId && x.TeamNumber == e.TeamNumber));
-                        if (!exists) AllPit.Add(e);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[History] Failed to load cached pit scouting: {ex.Message}");
-            }
-        }
-
-        // Merge pending pit entries on top
-        foreach (var p in PendingPit.OrderByDescending(e => e.Timestamp)) AllPit.Insert(0, p);
         // Load server pit entries (best-effort) and fall back to cache
         try
         {
@@ -374,10 +333,18 @@ public partial class HistoryViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"[History] PendingPit count: {pendingPitList.Count}");
         foreach (var p in pendingPitList) AllPit.Insert(0, p);
 
+        // Split qualitative entries into their own dedicated tab
+        var qualEntries = AllScouting.Where(e => e.IsQualitative).ToList();
+        foreach (var q in qualEntries)
+        {
+            AllScouting.Remove(q);
+            AllQualitative.Add(q);
+        }
+
         // Update status for debugging/UI and dump a sample entry to output
         try
         {
-            StatusMessage = $"Loaded {AllScouting.Count} match entries, {AllPit.Count} pit entries";
+            StatusMessage = $"Loaded {AllScouting.Count} match, {AllPit.Count} pit, {AllQualitative.Count} qualitative entries";
             System.Diagnostics.Debug.WriteLine($"[History] {StatusMessage}");
             if (AllScouting.Count > 0)
             {
@@ -437,8 +404,9 @@ public partial class HistoryViewModel : ObservableObject
         }
 
         StatusMessage = "Uploading...";
+        int uploadedCount = 0;
 
-        // Upload scouting entries
+        // Upload scouting entries (including qualitative entries in pending queue)
         foreach (var entry in PendingScouting.ToList())
         {
             try
@@ -456,6 +424,23 @@ public partial class HistoryViewModel : ObservableObject
                 {
                     await _cacheService.RemovePendingScoutingAsync(e => e.OfflineId == entry.OfflineId || e.Id == entry.Id);
                     PendingScouting.Remove(entry);
+                    uploadedCount++;
+
+                    // If this was a qualitative entry, update AllQualitative UI too
+                    if (entry.IsQualitative)
+                    {
+                        var qualMatch = AllQualitative.FirstOrDefault(x =>
+                            (!string.IsNullOrEmpty(entry.OfflineId) && x.OfflineId == entry.OfflineId) ||
+                            (entry.Id > 0 && x.Id == entry.Id) ||
+                            (x.Timestamp == entry.Timestamp && x.TeamId == entry.TeamId && x.MatchId == entry.MatchId));
+                        if (qualMatch != null)
+                        {
+                            if (res.ScoutingId > 0) entry.Id = res.ScoutingId;
+                            entry.OfflineId = string.Empty;
+                            var idx = AllQualitative.IndexOf(qualMatch);
+                            if (idx >= 0) AllQualitative[idx] = entry;
+                        }
+                    }
                 }
             }
             catch { }
@@ -544,6 +529,50 @@ public partial class HistoryViewModel : ObservableObject
             catch { }
         }
 
-        StatusMessage = "Upload complete";
+        StatusMessage = $"Upload complete ({uploadedCount} entries uploaded)";
+    }
+
+    [RelayCommand]
+    public async Task ExportQualitativeJsonAsync()
+    {
+        try
+        {
+            if (AllQualitative.Count == 0)
+            {
+                StatusMessage = "No qualitative entries to export";
+                return;
+            }
+
+            var exportEntries = AllQualitative.Select(e => new Dictionary<string, object?>
+            {
+                ["qualitative"] = true,
+                ["team_number"] = e.TeamNumber,
+                ["match_number"] = e.MatchNumber,
+                ["match_type"] = e.MatchType,
+                ["event_code"] = e.EventCode,
+                ["alliance"] = e.Alliance,
+                ["scout_name"] = e.ScoutName,
+                ["timestamp"] = e.Timestamp.ToString("O"),
+                ["data"] = e.Data
+            }).ToList();
+
+            var json = JsonSerializer.Serialize(exportEntries, new JsonSerializerOptions { WriteIndented = true });
+
+            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var exportsFolder = Path.Combine(documentsPath, "ObsidianScout", "Exports", "Qualitative");
+            Directory.CreateDirectory(exportsFolder);
+
+            var fileName = $"qualitative_export_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            var filePath = Path.Combine(exportsFolder, fileName);
+            await File.WriteAllTextAsync(filePath, json);
+
+            StatusMessage = $"\u2713 Exported {AllQualitative.Count} qualitative entries to {fileName}";
+            System.Diagnostics.Debug.WriteLine($"[History] Exported qualitative data to: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Export error: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"[History] ExportQualitativeJson error: {ex.Message}");
+        }
     }
 }

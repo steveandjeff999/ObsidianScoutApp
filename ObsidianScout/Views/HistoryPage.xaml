@@ -18,17 +18,25 @@
     <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding AllScouting.Count, StringFormat='Entries: {0}'}" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,4,0,0"
            TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
 
-    <Grid ColumnDefinitions="*,*" Grid.Row="0" Margin="0,36,0,8">
-      <Button Text="Match History"
+    <Grid ColumnDefinitions="*,*,*" Grid.Row="0" Margin="0,36,0,8">
+      <Button Text="Match"
               Command="{Binding SwitchToMatchCommand}"
               BackgroundColor="Transparent"
               FontAttributes="Bold"
               HeightRequest="40"
               TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
               HorizontalOptions="Center" VerticalOptions="Center" />
-      <Button Text="Pit History"
+      <Button Text="Pit"
               Command="{Binding SwitchToPitCommand}"
               Grid.Column="1"
+              BackgroundColor="Transparent"
+              FontAttributes="Bold"
+              HeightRequest="40"
+              TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}"
+              HorizontalOptions="Center" VerticalOptions="Center" />
+      <Button Text="Qualitative"
+              Command="{Binding SwitchToQualitativeCommand}"
+              Grid.Column="2"
               BackgroundColor="Transparent"
               FontAttributes="Bold"
               HeightRequest="40"
@@ -110,8 +118,59 @@
         </CollectionView.EmptyView>
       </CollectionView>
 
+    <!-- Qualitative tab -->
+    <CollectionView Grid.Row="1" IsVisible="{Binding IsQualitativeTabSelected}" ItemsSource="{Binding AllQualitative}" SelectionMode="None" ItemsLayout="VerticalList" VerticalOptions="FillAndExpand">
+        <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="models:ScoutingEntry">
+            <Frame Padding="10" Margin="4" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#222222}" CornerRadius="8">
+              <StackLayout Orientation="Vertical" VerticalOptions="Start" Spacing="6">
+                <HorizontalStackLayout Spacing="8">
+                  <Label Text="{Binding TeamNumber, StringFormat='Team {0}'}" FontAttributes="Bold" FontSize="18"
+                         TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
+                  <Frame Padding="4,2" CornerRadius="4" HasShadow="False"
+                         BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#444444}">
+                    <Label Text="{Binding Alliance}" FontSize="12"
+                           TextColor="{AppThemeBinding Light=#555555, Dark=#CCCCCC}" />
+                  </Frame>
+                </HorizontalStackLayout>
+                <Label Text="{Binding MatchNumber, StringFormat='Match {0}'}" FontSize="15"
+                       TextColor="{AppThemeBinding Light=#333333, Dark=#DDDDDD}" />
+                <Label Text="{Binding QualitativeSummary}" FontSize="14" LineBreakMode="TailTruncation" MaxLines="2"
+                       TextColor="{AppThemeBinding Light=#444444, Dark=#BBBBBB}" />
+                <HorizontalStackLayout Spacing="6">
+                  <Label Text="{Binding ScoutName, StringFormat='Scout: {0}'}" FontSize="13"
+                         TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" VerticalOptions="Center" />
+                  <Label Text="{Binding UploadStatus}" FontSize="12" VerticalOptions="Center"
+                         TextColor="{AppThemeBinding Light=#007700, Dark=#55FF55}" />
+                </HorizontalStackLayout>
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                  <Button Grid.Column="0" Text="Export" Clicked="OnExportQualEntryClicked" CommandParameter="{Binding .}" FontSize="12" Padding="8,4" />
+                  <Button Grid.Column="1" Text="Upload" Clicked="OnUploadEntryClicked" CommandParameter="{Binding .}" FontSize="12" Padding="8,4" IsVisible="{Binding IsPending}" />
+                  <Button Grid.Column="2" Text="View" Clicked="OnViewEntryClicked" CommandParameter="{Binding .}" FontSize="12" Padding="8,4" />
+                  <Button Grid.Column="3" Text="Delete" Clicked="OnDeleteEntryClicked" CommandParameter="{Binding .}" FontSize="12" Padding="8,4" />
+                  <Label Grid.Column="4" Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm}'}" FontSize="11"
+                         TextColor="{AppThemeBinding Light=#888888, Dark=#999999}"
+                         HorizontalOptions="End" VerticalOptions="Center" />
+                </Grid>
+              </StackLayout>
+            </Frame>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+        <CollectionView.EmptyView>
+          <StackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8" Padding="20">
+            <Label Text="No qualitative entries" HorizontalOptions="Center" FontSize="16"
+                   TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" />
+            <Label Text="Scout an alliance or team from the Qualitative Scouting page to see entries here."
+                   HorizontalOptions="Center" FontSize="13"
+                   TextColor="{AppThemeBinding Light=#999999, Dark=#777777}"
+                   HorizontalTextAlignment="Center" />
+          </StackLayout>
+        </CollectionView.EmptyView>
+      </CollectionView>
+
     <StackLayout Grid.Row="2" Orientation="Horizontal" HorizontalOptions="FillAndExpand" Spacing="12">
       <Button Text="Upload All" Command="{Binding UploadAllCommand}" HorizontalOptions="Start" />
+      <Button Text="Export All JSON" Command="{Binding ExportQualitativeJsonCommand}" IsVisible="{Binding IsQualitativeTabSelected}" HorizontalOptions="Start" />
       <Label Text="{Binding StatusMessage}" HorizontalOptions="EndAndExpand" VerticalOptions="Center" />
     </StackLayout>
   </Grid>

@@ -143,6 +143,9 @@ public partial class QualitativeScoutingViewModel : ObservableObject
     // Selected team picker item
     [ObservableProperty] private TeamPickerItem? selectedTeamPickerItem;
 
+    // Lookup: team number -> database team ID
+    private readonly Dictionary<int, int> _teamNumberToIdMap = new();
+
     public QualitativeScoutingViewModel(
         IApiService apiService,
         IQRCodeService qrCodeService,
@@ -164,6 +167,7 @@ public partial class QualitativeScoutingViewModel : ObservableObject
         {
             await LoadScoutNameAsync();
             await LoadGameConfigAsync();
+            await LoadTeamsAsync();
             await LoadMatchesAsync();
         }
         catch (Exception ex)
@@ -175,6 +179,34 @@ public partial class QualitativeScoutingViewModel : ObservableObject
         {
             IsLoading = false;
         }
+    }
+
+    private async Task LoadTeamsAsync()
+    {
+        try
+        {
+            var response = await _apiService.GetTeamsAsync(limit: 500);
+            if (response?.Teams != null)
+            {
+                foreach (var team in response.Teams)
+                {
+                    _teamNumberToIdMap[team.TeamNumber] = team.Id;
+                }
+                System.Diagnostics.Debug.WriteLine($"[QualScouting] Loaded {_teamNumberToIdMap.Count} team mappings");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[QualScouting] LoadTeams error: {ex.Message}");
+        }
+    }
+
+    private int ResolveTeamId(int teamNumber)
+    {
+        if (_teamNumberToIdMap.TryGetValue(teamNumber, out int dbId))
+            return dbId;
+        System.Diagnostics.Debug.WriteLine($"[QualScouting] WARNING: No database ID found for team number {teamNumber}, using 0");
+        return 0;
     }
 
     private async Task LoadScoutNameAsync()
@@ -368,12 +400,17 @@ public partial class QualitativeScoutingViewModel : ObservableObject
             return false;
         }
 
-        // Validate overall rating is set for all teams
+        // Validate overall rating and ranking are set for all teams
         foreach (var card in TeamCards)
         {
             if (card.OverallRating == null || card.OverallRating < 1 || card.OverallRating > 5)
             {
                 StatusMessage = $"Please set overall rating (1-5) for Team {card.TeamNumber}";
+                return false;
+            }
+            if (card.Ranking == null || card.Ranking < 1 || card.Ranking > 3)
+            {
+                StatusMessage = $"Please set ranking (1-3) for Team {card.TeamNumber}";
                 return false;
             }
         }
@@ -420,7 +457,6 @@ public partial class QualitativeScoutingViewModel : ObservableObject
         }
         else
         {
-            payload["individual_team"] = false;
             payload["alliance_scouted"] = SelectedAlliance;
 
             var redData = new Dictionary<string, object?>();
@@ -447,6 +483,43 @@ public partial class QualitativeScoutingViewModel : ObservableObject
         return payload;
     }
 
+    /// <summary>
+    /// Build cache entries for History — one entry per team so each team appears individually.
+    /// </summary>
+    private List<ScoutingEntry> BuildCacheEntries(Dictionary<string, object?> payload, string baseOfflineId)
+    {
+        var entries = new List<ScoutingEntry>();
+        var timestamp = DateTime.Now;
+
+        foreach (var card in TeamCards)
+        {
+            var entryPayload = new Dictionary<string, object?>(payload)
+            {
+                ["team_number"] = card.TeamNumber
+            };
+            // Include individual team's qualitative data at top level for History display
+            foreach (var kvp in card.ToDictionary())
+                entryPayload[$"qual_{kvp.Key}"] = kvp.Value;
+
+            entries.Add(new ScoutingEntry
+            {
+                TeamId = ResolveTeamId(card.TeamNumber),
+                TeamNumber = card.TeamNumber,
+                MatchId = SelectedMatch!.Id,
+                MatchNumber = SelectedMatch.MatchNumber,
+                MatchType = SelectedMatch.MatchType,
+                EventCode = EventCode,
+                Alliance = card.Alliance,
+                ScoutName = ScoutName,
+                Timestamp = timestamp,
+                Data = entryPayload.ToDictionary(k => k.Key, v => v.Value ?? new object()),
+                OfflineId = TeamCards.Count > 1 ? $"{baseOfflineId}_{card.TeamNumber}" : baseOfflineId
+            });
+        }
+
+        return entries;
+    }
+
     [RelayCommand]
     private async Task SaveAsync()
     {
@@ -459,51 +532,62 @@ public partial class QualitativeScoutingViewModel : ObservableObject
         {
             var payload = BuildPayload();
 
-            // Submit using the same scouting API endpoint
+            // Resolve the team's database ID from the team number
+            var teamNumber = IsTeamMode ? TeamCards[0].TeamNumber : (TeamCards.Count > 0 ? TeamCards[0].TeamNumber : 0);
             var submission = new ScoutingSubmission
             {
-                TeamId = IsTeamMode ? TeamCards[0].TeamNumber : 0,
+                TeamId = ResolveTeamId(teamNumber),
                 MatchId = SelectedMatch!.Id,
                 Data = payload
             };
 
-            var result = await _apiService.SubmitScoutingDataAsync(submission);
+            // Build cache entries — one per team so every team appears in History
+            var entries = BuildCacheEntries(payload, submission.OfflineId);
 
-            if (result.Success)
+            bool uploadSucceeded = false;
+            try
             {
-                StatusMessage = "✓ Qualitative scouting data saved!";
+                var result = await _apiService.SubmitScoutingDataAsync(submission);
+                uploadSucceeded = result.Success;
 
-                // Cache locally
-                try
+                if (result.Success)
                 {
-                    if (_cacheService != null)
-                    {
-                        var entry = new ScoutingEntry
-                        {
-                            TeamId = submission.TeamId,
-                            TeamNumber = IsTeamMode ? TeamCards[0].TeamNumber : 0,
-                            MatchId = SelectedMatch.Id,
-                            MatchNumber = SelectedMatch.MatchNumber,
-                            MatchType = SelectedMatch.MatchType,
-                            ScoutName = ScoutName,
-                            Timestamp = DateTime.Now,
-                            Data = payload.ToDictionary(k => k.Key, v => v.Value ?? new object()),
-                            OfflineId = submission.OfflineId
-                        };
-
-                        var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
-                        cached.Add(entry);
-                        await _cacheService.CacheScoutingDataAsync(cached);
-                    }
+                    StatusMessage = "✓ Qualitative scouting data saved!";
+                    if (result.ScoutingId > 0 && entries.Count > 0)
+                        entries[0].Id = result.ScoutingId;
                 }
-                catch (Exception ex)
+                else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[QualScouting] Cache error: {ex.Message}");
+                    StatusMessage = $"⚠ Saved locally. Upload failed: {result.Message}";
+                    System.Diagnostics.Debug.WriteLine($"[QualScouting] Server upload failed: {result.Message}");
                 }
             }
-            else
+            catch (Exception uploadEx)
             {
-                StatusMessage = $"Error: {result.Message}";
+                System.Diagnostics.Debug.WriteLine($"[QualScouting] Upload exception: {uploadEx.Message}");
+                StatusMessage = "⚠ Saved locally. Server upload failed (offline?)";
+            }
+
+            // Always cache locally as backup — every team gets its own History entry
+            try
+            {
+                if (_cacheService != null)
+                {
+                    var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                    cached.AddRange(entries);
+                    await _cacheService.CacheScoutingDataAsync(cached);
+
+                    if (!uploadSucceeded)
+                    {
+                        foreach (var entry in entries)
+                            await _cacheService.AddPendingScoutingAsync(entry);
+                        System.Diagnostics.Debug.WriteLine($"[QualScouting] Added {entries.Count} entries to pending queue");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[QualScouting] Cache error: {ex.Message}");
             }
         }
         catch (Exception ex)
@@ -518,7 +602,7 @@ public partial class QualitativeScoutingViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void GenerateQRCode()
+    private async Task GenerateQRCode()
     {
         if (!ValidateForm()) return;
 
@@ -527,9 +611,32 @@ public partial class QualitativeScoutingViewModel : ObservableObject
             var payload = BuildPayload();
             var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = false });
 
+            // Generate QR code
             QrCodeImage = _qrCodeService.GenerateQRCode(json);
             IsQRCodeVisible = true;
-            StatusMessage = string.Empty;
+
+            // Cache entries for each team so they all appear in History
+            try
+            {
+                if (_cacheService != null)
+                {
+                    var entries = BuildCacheEntries(payload, Guid.NewGuid().ToString());
+                    var cached = await _cacheService.GetCachedScoutingDataAsync() ?? new List<ScoutingEntry>();
+                    cached.AddRange(entries);
+                    await _cacheService.CacheScoutingDataAsync(cached);
+
+                    foreach (var entry in entries)
+                        await _cacheService.AddPendingScoutingAsync(entry);
+
+                    System.Diagnostics.Debug.WriteLine($"[QualScouting] QR generated and {entries.Count} entries cached for History");
+                }
+            }
+            catch (Exception cacheEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"[QualScouting] Cache during QR generation error: {cacheEx.Message}");
+            }
+
+            StatusMessage = "✓ QR code generated and saved to History";
         }
         catch (Exception ex)
         {

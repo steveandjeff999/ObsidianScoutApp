@@ -207,9 +207,12 @@ public partial class QualitativeScoutingPage : ContentPage
         overallBorder.Content = overallStack;
         stack.Add(overallBorder);
 
-        // ── RANKING (1st, 2nd, 3rd buttons) ──
+        // ── RANKING (1st, 2nd, 3rd buttons — required) ──
         var rankStack = new VerticalStackLayout { Spacing = 6 };
-        rankStack.Add(new Label { Text = "Ranking (1=best)", FontSize = 12, TextColor = textSecondary });
+        var rankHeader = new HorizontalStackLayout { Spacing = 4 };
+        rankHeader.Add(new Label { Text = "Ranking (1=best)", FontSize = 12, FontAttributes = FontAttributes.Bold, TextColor = textSecondary });
+        rankHeader.Add(new Label { Text = "*", TextColor = Color.FromArgb("#DC3545"), FontSize = 12 });
+        rankStack.Add(rankHeader);
         var rankButtons = new HorizontalStackLayout { Spacing = 6 };
         var rankColors = new[] { "#198754", "#0D6EFD", "#6C757D" };
         var rankLabels = new[] { "1st", "2nd", "3rd" };
@@ -316,7 +319,8 @@ public partial class QualitativeScoutingPage : ContentPage
 
     private static View CreateRoleCheck(string label, bool initialValue, EventHandler<CheckedChangedEventArgs> handler)
     {
-        var stack = new HorizontalStackLayout { Spacing = 2, Margin = new Thickness(0, 0, 10, 4) };
+        // Give a bit more spacing between checkbox and label to avoid visual overlap
+        var stack = new HorizontalStackLayout { Spacing = 6, Margin = new Thickness(0, 0, 12, 6), HorizontalOptions = LayoutOptions.Start };
         var cb = CreateCheckBox(initialValue, handler);
         stack.Add(cb);
         stack.Add(new Label
@@ -324,6 +328,7 @@ public partial class QualitativeScoutingPage : ContentPage
             Text = label,
             FontSize = 12,
             VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.Start,
             TextColor = Application.Current?.RequestedTheme == AppTheme.Dark ? Color.FromArgb("#E6E6E6") : Color.FromArgb("#333333")
         });
         return stack;
@@ -336,8 +341,10 @@ public partial class QualitativeScoutingPage : ContentPage
             IsChecked = initialValue,
             Color = Color.FromArgb("#0D6EFD"),
             VerticalOptions = LayoutOptions.Center,
-            WidthRequest = 30,
-            HeightRequest = 30
+            MinimumWidthRequest = 24,
+            WidthRequest = 24,
+            HeightRequest = 24,
+            Margin = new Thickness(0, 0, 6, 0)
         };
         cb.CheckedChanged += handler;
         return cb;
