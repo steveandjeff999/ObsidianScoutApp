@@ -45,20 +45,7 @@ FontSize="15"
      FontFamily="OpenSansRegular"
   TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
 
-       <VisualStateManager.VisualStateGroups>
-      <VisualStateGroup Name="CommonStates">
-            <VisualState Name="Normal">
-          <VisualState.Setters>
-           <Setter TargetName="AccentBar" Property="Opacity" Value="0" />
-    </VisualState.Setters>
-   </VisualState>
-   <VisualState Name="Selected">
-      <VisualState.Setters>
-   <Setter TargetName="AccentBar" Property="Opacity" Value="1" />
-          </VisualState.Setters>
-         </VisualState>
-     </VisualStateGroup>
-</VisualStateManager.VisualStateGroups>
+
        </Grid>
             </DataTemplate>
 
@@ -230,6 +217,13 @@ Source="{Binding ProfilePictureSource}"
     <FontImageSource Glyph="🎯" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
         </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:ScoutingLandingPage}" />
+        </Tab>
+        <!-- Qualitative scouting quick access on mobile -->
+        <Tab Title="Qualitative" Route="QualitativeScoutingPage">
+            <Tab.Icon>
+                <FontImageSource Glyph="⭐" FontFamily="OpenSansSemibold" Size="24" Color="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:QualitativeScoutingPage}" />
         </Tab>
         <!-- History moved into Menu for Android; removed from bottom tab bar to avoid showing under 'More' -->
 

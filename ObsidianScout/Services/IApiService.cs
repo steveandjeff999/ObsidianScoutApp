@@ -23,6 +23,7 @@ public interface IApiService
     Task<ScoutingSubmitResponse> SubmitScoutingDataAsync(ScoutingSubmission submission);
     Task<GameConfigResponse> GetGameConfigAsync();
     Task<GameConfigResponse> GetTeamGameConfigAsync();
+    Task<MobileDataModeResponse> GetMobileDataModeAsync();
     Task<ApiResponse<string>> HealthCheckAsync();
     Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId);
     Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request);

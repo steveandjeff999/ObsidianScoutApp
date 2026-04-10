@@ -6,6 +6,7 @@ using Microsoft.Maui.Devices;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
 using System.Linq;
+using System.Threading;
 
 namespace ObsidianScout.ViewModels;
 
@@ -117,6 +118,146 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    // Data mode state
+    private CancellationTokenSource? _dataModeRefreshCts;
+
+    private string _currentDataMode = "Loading...";
+    public string CurrentDataMode
+    {
+        get => _currentDataMode;
+        set
+        {
+            if (_currentDataMode == value) return;
+            _currentDataMode = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string _currentEpaSource = "Loading...";
+    public string CurrentEpaSource
+    {
+        get => _currentEpaSource;
+        set
+        {
+            if (_currentEpaSource == value) return;
+            _currentEpaSource = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool _isDataModeAvailable;
+    public bool IsDataModeAvailable
+    {
+        get => _isDataModeAvailable;
+        set
+        {
+            if (_isDataModeAvailable == value) return;
+            _isDataModeAvailable = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public Task OnAppearingAsync()
+    {
+        StartDataModeRefreshLoop();
+        return Task.CompletedTask;
+    }
+
+    public void OnDisappearing()
+    {
+        _dataModeRefreshCts?.Cancel();
+        _dataModeRefreshCts?.Dispose();
+        _dataModeRefreshCts = null;
+    }
+
+    private void StartDataModeRefreshLoop()
+    {
+        _dataModeRefreshCts?.Cancel();
+        _dataModeRefreshCts?.Dispose();
+
+        _dataModeRefreshCts = new CancellationTokenSource();
+        var token = _dataModeRefreshCts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await RefreshDataModeAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Initial data mode refresh error: {ex.Message}");
+            }
+
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(5), token);
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    await RefreshDataModeAsync();
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Data mode refresh loop error: {ex.Message}");
+                }
+            }
+        }, token);
+    }
+
+    private void SetDataModeState(string dataMode, string epaSource, bool isAvailable)
+    {
+        void Apply()
+        {
+            CurrentDataMode = dataMode;
+            CurrentEpaSource = epaSource;
+            IsDataModeAvailable = isAvailable;
+        }
+
+        if (MainThread.IsMainThread)
+        {
+            Apply();
+        }
+        else
+        {
+            MainThread.BeginInvokeOnMainThread(Apply);
+        }
+    }
+
+    private async Task RefreshDataModeAsync()
+    {
+        if (_apiService == null)
+        {
+            SetDataModeState("Unavailable", "API service unavailable", false);
+            return;
+        }
+
+        try
+        {
+            var response = await _apiService.GetMobileDataModeAsync();
+            if (response.Success)
+            {
+                SetDataModeState(response.DataMode, response.EpaSource, true);
+            }
+            else
+            {
+                SetDataModeState("Unavailable", response.Error ?? "Unable to load data mode", false);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetDataModeState("Unavailable", ex.Message, false);
+        }
+    }
+
     public SettingsViewModel(ICacheService cacheService, ISettingsService settingsService, IDataPreloadService preloadService, INotificationPollingService? notificationPollingService = null, ILocalNotificationService? localNotificationService = null, IApiService? apiService = null)
     {
         _cacheService = cacheService;
@@ -178,7 +319,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            AutoUpdateCheck = await _settingsService.GetAutoUpdateCheckAsync();
+            var value = await _settingsService.GetAutoUpdateCheckAsync();
+            if (autoUpdateCheck != value)
+            {
+                autoUpdateCheck = value;
+                OnPropertyChanged(nameof(AutoUpdateCheck));
+            }
         }
         catch { }
     }
@@ -382,14 +528,24 @@ public partial class SettingsViewModel : ObservableObject
     private async void LoadThemePreference()
     {
         var theme = await _settingsService.GetThemeAsync();
-        IsDarkMode = theme == "Dark";
+        var value = theme == "Dark";
+        if (isDarkMode != value)
+        {
+            isDarkMode = value;
+            OnPropertyChanged(nameof(IsDarkMode));
+        }
     }
 
     private async Task LoadOfflineModeAsync()
     {
         try
         {
-            IsOfflineMode = await _settingsService.GetOfflineModeAsync();
+            var value = await _settingsService.GetOfflineModeAsync();
+            if (_isOfflineMode != value)
+            {
+                _isOfflineMode = value;
+                OnPropertyChanged(nameof(IsOfflineMode));
+            }
         }
         catch (Exception ex)
         {
@@ -478,12 +634,20 @@ public partial class SettingsViewModel : ObservableObject
         try
         {
             var enabled = await _settingsService.GetNotificationsEnabledAsync();
-            IsNotificationsEnabled = enabled;
+            if (_isNotificationsEnabled != enabled)
+            {
+                _isNotificationsEnabled = enabled;
+                OnPropertyChanged(nameof(IsNotificationsEnabled));
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load notifications preference: {ex.Message}");
-            IsNotificationsEnabled = true;
+            if (!_isNotificationsEnabled)
+            {
+                _isNotificationsEnabled = true;
+                OnPropertyChanged(nameof(IsNotificationsEnabled));
+            }
         }
     }
 
@@ -520,13 +684,22 @@ public partial class SettingsViewModel : ObservableObject
         try
         {
             var timeout = await _settingsService.GetNetworkTimeoutAsync();
-            NetworkTimeoutSeconds = timeout;
+            var clamped = Math.Clamp(timeout, 5, 60);
+            if (_networkTimeoutSeconds != clamped)
+            {
+                _networkTimeoutSeconds = clamped;
+                OnPropertyChanged(nameof(NetworkTimeoutSeconds));
+            }
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Loaded network timeout: {timeout}s");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[SettingsViewModel] Failed to load network timeout: {ex.Message}");
-            NetworkTimeoutSeconds = 8; // Default
+            if (_networkTimeoutSeconds != 8)
+            {
+                _networkTimeoutSeconds = 8;
+                OnPropertyChanged(nameof(NetworkTimeoutSeconds));
+            }
         }
     }
 

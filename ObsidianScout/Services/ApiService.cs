@@ -2252,7 +2252,7 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
         }
         
         try
-        {
+   {
    await AddAuthHeaderAsync();
      var baseUrl = await GetBaseUrlAsync();
        var response = await _httpClient.GetAsync($"{baseUrl}/config/pit");
@@ -2744,16 +2744,18 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
  {
  await AddAuthHeaderAsync();
  var baseUrl = await GetBaseUrlAsync();
- var url = $"{baseUrl}/admin/roles";
- var response = await _httpClient.GetAsync(url);
- if (response.IsSuccessStatusCode)
- {
- var result = await response.Content.ReadFromJsonAsync<RolesResponse>(_jsonOptions);
- return result ?? new RolesResponse { Success = false };
- }
+ var response = await _httpClient.GetAsync($"{baseUrl}/admin/roles");
 
- var err = await response.Content.ReadAsStringAsync();
- return new RolesResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+            if (response.IsSuccessStatusCode)
+ {
+                var result = await response.Content.ReadFromJsonAsync<RolesResponse>(_jsonOptions);
+                return result ?? new RolesResponse { Success = false };
+ }
+            else
+ {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return new RolesResponse { Success = false, Error = $"HTTP {response.StatusCode}: {errorContent}" };
+ }
  }
  catch (Exception ex)
  {
@@ -3042,6 +3044,50 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
         catch (Exception ex)
         {
             return new ApiResponse<bool> { Success = false, Error = ex.Message };
+        }
+    }
+
+    public async Task<MobileDataModeResponse> GetMobileDataModeAsync()
+    {
+        if (!await ShouldUseNetworkAsync())
+        {
+            return new MobileDataModeResponse
+            {
+                Success = false,
+                Error = "Offline - cannot fetch mobile data mode"
+            };
+        }
+
+        try
+        {
+            await AddAuthHeaderAsync();
+            var baseUrl = await GetBaseUrlAsync();
+            var response = await _httpClient.GetAsync($"{baseUrl}/config/game/data-mode");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<MobileDataModeResponse>(_jsonOptions);
+                return result ?? new MobileDataModeResponse
+                {
+                    Success = false,
+                    Error = "Invalid response"
+                };
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            return new MobileDataModeResponse
+            {
+                Success = false,
+                Error = $"Request failed with status {response.StatusCode}: {errorContent}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new MobileDataModeResponse
+            {
+                Success = false,
+                Error = $"Connection error: {ex.Message}"
+            };
         }
     }
 }

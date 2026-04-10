@@ -267,6 +267,46 @@ Text="Lower values fail faster on slow networks"
       </Grid>
    </Border>
 
+   <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource LightDivider}, Dark={StaticResource DarkDivider}}" Margin="14,0" />
+
+   <!-- Mobile Data Mode -->
+   <Border Padding="14,12" BackgroundColor="Transparent">
+      <Border.StrokeShape>
+         <RoundRectangle CornerRadius="10" />
+      </Border.StrokeShape>
+      <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="14" RowSpacing="4">
+         <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"
+                 BackgroundColor="{AppThemeBinding Light=#DBEAFE, Dark=#1E3A8A}"
+                 WidthRequest="40"
+                 HeightRequest="40"
+                 VerticalOptions="Center">
+            <Border.StrokeShape>
+               <RoundRectangle CornerRadius="10" />
+            </Border.StrokeShape>
+            <Border.StrokeThickness>0</Border.StrokeThickness>
+            <Image Source="{StaticResource IconSave}" WidthRequest="18" HeightRequest="18" HorizontalOptions="Center" VerticalOptions="Center" Aspect="AspectFit" />
+         </Border>
+
+         <Label Grid.Column="1" Grid.Row="0"
+                Text="Mobile Data Mode"
+                FontSize="15"
+                FontFamily="OpenSansSemibold"
+                TextColor="{AppThemeBinding Light={StaticResource LightTextPrimary}, Dark={StaticResource DarkTextPrimary}}" />
+
+         <Label Grid.Column="1" Grid.Row="1"
+                Text="{Binding CurrentDataMode}"
+                FontSize="14"
+                FontFamily="OpenSansSemibold"
+                TextColor="{AppThemeBinding Light={StaticResource LightPrimary}, Dark={StaticResource DarkPrimary}}" />
+
+         <Label Grid.Column="1" Grid.Row="2"
+                Text="{Binding CurrentEpaSource, StringFormat='EPA source: {0}'}"
+                FontSize="12"
+                TextColor="{AppThemeBinding Light={StaticResource LightTextTertiary}, Dark={StaticResource DarkTextTertiary}}"
+                LineBreakMode="WordWrap" />
+      </Grid>
+   </Border>
+
    </VerticalStackLayout>
    </Border>
 

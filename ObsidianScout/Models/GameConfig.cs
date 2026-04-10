@@ -386,3 +386,18 @@ public class GameConfigResponse
     [JsonPropertyName("error")]
     public string? Error { get; set; }
 }
+
+public class MobileDataModeResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("epa_source")]
+    public string EpaSource { get; set; } = "scouted_only";
+
+    [JsonPropertyName("data_mode")]
+    public string DataMode { get; set; } = "data";
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}

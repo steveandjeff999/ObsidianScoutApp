@@ -50,60 +50,66 @@ InitializeComponent();
         {
             if (!MainThread.IsMainThread)
             {
-         MainThread.BeginInvokeOnMainThread(() => UpdateBannerState(showBanner, isOfflineMode, showConnectionProblem, message));
-         return;
+                MainThread.BeginInvokeOnMainThread(() => UpdateBannerState(showBanner, isOfflineMode, showConnectionProblem, message));
+                return;
             }
 
- try
-   {
-    EnsureBannerOverlayExists();
- if (_bannerOverlay != null)
-     {
-  _bannerOverlay.ShowBanner = showBanner;
-    _bannerOverlay.ShowOfflineBanner = isOfflineMode;
- _bannerOverlay.ShowConnectionProblem = showConnectionProblem && !isOfflineMode;
-    _bannerOverlay.Message = message ?? string.Empty;
-            }
-        }
-catch (Exception ex)
-   {
- System.Diagnostics.Debug.WriteLine($"[App] UpdateBannerState error: {ex.Message}");
-            }
-        }
-
-  private void EnsureBannerOverlayExists()
-        {
-  if (_bannerOverlay != null) return;
-
-    try
+            try
             {
-         // Create the banner overlay
-        _bannerOverlay = new ConnectionBannerView
-          {
-     ShowBanner = false,
-      ShowOfflineBanner = false,
-         ShowConnectionProblem = false,
-            Message = string.Empty
-        };
+                EnsureBannerOverlayExists();
+                if (_bannerOverlay != null)
+                {
+                    _bannerOverlay.ShowBanner = showBanner;
+                    _bannerOverlay.ShowOfflineBanner = isOfflineMode;
+                    _bannerOverlay.ShowConnectionProblem = showConnectionProblem && !isOfflineMode;
+                    _bannerOverlay.Message = message ?? string.Empty;
 
-            // Wire up events
-    _bannerOverlay.YesClicked += OnBannerYesClicked;
+                    if (_bannerOverlay.ShowBanner || _bannerOverlay.ShowOfflineBanner || _bannerOverlay.ShowConnectionProblem)
+                    {
+                        InjectBannerIntoCurrentPage();
+                    }
+                    else if (_bannerOverlay.Parent is Layout parentLayout)
+                    {
+                        parentLayout.Children.Remove(_bannerOverlay);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] UpdateBannerState error: {ex.Message}");
+            }
+        }
+
+        private void EnsureBannerOverlayExists()
+        {
+            if (_bannerOverlay != null) return;
+
+            try
+            {
+                // Create the banner overlay
+                _bannerOverlay = new ConnectionBannerView
+                {
+                    ShowBanner = false,
+                    ShowOfflineBanner = false,
+                    ShowConnectionProblem = false,
+                    Message = string.Empty
+                };
+
+                // Wire up events
+                _bannerOverlay.YesClicked += OnBannerYesClicked;
                 _bannerOverlay.NoClicked += OnBannerNoClicked;
 
-                // Add to the current page's layout if possible
-       InjectBannerIntoCurrentPage();
-
-    // Subscribe to page changes to re-inject banner
-       if (MainPage is Shell shell)
-            {
-     shell.Navigated += OnShellNavigated;
-    }
+                // Subscribe to page changes to re-inject banner
+                if (MainPage is Shell shell)
+                {
+                    shell.Navigated += OnShellNavigated;
+                }
             }
-  catch (Exception ex)
+            catch (Exception ex)
             {
-     System.Diagnostics.Debug.WriteLine($"[App] EnsureBannerOverlayExists error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[App] EnsureBannerOverlayExists error: {ex.Message}");
             }
-   }
+        }
 
       private void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
  {
@@ -123,114 +129,161 @@ catch (Exception ex)
 
 private void InjectBannerIntoCurrentPage()
         {
-if (_bannerOverlay == null) return;
+    if (_bannerOverlay == null) return;
 
-            try
-   {
-    // Get the current page from Shell - add null checks
-  var shellCurrent = Shell.Current;
-  if (shellCurrent == null) return;
-
-      var currentPage = shellCurrent.CurrentPage;
-           if (currentPage == null) return;
-
-          // Skip banner injection on LoginPage during startup - it will be added when navigating to proper pages
-          var pageTypeName = currentPage.GetType().Name;
-          if (pageTypeName == "LoginPage" && !_bannerOverlay.ShowBanner)
-          {
-              System.Diagnostics.Debug.WriteLine($"[App] Skipping banner injection on LoginPage (not visible yet)");
-              return;
-          }
-
-          // Remove banner from previous parent if any
-    if (_bannerOverlay.Parent is Layout oldLayout)
-          {
-            try
+    if (!_bannerOverlay.ShowBanner && !_bannerOverlay.ShowOfflineBanner && !_bannerOverlay.ShowConnectionProblem)
     {
-             oldLayout.Children.Remove(_bannerOverlay);
-         }
-               catch (Exception ex)
-    {
-       System.Diagnostics.Debug.WriteLine($"[App] Error removing banner from old layout: {ex.Message}");
-   }
-                }
-
-           // Only ContentPage has Content property
-          if (currentPage is ContentPage contentPage)
-   {
-              var content = contentPage.Content;
-          if (content == null) return;
-
-  if (content is Layout layout && layout is not Grid)
-  {
-            // Check if banner is already in this layout
-            if (!layout.Children.Contains(_bannerOverlay))
-      {
-      // Insert at position 0 so it appears at top
-       layout.Children.Insert(0, _bannerOverlay);
-          System.Diagnostics.Debug.WriteLine($"[App] Banner injected into {pageTypeName}");
-         }
-  }
-     else if (content is Grid grid)
-             {
-    if (!grid.Children.Contains(_bannerOverlay))
-     {
-          // Add to grid row 0 with high ZIndex
-             Grid.SetRow(_bannerOverlay, 0);
-    Grid.SetColumnSpan(_bannerOverlay, 99);
-    _bannerOverlay.ZIndex = 9999;
- grid.Children.Add(_bannerOverlay);
-        System.Diagnostics.Debug.WriteLine($"[App] Banner injected into Grid on {pageTypeName}");
-              }
-     }
-          else if (content is ScrollView scrollView && scrollView.Content is Layout scrollLayout)
+        if (_bannerOverlay.Parent is Layout hiddenParent)
         {
-     // For ScrollView, we need to wrap content
-      if (!scrollLayout.Children.Contains(_bannerOverlay))
-         {
-   scrollLayout.Children.Insert(0, _bannerOverlay);
-           System.Diagnostics.Debug.WriteLine($"[App] Banner injected into ScrollView content on {pageTypeName}");
+            hiddenParent.Children.Remove(_bannerOverlay);
         }
-       }
-       else
-    {
-                // Fallback: wrap the content in a Grid with the banner
-      var originalContent = contentPage.Content;
- if (originalContent != null && originalContent != _bannerOverlay)
-         {
-  var wrapperGrid = new Grid
-        {
-    RowDefinitions =
-             {
-      new RowDefinition { Height = GridLength.Auto },
-              new RowDefinition { Height = GridLength.Star }
- }
-      };
-
-     Grid.SetRow(_bannerOverlay, 0);
-              wrapperGrid.Children.Add(_bannerOverlay);
-
-           if (originalContent is View view)
-   {
-         Grid.SetRow(view, 1);
-                  wrapperGrid.Children.Add(view);
-                 }
-
-  contentPage.Content = wrapperGrid;
-         System.Diagnostics.Debug.WriteLine($"[App] Banner wrapped content on {pageTypeName}");
-           }
-               }
+        return;
     }
-    else
-              {
-         System.Diagnostics.Debug.WriteLine($"[App] Current page is not ContentPage: {pageTypeName}");
+
+    try
+    {
+        var shellCurrent = Shell.Current;
+        if (shellCurrent == null) return;
+
+        var currentPage = shellCurrent.CurrentPage;
+        if (currentPage == null) return;
+
+        var pageTypeName = currentPage.GetType().Name;
+        if (pageTypeName == "LoginPage" && !_bannerOverlay.ShowBanner)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Skipping banner injection on LoginPage (not visible yet)");
+            return;
+        }
+
+        if (pageTypeName == "SettingsPage")
+        {
+            System.Diagnostics.Debug.WriteLine("[App] Skipping banner injection on SettingsPage to avoid heavy layout wrapping");
+            return;
+        }
+
+        if (_bannerOverlay.Parent is Layout oldLayout)
+        {
+            try
+            {
+                oldLayout.Children.Remove(_bannerOverlay);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] Error removing banner from old layout: {ex.Message}");
             }
         }
-          catch (Exception ex)
-            {
-  System.Diagnostics.Debug.WriteLine($"[App] InjectBannerIntoCurrentPage error: {ex.Message}");
-   }
+
+        if (currentPage is not ContentPage contentPage)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Current page is not ContentPage: {pageTypeName}");
+            return;
         }
+
+        var content = contentPage.Content;
+        if (content == null) return;
+
+        // Already wrapped page: just re-add banner if needed.
+        if (content is Grid existingGrid && existingGrid.ClassId == "BannerWrapper")
+        {
+            if (!existingGrid.Children.Contains(_bannerOverlay))
+            {
+                Grid.SetRow(_bannerOverlay, 0);
+                Grid.SetColumn(_bannerOverlay, 0);
+                Grid.SetColumnSpan(_bannerOverlay, 1);
+                _bannerOverlay.ZIndex = 9999;
+                existingGrid.Children.Add(_bannerOverlay);
+            }
+            return;
+        }
+
+        // For ScrollView pages, wrap once and move the ScrollView safely.
+        if (content is ScrollView scrollView)
+        {
+            var wrapperGrid = new Grid
+            {
+                ClassId = "BannerWrapper",
+                RowDefinitions =
+                {
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Star }
+                }
+            };
+
+            // Detach content first so re-parenting does not trigger warnings.
+            contentPage.Content = null;
+
+            Grid.SetRow(_bannerOverlay, 0);
+            Grid.SetColumn(_bannerOverlay, 0);
+            Grid.SetColumnSpan(_bannerOverlay, 1);
+            _bannerOverlay.ZIndex = 9999;
+            wrapperGrid.Children.Add(_bannerOverlay);
+
+            Grid.SetRow(scrollView, 1);
+            Grid.SetColumn(scrollView, 0);
+            wrapperGrid.Children.Add(scrollView);
+
+            contentPage.Content = wrapperGrid;
+            System.Diagnostics.Debug.WriteLine($"[App] Banner wrapped ScrollView content on {pageTypeName}");
+            return;
+        }
+
+        if (content is Layout layout && content is not Grid)
+        {
+            if (!layout.Children.Contains(_bannerOverlay))
+            {
+                layout.Children.Insert(0, _bannerOverlay);
+                System.Diagnostics.Debug.WriteLine($"[App] Banner injected into {pageTypeName}");
+            }
+            return;
+        }
+
+        if (content is Grid grid)
+        {
+            if (!grid.Children.Contains(_bannerOverlay))
+            {
+                Grid.SetRow(_bannerOverlay, 0);
+                Grid.SetColumn(_bannerOverlay, 0);
+                Grid.SetColumnSpan(_bannerOverlay, 1);
+                _bannerOverlay.ZIndex = 9999;
+                grid.Children.Add(_bannerOverlay);
+                System.Diagnostics.Debug.WriteLine($"[App] Banner injected into Grid on {pageTypeName}");
+            }
+            return;
+        }
+
+        // Fallback: wrap unknown content types once.
+        if (content is View view && content != _bannerOverlay)
+        {
+            var wrapperGrid = new Grid
+            {
+                ClassId = "BannerWrapper",
+                RowDefinitions =
+                {
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Star }
+                }
+            };
+
+            contentPage.Content = null;
+
+            Grid.SetRow(_bannerOverlay, 0);
+            Grid.SetColumn(_bannerOverlay, 0);
+            Grid.SetColumnSpan(_bannerOverlay, 1);
+            wrapperGrid.Children.Add(_bannerOverlay);
+
+            Grid.SetRow(view, 1);
+            Grid.SetColumn(view, 0);
+            wrapperGrid.Children.Add(view);
+
+            contentPage.Content = wrapperGrid;
+            System.Diagnostics.Debug.WriteLine($"[App] Banner wrapped content on {pageTypeName}");
+        }
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"[App] InjectBannerIntoCurrentPage error: {ex.Message}");
+    }
+}
 
         private async void OnBannerYesClicked(object? sender, EventArgs e)
         {

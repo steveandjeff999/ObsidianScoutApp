@@ -14,7 +14,7 @@
    <Frame IsVisible="{Binding ShowOfflineBanner, Source={x:Reference BannerRoot}}" 
           BackgroundColor="#FFF59D" 
                Padding="8" 
-               HasShadow="True" 
+               HasShadow="False" 
       CornerRadius="0" 
           HorizontalOptions="FillAndExpand" 
                Margin="0">
@@ -30,7 +30,7 @@
     <Frame IsVisible="{Binding ShowConnectionProblem, Source={x:Reference BannerRoot}}" 
           BackgroundColor="#FFCC80" 
     Padding="8" 
-HasShadow="True" 
+HasShadow="False" 
           CornerRadius="0" 
           HorizontalOptions="FillAndExpand" 
       Margin="0">
