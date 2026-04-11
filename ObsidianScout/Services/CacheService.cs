@@ -75,6 +75,10 @@ public interface ICacheService
  Task<byte[]?> GetCachedProfilePictureAsync();
  Task CacheProfilePictureAsync(byte[] pictureBytes);
  
+ // Current data mode (EPA/OPR/scouting predictions)
+ Task<CurrentDataModeResponse?> GetCachedCurrentDataModeAsync(int? eventId = null);
+ Task CacheCurrentDataModeAsync(CurrentDataModeResponse response, int? eventId = null);
+
  // Cache Management
  Task<DateTime?> GetCacheTimestampAsync(string key);
  Task<DateTime?> GetCacheCreatedAsync(string key);
@@ -97,6 +101,7 @@ public class CacheService : ICacheService
  private const string CACHE_KEY_AVAILABLE_METRICS = "cache_available_metrics";
  private const string CACHE_KEY_LAST_PRELOAD = "cache_last_preload";
  private const string CACHE_KEY_PROFILE_PICTURE = "cache_profile_picture";
+ private const string CACHE_KEY_CURRENT_DATA_MODE = "cache_current_data_mode";
  
  private const string TIMESTAMP_SUFFIX = "_timestamp"; // legacy
  private const string CREATED_SUFFIX = "_created";
@@ -1106,6 +1111,92 @@ public class CacheService : ICacheService
  {
  System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache profile picture: {ex.Message}");
  }
+ }
+
+ #endregion
+
+ #region Current Data Mode
+
+ private static string NormalizeCacheFragment(string? value)
+ {
+     if (string.IsNullOrWhiteSpace(value))
+     {
+         return "all";
+     }
+
+     var chars = value.Trim().ToLowerInvariant()
+         .Select(c => char.IsLetterOrDigit(c) ? c : '_')
+         .ToArray();
+
+     var normalized = new string(chars);
+     while (normalized.Contains("__", StringComparison.Ordinal))
+     {
+         normalized = normalized.Replace("__", "_", StringComparison.Ordinal);
+     }
+
+     return normalized.Trim('_');
+ }
+
+ private string GetCurrentDataModeCacheKey(int? eventId)
+     => $"{CACHE_KEY_CURRENT_DATA_MODE}_event_{eventId?.ToString() ?? "all"}";
+
+ public async Task<CurrentDataModeResponse?> GetCachedCurrentDataModeAsync(int? eventId = null)
+ {
+     try
+     {
+         var cacheKey = GetCurrentDataModeCacheKey(eventId);
+         var json = await GetStringFromCacheAsync(cacheKey);
+         if (string.IsNullOrEmpty(json) && eventId.HasValue)
+         {
+             json = await GetStringFromCacheAsync(GetCurrentDataModeCacheKey(null));
+         }
+         if (!string.IsNullOrEmpty(json))
+         {
+             var response = JsonSerializer.Deserialize<CurrentDataModeResponse>(json, _jsonOptions);
+             if (response != null)
+             {
+                 var timestamp = await GetCacheTimestampAsync(cacheKey);
+                 if (!timestamp.HasValue && eventId.HasValue)
+                 {
+                     timestamp = await GetCacheTimestampAsync(GetCurrentDataModeCacheKey(null));
+                 }
+                 if (timestamp.HasValue)
+                 {
+                     var age = DateTime.UtcNow - timestamp.Value;
+                     System.Diagnostics.Debug.WriteLine($"[Cache] Current data mode loaded from cache (age: {age.TotalHours:F1}h, teams: {response.Teams.Count})");
+                 }
+             }
+
+             return response;
+         }
+     }
+     catch (Exception ex)
+     {
+         System.Diagnostics.Debug.WriteLine($"[Cache] Failed to load current data mode: {ex.Message}");
+     }
+
+     return null;
+ }
+
+ public async Task CacheCurrentDataModeAsync(CurrentDataModeResponse response, int? eventId = null)
+ {
+     try
+     {
+         var json = JsonSerializer.Serialize(response, _jsonOptions);
+         var eventCacheKey = GetCurrentDataModeCacheKey(eventId ?? response.EventId);
+         await SaveStringToCacheAsync(eventCacheKey, json);
+         await SetCacheTimestampAsync(eventCacheKey);
+
+         var genericCacheKey = GetCurrentDataModeCacheKey(null);
+         await SaveStringToCacheAsync(genericCacheKey, json);
+         await SetCacheTimestampAsync(genericCacheKey);
+
+         System.Diagnostics.Debug.WriteLine($"[Cache] Cached current data mode for event {response.EventId} ({response.DataMode})");
+     }
+     catch (Exception ex)
+     {
+         System.Diagnostics.Debug.WriteLine($"[Cache] Failed to cache current data mode: {ex.Message}");
+     }
  }
 
  #endregion

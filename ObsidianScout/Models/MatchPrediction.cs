@@ -171,3 +171,84 @@ public class TeamPredictionDetail
     [JsonPropertyName("consistency")]
     public double Consistency { get; set; }
 }
+
+public class CurrentDataModeMatchPoint
+{
+    [JsonPropertyName("match_id")]
+    public int MatchId { get; set; }
+
+    [JsonPropertyName("match_number")]
+    public int MatchNumber { get; set; }
+
+    [JsonPropertyName("scouted_auto_points")]
+    public double ScoutedAutoPoints { get; set; }
+
+    [JsonPropertyName("scouted_teleop_points")]
+    public double ScoutedTeleopPoints { get; set; }
+
+    [JsonPropertyName("scouted_endgame_points")]
+    public double ScoutedEndgamePoints { get; set; }
+
+    [JsonPropertyName("scouted_total_points")]
+    public double ScoutedTotalPoints { get; set; }
+
+    [JsonPropertyName("external_total_points")]
+    public double ExternalTotalPoints { get; set; }
+
+    [JsonPropertyName("selected_total_points")]
+    public double SelectedTotalPoints { get; set; }
+
+    [JsonPropertyName("selected_source")]
+    public string SelectedSource { get; set; } = string.Empty;
+
+    [JsonPropertyName("has_scouted_data")]
+    public bool HasScoutedData { get; set; }
+}
+
+public class CurrentDataModeTeam
+{
+    [JsonPropertyName("team_number")]
+    public int TeamNumber { get; set; }
+
+    [JsonPropertyName("team_name")]
+    public string TeamName { get; set; } = string.Empty;
+
+    [JsonPropertyName("match_count")]
+    public int MatchCount { get; set; }
+
+    [JsonPropertyName("external_total_points")]
+    public double ExternalTotalPoints { get; set; }
+
+    [JsonPropertyName("match_points")]
+    public List<CurrentDataModeMatchPoint> MatchPoints { get; set; } = new();
+}
+
+public class CurrentDataModeResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("epa_source")]
+    public string EpaSource { get; set; } = "scouted_only";
+
+    [JsonPropertyName("data_mode")]
+    public string DataMode { get; set; } = "Scouted Data Only";
+
+    [JsonPropertyName("event_id")]
+    public int EventId { get; set; }
+
+    [JsonPropertyName("team_count")]
+    public int TeamCount { get; set; }
+
+    [JsonPropertyName("requested_team_numbers")]
+    public List<int> RequestedTeamNumbers { get; set; } = new();
+
+    [JsonPropertyName("includes_scouted_data")]
+    public bool IncludesScoutedData { get; set; }
+
+    [JsonPropertyName("teams")]
+    public List<CurrentDataModeTeam> Teams { get; set; } = new();
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+}

@@ -15,6 +15,13 @@ public partial class MatchPredictionViewModel : ObservableObject
     private readonly IApiService _apiService;
     private readonly ISettingsService _settingsService;
     private GameConfig? _gameConfig;
+    private static readonly HashSet<string> ExternalPredictionModes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Statbotics EPA Only",
+        "Scouted Data + Statbotics EPA Gap-Fill",
+        "TBA OPR Only",
+        "Scouted Data + TBA OPR Gap-Fill"
+    };
 
     [ObservableProperty]
     private bool isLoading;
@@ -345,6 +352,7 @@ var response = await _apiService.GetEventsAsync();
             // Parse team numbers from alliances
             var redTeams = ParseTeamNumbers(SelectedMatch.RedAlliance);
             var blueTeams = ParseTeamNumbers(SelectedMatch.BlueAlliance);
+            var allTeams = redTeams.Concat(blueTeams).Distinct().ToList();
             
             System.Diagnostics.Debug.WriteLine($"Red Alliance: {string.Join(", ", redTeams)}");
             System.Diagnostics.Debug.WriteLine($"Blue Alliance: {string.Join(", ", blueTeams)}");
@@ -355,23 +363,59 @@ var response = await _apiService.GetEventsAsync();
                 return;
             }
 
-            // Get historical stats for all teams
-            var allTeams = redTeams.Concat(blueTeams).ToList();
             var teamStats = new Dictionary<int, TeamHistoricalStats>();
             var teamsWithoutData = new List<int>();
+            var useExternalDataMode = await ShouldUseExternalDataModeAsync();
 
-            foreach (var teamNumber in allTeams)
+            if (useExternalDataMode)
             {
-                var stats = await GetTeamHistoricalStatsAsync(teamNumber, SelectedEvent.Id);
-                if (stats != null && stats.MatchCount > 0)
+                var currentDataMode = await _apiService.GetCurrentDataModeAsync(SelectedEvent.Id);
+                if (currentDataMode.Success && currentDataMode.Teams.Count > 0)
                 {
-                    teamStats[teamNumber] = stats;
-                    System.Diagnostics.Debug.WriteLine($"Team {teamNumber}: {stats.MatchCount} matches, Avg={stats.AvgTotalPoints:F1}");
+                    var externalStats = BuildStatsFromCurrentDataMode(currentDataMode);
+                    foreach (var teamNumber in allTeams)
+                    {
+                        if (externalStats.TryGetValue(teamNumber, out var stats))
+                        {
+                            teamStats[teamNumber] = stats;
+                        }
+                        else
+                        {
+                            var fallbackStats = await GetTeamHistoricalStatsAsync(teamNumber, SelectedEvent.Id);
+                            if (fallbackStats != null && fallbackStats.MatchCount > 0)
+                            {
+                                teamStats[teamNumber] = fallbackStats;
+                            }
+                            else
+                            {
+                                teamsWithoutData.Add(teamNumber);
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    teamsWithoutData.Add(teamNumber);
-                    System.Diagnostics.Debug.WriteLine($"Team {teamNumber}: NO DATA");
+                    System.Diagnostics.Debug.WriteLine($"[MatchPredictionVM] Current data mode unavailable: {currentDataMode.Error}");
+                    useExternalDataMode = false;
+                }
+            }
+
+            if (!useExternalDataMode)
+            {
+                // Get historical stats for all teams
+                foreach (var teamNumber in allTeams)
+                {
+                    var stats = await GetTeamHistoricalStatsAsync(teamNumber, SelectedEvent.Id);
+                    if (stats != null && stats.MatchCount > 0)
+                    {
+                        teamStats[teamNumber] = stats;
+                        System.Diagnostics.Debug.WriteLine($"Team {teamNumber}: {stats.MatchCount} matches, Avg={stats.AvgTotalPoints:F1}");
+                    }
+                    else
+                    {
+                        teamsWithoutData.Add(teamNumber);
+                        System.Diagnostics.Debug.WriteLine($"Team {teamNumber}: NO DATA");
+                    }
                 }
             }
 
@@ -406,43 +450,20 @@ var response = await _apiService.GetEventsAsync();
                 matchPrediction.BluePredictedTotalPoints += teamPred.PredictedTotalPoints;
             }
 
-            // Calculate win probability using a simple normal distribution model
-            var scoreDiff = matchPrediction.RedPredictedTotalPoints - matchPrediction.BluePredictedTotalPoints;
-            var redStdDev = Math.Sqrt(matchPrediction.RedAlliance.Sum(t => Math.Pow(t.TotalPointsStd, 2)));
-            var blueStdDev = Math.Sqrt(matchPrediction.BlueAlliance.Sum(t => Math.Pow(t.TotalPointsStd, 2)));
-            var combinedStdDev = Math.Sqrt(redStdDev * redStdDev + blueStdDev * blueStdDev);
-            
-            if (combinedStdDev > 0)
-            {
-                // Z-score for score difference
-                var zScore = scoreDiff / combinedStdDev;
-                matchPrediction.RedWinProbability = NormalCDF(zScore);
-                matchPrediction.BlueWinProbability = 1 - matchPrediction.RedWinProbability;
-            }
-            else
-            {
-                // No variance, use simple comparison
-                if (scoreDiff > 0)
-                {
-                    matchPrediction.RedWinProbability = 0.75;
-                    matchPrediction.BlueWinProbability = 0.25;
-                }
-                else if (scoreDiff < 0)
-                {
-                    matchPrediction.RedWinProbability = 0.25;
-                    matchPrediction.BlueWinProbability = 0.75;
-                }
-                else
-                {
-                    matchPrediction.RedWinProbability = 0.5;
-                    matchPrediction.BlueWinProbability = 0.5;
-                }
-            }
+            // Calculate win probability using a deterministic point-distribution simulation
+            var (redWinProbability, blueWinProbability) = CalculateWinProbabilitiesFromPoints(
+                matchPrediction.RedAlliance,
+                matchPrediction.BlueAlliance,
+                SelectedEvent.Id,
+                SelectedMatch.MatchNumber);
+
+            matchPrediction.RedWinProbability = redWinProbability;
+            matchPrediction.BlueWinProbability = blueWinProbability;
 
             // Set warning message if insufficient data
             if (teamsWithoutData.Count > 0)
             {
-                matchPrediction.WarningMessage = $"?? {teamsWithoutData.Count} team(s) have no historical data at this event: {string.Join(", ", teamsWithoutData)}";
+                matchPrediction.WarningMessage = $"?? {teamsWithoutData.Count} team(s) have no data available: {string.Join(", ", teamsWithoutData)}";
                 ShowInsufficientDataWarning = true;
                 InsufficientDataMessage = matchPrediction.WarningMessage;
             }
@@ -555,6 +576,50 @@ var response = await _apiService.GetEventsAsync();
         }
     }
 
+    private async Task<bool> ShouldUseExternalDataModeAsync()
+    {
+        try
+        {
+            var response = await _apiService.GetMobileDataModeAsync();
+            return response.Success && ExternalPredictionModes.Contains(response.DataMode);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private Dictionary<int, TeamHistoricalStats> BuildStatsFromCurrentDataMode(CurrentDataModeResponse response)
+    {
+        var stats = new Dictionary<int, TeamHistoricalStats>();
+
+        foreach (var team in response.Teams)
+        {
+            var selectedTotals = team.MatchPoints.Select(p => p.SelectedTotalPoints).ToList();
+            var autoPoints = team.MatchPoints.Select(p => p.ScoutedAutoPoints).ToList();
+            var teleopPoints = team.MatchPoints.Select(p => p.ScoutedTeleopPoints).ToList();
+            var endgamePoints = team.MatchPoints.Select(p => p.ScoutedEndgamePoints).ToList();
+
+            stats[team.TeamNumber] = new TeamHistoricalStats
+            {
+                TeamNumber = team.TeamNumber,
+                TeamName = team.TeamName,
+                AvgAutoPoints = autoPoints.Count > 0 ? autoPoints.Average() : 0,
+                StdAutoPoints = CalculateStdDev(autoPoints),
+                AvgTeleopPoints = teleopPoints.Count > 0 ? teleopPoints.Average() : 0,
+                StdTeleopPoints = CalculateStdDev(teleopPoints),
+                AvgEndgamePoints = endgamePoints.Count > 0 ? endgamePoints.Average() : 0,
+                StdEndgamePoints = CalculateStdDev(endgamePoints),
+                AvgTotalPoints = selectedTotals.Count > 0 ? selectedTotals.Average() : team.ExternalTotalPoints,
+                StdTotalPoints = CalculateStdDev(selectedTotals.Count > 0 ? selectedTotals : new List<double> { team.ExternalTotalPoints }),
+                MatchCount = team.MatchCount > 0 ? team.MatchCount : Math.Max(1, selectedTotals.Count),
+                Consistency = CalculateConsistency(selectedTotals.Count > 0 ? selectedTotals : new List<double> { team.ExternalTotalPoints })
+            };
+        }
+
+        return stats;
+    }
+
     private TeamMatchPrediction CreateTeamPrediction(
         int teamNumber, 
         Dictionary<int, TeamHistoricalStats> teamStats,
@@ -598,6 +663,70 @@ var response = await _apiService.GetEventsAsync();
                 Alliance = alliance
             };
         }
+    }
+
+    private (double RedWinProbability, double BlueWinProbability) CalculateWinProbabilitiesFromPoints(
+        IReadOnlyList<TeamMatchPrediction> redAlliance,
+        IReadOnlyList<TeamMatchPrediction> blueAlliance,
+        int eventId,
+        int matchNumber)
+    {
+        const int simulationCount = 5000;
+
+        var seed = HashCode.Combine(eventId, matchNumber, redAlliance.Count, blueAlliance.Count);
+        foreach (var team in redAlliance)
+        {
+            seed = HashCode.Combine(seed, team.TeamNumber, (int)Math.Round(team.PredictedTotalPoints * 10), (int)Math.Round(team.TotalPointsStd * 10));
+        }
+        foreach (var team in blueAlliance)
+        {
+            seed = HashCode.Combine(seed, team.TeamNumber, (int)Math.Round(team.PredictedTotalPoints * 10), (int)Math.Round(team.TotalPointsStd * 10));
+        }
+
+        var random = new Random(seed);
+        double redWins = 0;
+        double blueWins = 0;
+
+        for (var i = 0; i < simulationCount; i++)
+        {
+            var redScore = redAlliance.Sum(team => SampleNormal(random, team.PredictedTotalPoints, GetEffectiveScoreStdDev(team.PredictedTotalPoints, team.TotalPointsStd)));
+            var blueScore = blueAlliance.Sum(team => SampleNormal(random, team.PredictedTotalPoints, GetEffectiveScoreStdDev(team.PredictedTotalPoints, team.TotalPointsStd)));
+
+            if (Math.Abs(redScore - blueScore) < 0.01)
+            {
+                redWins += 0.5;
+                blueWins += 0.5;
+            }
+            else if (redScore > blueScore)
+            {
+                redWins += 1;
+            }
+            else
+            {
+                blueWins += 1;
+            }
+        }
+
+        return (redWins / simulationCount, blueWins / simulationCount);
+    }
+
+    private static double GetEffectiveScoreStdDev(double mean, double standardDeviation)
+    {
+        var varianceFloor = Math.Max(15.0, mean * 0.15);
+        return Math.Max(standardDeviation, varianceFloor);
+    }
+
+    private static double SampleNormal(Random random, double mean, double standardDeviation)
+    {
+        if (standardDeviation <= 0)
+        {
+            return Math.Max(0, mean);
+        }
+
+        var u1 = 1.0 - random.NextDouble();
+        var u2 = 1.0 - random.NextDouble();
+        var standardNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2);
+        return Math.Max(0, mean + standardDeviation * standardNormal);
     }
 
     private double CalculateAutoPoints(Dictionary<string, object> data)

@@ -155,7 +155,7 @@
                                        FontAttributes="Bold"
                                        TextColor="#FF6B6B"
                                        VerticalOptions="Center" />
-                                <Label Text="{Binding Prediction.RedWinProbability, StringFormat='{0:P0}'}"
+                                <Label Text="{Binding Prediction.RedWinProbability, StringFormat='{0:P1}'}"
                                        FontSize="24"
                                        FontAttributes="Bold"
                                        TextColor="#FF6B6B"
@@ -176,7 +176,7 @@
                                        FontAttributes="Bold"
                                        TextColor="#4ECDC4"
                                        VerticalOptions="Center" />
-                                <Label Text="{Binding Prediction.BlueWinProbability, StringFormat='{0:P0}'}"
+                                <Label Text="{Binding Prediction.BlueWinProbability, StringFormat='{0:P1}'}"
                                        FontSize="24"
                                        FontAttributes="Bold"
                                        TextColor="#4ECDC4"

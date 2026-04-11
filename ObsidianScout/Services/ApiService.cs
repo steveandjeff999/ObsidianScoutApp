@@ -1908,14 +1908,14 @@ var errorContent = await response.Content.ReadAsStringAsync();
             var baseUrl = await GetBaseUrlAsync();
             var endpoint = $"{baseUrl}/chat/groups";
             var response = await _httpClient.PostAsJsonAsync(endpoint, request, _jsonOptions);
+            var content = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ChatCreateGroupResponse>(_jsonOptions);
-                return result ?? new ChatCreateGroupResponse { Success = false, Error = "Invalid response" };
+                var result = System.Text.Json.JsonSerializer.Deserialize<ChatCreateGroupResponse>(content, _jsonOptions);
+                return result ?? new ChatCreateGroupResponse { Success = false };
             }
 
-            var err = await response.Content.ReadAsStringAsync();
-            return new ChatCreateGroupResponse { Success = false, Error = $"HTTP {response.StatusCode}: {err}" };
+            return new ChatCreateGroupResponse { Success = false, Error = $"HTTP {response.StatusCode}: {content}" };
         }
         catch (Exception ex)
         {
@@ -2322,9 +2322,9 @@ var cachedConfig2 = await _cache_service.GetCachedPitConfigAsync();
 
     public async Task<PitScoutingSubmitResponse> SubmitPitScoutingDataAsync(PitScoutingSubmission submission)
     {
-    // If offline, return quickly indicating offline so UI can queue/handle
-  if (!_connectivity_service.IsConnected)
-    {
+        // If offline, return quickly indicating offline so UI can queue/handle
+        if (!_connectivity_service.IsConnected)
+        {
             return new PitScoutingSubmitResponse
      {
  Success = false,
@@ -2345,10 +2345,8 @@ try
             System.Diagnostics.Debug.WriteLine($"Timestamp: {startTime:yyyy-MM-dd HH:mm:ss.fff}");
    System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
             System.Diagnostics.Debug.WriteLine($"Team ID: {submission.TeamId}");
-          System.Diagnostics.Debug.WriteLine($"Data fields: {submission.Data.Count}");
-            System.Diagnostics.Debug.WriteLine($"Images: {submission.Images?.Count ?? 0}");
-     
-    var response = await _httpClient.PostAsJsonAsync(endpoint, submission, _jsonOptions);
+        
+ var response = await _httpClient.PostAsJsonAsync(endpoint, submission, _jsonOptions);
         
    var elapsed = (DateTime.Now - startTime).TotalMilliseconds;
             System.Diagnostics.Debug.WriteLine($"Response received in {elapsed:F0}ms");
@@ -2372,6 +2370,8 @@ try
                     if (parsedSuccess != null)
                     {
                         System.Diagnostics.Debug.WriteLine($"Parsed Success: {parsedSuccess.Success}");
+                        System.Diagnostics.Debug.WriteLine($"Parsed Message: {parsedSuccess.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Parsed Error: {parsedSuccess.Error}");
                         System.Diagnostics.Debug.WriteLine($"Parsed Pit Scouting ID: {parsedSuccess.PitScoutingId}");
                         return parsedSuccess;
                     }
@@ -2541,13 +2541,12 @@ finally
          System.Diagnostics.Debug.WriteLine($"Team ID: {submission.TeamId}");
         
  var response = await _httpClient.PutAsJsonAsync(endpoint, submission, _jsonOptions);
-     
-        System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+     var content = await response.Content.ReadAsStringAsync();
+     System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
 
             if (response.IsSuccessStatusCode)
       {
-    var responseContent = await response.Content.ReadAsStringAsync();
-    var result = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(responseContent, _jsonOptions);
+    var result = System.Text.Json.JsonSerializer.Deserialize<PitScoutingSubmitResponse>(content, _jsonOptions);
           return result ?? new PitScoutingSubmitResponse { Success = true, Message = "Updated successfully" };
             }
             else
@@ -2580,7 +2579,7 @@ System.Diagnostics.Debug.WriteLine($"Update pit scouting failed: {ex.Message}");
    }
         
         try
-        {
+ {
      await AddAuthHeaderAsync();
     var baseUrl = await GetBaseUrlAsync();
        var endpoint = $"{baseUrl}/pit-scouting/{entryId}";
@@ -2589,8 +2588,8 @@ System.Diagnostics.Debug.WriteLine($"Update pit scouting failed: {ex.Message}");
      System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
  
       var response = await _httpClient.DeleteAsync(endpoint);
-     
-    System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
+     var content = await response.Content.ReadAsStringAsync();
+     System.Diagnostics.Debug.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
 
       if (response.IsSuccessStatusCode)
    {
@@ -3049,12 +3048,32 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
 
     public async Task<MobileDataModeResponse> GetMobileDataModeAsync()
     {
+        var response = await GetCurrentDataModeAsync();
+        return new MobileDataModeResponse
+        {
+            Success = response.Success,
+            EpaSource = response.EpaSource,
+            DataMode = response.DataMode,
+            Error = response.Error
+        };
+    }
+
+    public async Task<CurrentDataModeResponse> GetCurrentDataModeAsync(int? eventId = null, IEnumerable<int>? teamNumbers = null)
+    {
+        var requestedTeamNumbers = teamNumbers?.Distinct().ToList();
+
         if (!await ShouldUseNetworkAsync())
         {
-            return new MobileDataModeResponse
+            var cached = await _cache_service.GetCachedCurrentDataModeAsync(eventId);
+            if (cached != null && cached.Teams.Count > 0)
+            {
+                return cached;
+            }
+
+            return new CurrentDataModeResponse
             {
                 Success = false,
-                Error = "Offline - cannot fetch mobile data mode"
+                Error = "Offline - no cached current data mode available"
             };
         }
 
@@ -3062,20 +3081,53 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
         {
             await AddAuthHeaderAsync();
             var baseUrl = await GetBaseUrlAsync();
-            var response = await _httpClient.GetAsync($"{baseUrl}/config/game/data-mode");
+            var endpoint = $"{baseUrl}/config/game/current-data-mode";
+
+            var payload = new Dictionary<string, object?>();
+            if (eventId.HasValue)
+            {
+                payload["event_id"] = eventId.Value;
+            }
+
+            if (requestedTeamNumbers != null && requestedTeamNumbers.Count > 0)
+            {
+                payload["team_numbers"] = requestedTeamNumbers;
+            }
+
+            HttpResponseMessage response;
+            if (payload.Count == 0)
+            {
+                response = await _httpClient.GetAsync(endpoint);
+            }
+            else
+            {
+                response = await _httpClient.PostAsJsonAsync(endpoint, payload, _jsonOptions);
+            }
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<MobileDataModeResponse>(_jsonOptions);
-                return result ?? new MobileDataModeResponse
+                var result = await response.Content.ReadFromJsonAsync<CurrentDataModeResponse>(_jsonOptions) ?? new CurrentDataModeResponse
                 {
                     Success = false,
                     Error = "Invalid response"
                 };
+
+                if (result.Success && (requestedTeamNumbers == null || requestedTeamNumbers.Count == 0))
+                {
+                    await _cache_service.CacheCurrentDataModeAsync(result, eventId);
+                }
+
+                return result;
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            return new MobileDataModeResponse
+            var cachedResponse = await _cache_service.GetCachedCurrentDataModeAsync(eventId);
+            if (cachedResponse != null && cachedResponse.Teams.Count > 0)
+            {
+                return cachedResponse;
+            }
+
+            return new CurrentDataModeResponse
             {
                 Success = false,
                 Error = $"Request failed with status {response.StatusCode}: {errorContent}"
@@ -3083,7 +3135,13 @@ System.Diagnostics.Debug.WriteLine($"Endpoint: {endpoint}");
         }
         catch (Exception ex)
         {
-            return new MobileDataModeResponse
+            var cachedResponse = await _cache_service.GetCachedCurrentDataModeAsync(eventId);
+            if (cachedResponse != null && cachedResponse.Teams.Count > 0)
+            {
+                return cachedResponse;
+            }
+
+            return new CurrentDataModeResponse
             {
                 Success = false,
                 Error = $"Connection error: {ex.Message}"

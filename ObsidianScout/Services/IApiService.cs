@@ -24,6 +24,7 @@ public interface IApiService
     Task<GameConfigResponse> GetGameConfigAsync();
     Task<GameConfigResponse> GetTeamGameConfigAsync();
     Task<MobileDataModeResponse> GetMobileDataModeAsync();
+    Task<CurrentDataModeResponse> GetCurrentDataModeAsync(int? eventId = null, IEnumerable<int>? teamNumbers = null);
     Task<ApiResponse<string>> HealthCheckAsync();
     Task<TeamMetricsResponse> GetTeamMetricsAsync(int teamId, int eventId);
     Task<CompareTeamsResponse> CompareTeamsAsync(CompareTeamsRequest request);
